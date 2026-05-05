@@ -1,0 +1,284 @@
+import { createContext, useContext, useEffect, useState } from 'react'
+import toast from 'react-hot-toast'
+import { loadData, saveData, clearStorage } from '../utils/storage'
+import { migrateData } from '../utils/dataMigration'
+
+const VehicleContext = createContext(null)
+
+export const useVehicles = () => {
+  const ctx = useContext(VehicleContext)
+  if (!ctx) throw new Error('useVehicles must be used within VehicleProvider')
+  return ctx
+}
+
+export const VehicleProvider = ({ children }) => {
+  const [vehicles, setVehicles] = useState([])
+  const [maintenanceRecords, setMaintenanceRecords] = useState([])
+  const [fuelRecords, setFuelRecords] = useState([])
+  const [tireSets, setTireSets] = useState([])
+  const [tireChanges, setTireChanges] = useState([])
+  const [customIntervals, setCustomIntervals] = useState({})
+  const [isLoaded, setIsLoaded] = useState(false)
+
+  // İlk yükleme
+  useEffect(() => {
+    const data = loadData()
+    if (data) {
+      const migrated = migrateData(data)
+      setVehicles(migrated.vehicles || [])
+      setMaintenanceRecords(migrated.maintenanceRecords || [])
+      setFuelRecords(migrated.fuelRecords || [])
+      setTireSets(migrated.tireSets || [])
+      setTireChanges(migrated.tireChanges || [])
+      setCustomIntervals(migrated.customIntervals || {})
+    }
+    setIsLoaded(true)
+  }, [])
+
+  // Her değişiklikte kaydet
+  useEffect(() => {
+    if (!isLoaded) return
+    saveData({
+      vehicles,
+      maintenanceRecords,
+      fuelRecords,
+      tireSets,
+      tireChanges,
+      customIntervals,
+    })
+  }, [vehicles, maintenanceRecords, fuelRecords, tireSets, tireChanges, customIntervals, isLoaded])
+
+  // ============ ARAÇ CRUD ============
+  const addVehicle = (vehicle) => {
+    const newVehicle = { ...vehicle, id: String(Date.now()) }
+    setVehicles(prev => [...prev, newVehicle])
+    toast.success('Araç eklendi ✓')
+    return newVehicle
+  }
+
+  const updateVehicle = (id, updates) => {
+    setVehicles(prev => prev.map(v => (v.id === id ? { ...v, ...updates } : v)))
+    toast.success('Araç güncellendi ✓')
+  }
+
+  const deleteVehicle = (id) => {
+    setVehicles(prev => prev.filter(v => v.id !== id))
+    setMaintenanceRecords(prev => prev.filter(r => r.vehicleId !== id))
+    setFuelRecords(prev => prev.filter(r => r.vehicleId !== id))
+    setTireSets(prev => prev.filter(t => t.vehicleId !== id))
+    setTireChanges(prev => prev.filter(t => t.vehicleId !== id))
+    toast.success('Araç ve tüm kayıtları silindi')
+  }
+
+  // ============ BAKIM CRUD ============
+  const addMaintenance = (record) => {
+    const newRecord = { ...record, id: String(Date.now()) }
+    setMaintenanceRecords(prev => [...prev, newRecord])
+    toast.success('Bakım kaydı eklendi ✓')
+    return newRecord
+  }
+
+  const updateMaintenance = (id, updates) => {
+    setMaintenanceRecords(prev => prev.map(r => (r.id === id ? { ...r, ...updates } : r)))
+    toast.success('Bakım kaydı güncellendi ✓')
+  }
+
+  const deleteMaintenance = (id) => {
+    setMaintenanceRecords(prev => prev.filter(r => r.id !== id))
+    toast.success('Bakım kaydı silindi')
+  }
+
+  // ============ YAKIT CRUD ============
+  const addFuel = (record) => {
+    const newRecord = { ...record, id: String(Date.now()) }
+    setFuelRecords(prev => [...prev, newRecord])
+    toast.success('Yakıt kaydı eklendi ✓')
+    return newRecord
+  }
+
+  const updateFuel = (id, updates) => {
+    setFuelRecords(prev => prev.map(r => (r.id === id ? { ...r, ...updates } : r)))
+    toast.success('Yakıt kaydı güncellendi ✓')
+  }
+
+  const deleteFuel = (id) => {
+    setFuelRecords(prev => prev.filter(r => r.id !== id))
+    toast.success('Yakıt kaydı silindi')
+  }
+
+  // ============ LASTİK SETİ CRUD ============
+  const addTireSet = (tireSet) => {
+    const newSet = { ...tireSet, id: String(Date.now()) }
+    setTireSets(prev => [...prev, newSet])
+    toast.success(`${tireSet.season === 'winter' ? 'Kışlık' : 'Yazlık'} lastik seti eklendi ✓`)
+    return newSet
+  }
+
+  const updateTireSet = (id, updates) => {
+    setTireSets(prev => prev.map(t => (t.id === id ? { ...t, ...updates } : t)))
+    toast.success('Lastik seti güncellendi ✓')
+  }
+
+  const deleteTireSet = (id) => {
+    setTireSets(prev => prev.filter(t => t.id !== id))
+    toast.success('Lastik seti silindi')
+  }
+
+  // ============ LASTİK DEĞİŞİMİ CRUD ============
+  const addTireChange = (change) => {
+    const newChange = { ...change, id: String(Date.now()) }
+    setTireChanges(prev => [...prev, newChange])
+    toast.success('Lastik değişimi kaydedildi ✓')
+    return newChange
+  }
+
+  const updateTireChange = (id, updates) => {
+    setTireChanges(prev => prev.map(t => (t.id === id ? { ...t, ...updates } : t)))
+    toast.success('Lastik değişimi güncellendi ✓')
+  }
+
+  const deleteTireChange = (id) => {
+    setTireChanges(prev => prev.filter(t => t.id !== id))
+    toast.success('Lastik değişim kaydı silindi')
+  }
+
+  // ============ CUSTOM INTERVALS ============
+  const updateCustomIntervals = (intervals) => {
+    setCustomIntervals(intervals)
+    toast.success('Bakım periyotları güncellendi ✓')
+  }
+
+  // ============ IMPORT/EXPORT ============
+  const importDataMerge = (importedVehicles, importedMaintenance, importedFuel = [], importedIntervals = {}, importedTireSets = [], importedTireChanges = []) => {
+    let addedVehicles = 0
+    let skippedVehicles = 0
+    let addedRecords = 0
+    let skippedRecords = 0
+    let addedFuel = 0
+    let skippedFuel = 0
+    let addedTireSets = 0
+    let addedTireChanges = 0
+
+    const existingVehicleIds = new Set(vehicles.map(v => v.id))
+    const newVehicles = importedVehicles.filter(v => {
+      if (existingVehicleIds.has(v.id)) {
+        skippedVehicles++
+        return false
+      }
+      addedVehicles++
+      return true
+    })
+
+    const existingMaintenanceIds = new Set(maintenanceRecords.map(r => r.id))
+    const newMaintenance = importedMaintenance.filter(r => {
+      if (existingMaintenanceIds.has(r.id)) {
+        skippedRecords++
+        return false
+      }
+      addedRecords++
+      return true
+    })
+
+    const existingFuelIds = new Set(fuelRecords.map(r => r.id))
+    const newFuel = importedFuel.filter(r => {
+      if (existingFuelIds.has(r.id)) {
+        skippedFuel++
+        return false
+      }
+      addedFuel++
+      return true
+    })
+
+    const existingTireSetIds = new Set(tireSets.map(t => t.id))
+    const newTireSets = importedTireSets.filter(t => {
+      if (existingTireSetIds.has(t.id)) return false
+      addedTireSets++
+      return true
+    })
+
+    const existingTireChangeIds = new Set(tireChanges.map(t => t.id))
+    const newTireChanges = importedTireChanges.filter(t => {
+      if (existingTireChangeIds.has(t.id)) return false
+      addedTireChanges++
+      return true
+    })
+
+    setVehicles(prev => [...prev, ...newVehicles])
+    setMaintenanceRecords(prev => [...prev, ...newMaintenance])
+    setFuelRecords(prev => [...prev, ...newFuel])
+    setTireSets(prev => [...prev, ...newTireSets])
+    setTireChanges(prev => [...prev, ...newTireChanges])
+
+    setCustomIntervals(prev => ({ ...prev, ...importedIntervals }))
+
+    return {
+      addedVehicles, skippedVehicles,
+      addedRecords, skippedRecords,
+      addedFuel, skippedFuel,
+      addedTireSets, addedTireChanges,
+    }
+  }
+
+  const importDataReplace = (importedVehicles, importedMaintenance, importedFuel = [], importedIntervals = {}, importedTireSets = [], importedTireChanges = []) => {
+    setVehicles(importedVehicles)
+    setMaintenanceRecords(importedMaintenance)
+    setFuelRecords(importedFuel)
+    setTireSets(importedTireSets)
+    setTireChanges(importedTireChanges)
+    setCustomIntervals(importedIntervals)
+
+    return {
+      totalVehicles: importedVehicles.length,
+      totalRecords: importedMaintenance.length,
+      totalFuel: importedFuel.length,
+      totalTireSets: importedTireSets.length,
+      totalTireChanges: importedTireChanges.length,
+    }
+  }
+
+  const clearAllData = () => {
+    setVehicles([])
+    setMaintenanceRecords([])
+    setFuelRecords([])
+    setTireSets([])
+    setTireChanges([])
+    setCustomIntervals({})
+    clearStorage()
+    toast.success('Tüm veriler silindi')
+  }
+
+  return (
+    <VehicleContext.Provider
+      value={{
+        vehicles,
+        maintenanceRecords,
+        fuelRecords,
+        tireSets,
+        tireChanges,
+        customIntervals,
+        isLoaded,
+        addVehicle,
+        updateVehicle,
+        deleteVehicle,
+        addMaintenance,
+        updateMaintenance,
+        deleteMaintenance,
+        addFuel,
+        updateFuel,
+        deleteFuel,
+        addTireSet,
+        updateTireSet,
+        deleteTireSet,
+        addTireChange,
+        updateTireChange,
+        deleteTireChange,
+        updateCustomIntervals,
+        importDataMerge,
+        importDataReplace,
+        clearAllData,
+      }}
+    >
+      {children}
+    </VehicleContext.Provider>
+  )
+}
