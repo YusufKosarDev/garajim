@@ -56,6 +56,24 @@ export function AuthProvider({ children }) {
     return { data, error }
   }
 
+  /**
+   * Google OAuth ile giriş yap.
+   * 
+   * Kullanıcı Google izin ekranına yönlendirilir, izin verirse
+   * uygulamaya geri döner ve otomatik olarak login olur.
+   * 
+   * @returns {Promise<{ data, error }>}
+   */
+  const signInWithGoogle = async () => {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/`,
+      },
+    })
+    return { data, error }
+  }
+
   const signOut = async () => {
     const { error } = await supabase.auth.signOut()
     return { error }
@@ -75,6 +93,7 @@ export function AuthProvider({ children }) {
     loading,
     signUp,
     signIn,
+    signInWithGoogle,
     signOut,
     resetPassword,
     isAuthenticated: !!user,
