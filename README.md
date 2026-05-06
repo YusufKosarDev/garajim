@@ -20,6 +20,57 @@
 
 ---
 
+## 📸 Önizleme
+
+<div align="center">
+
+### 💻 Desktop
+
+<img src="docs/screenshots/desktop/01-dashboard.png" alt="Dashboard - Desktop" width="800" />
+
+<details>
+<summary>📂 Daha fazla ekran görüntüsü</summary>
+
+<br />
+
+**Araçlarım Sayfası**
+<img src="docs/screenshots/desktop/02-vehicles.png" alt="Vehicles - Desktop" width="800" />
+
+**Bakım Takibi**
+<img src="docs/screenshots/desktop/03-maintenance.png" alt="Maintenance - Desktop" width="800" />
+
+**İstatistikler**
+<img src="docs/screenshots/desktop/04-stats.png" alt="Stats - Desktop" width="800" />
+
+</details>
+
+### 📱 Mobile
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="docs/screenshots/mobile/01-dashboard.png" alt="Dashboard" width="220" /><br />
+      <sub><b>Dashboard</b></sub>
+    </td>
+    <td align="center">
+      <img src="docs/screenshots/mobile/02-vehicles.png" alt="Vehicles" width="220" /><br />
+      <sub><b>Araçlarım</b></sub>
+    </td>
+    <td align="center">
+      <img src="docs/screenshots/mobile/03-maintenance.png" alt="Maintenance" width="220" /><br />
+      <sub><b>Bakım Takibi</b></sub>
+    </td>
+    <td align="center">
+      <img src="docs/screenshots/mobile/04-stats.png" alt="Stats" width="220" /><br />
+      <sub><b>İstatistikler</b></sub>
+    </td>
+  </tr>
+</table>
+
+</div>
+
+---
+
 ## 🌟 Hakkında
 
 **Garajım**, Türkiye'deki araç sahiplerinin tüm araç işlerini takip edebileceği modern bir Progressive Web App (PWA). Bakım kayıtları, MTV ödemeleri, sigorta yenilemeleri, lastik durumu ve yakıt tüketimi — hepsi tek bir uygulamada.
@@ -129,206 +180,3 @@
 ---
 
 ## 🏗️ Mimari
-
-\`\`\`
-┌─────────────────┐     ┌──────────────────┐     ┌──────────────────┐
-│   React + PWA   │     │   Supabase API   │     │   PostgreSQL DB  │
-│                 │────▶│                  │────▶│                  │
-│  - VehicleCtx   │     │  - Auth          │     │  - 7 tablo       │
-│  - AuthCtx      │◀────│  - REST API      │◀────│  - RLS policies  │
-│  - Components   │     │  - Storage       │     │  - Triggers      │
-└─────────────────┘     └──────────────────┘     └──────────────────┘
-        │                       │                          │
-        ▼                       ▼                          ▼
-   Vercel CDN          Supabase Storage              7 Index'li
-   (HTTPS, hızlı)      (Fotoğraflar, CDN)          PostgreSQL
-\`\`\`
-
-### Database Schema
-
-\`\`\`
-auth.users (Supabase Auth)
-    │
-    ├── profiles (1-1)
-    │
-    └── vehicles (1-N)
-            │
-            ├── maintenance_records (1-N)
-            ├── fuel_records (1-N)
-            ├── tire_sets (1-N)
-            ├── tire_changes (1-N)
-            └── custom_intervals (1-N)
-\`\`\`
-
-**Özellikler:**
-- 12 Foreign Key ilişkisi
-- 13 performans index'i
-- 7 RLS policy (her tablo için)
-- Otomatik `updated_at` trigger'ları
-- CASCADE delete (araç silinince bağlı kayıtlar otomatik silinir)
-
----
-
-## 🚀 Canlı Demo
-
-🌐 **[garajim-sage.vercel.app](https://garajim-sage.vercel.app)**
-
-Test hesabı:
-- Email: `demo@garajim.com`
-- Şifre: `demo1234`
-
-> Veya kendi hesabını oluşturabilirsin (gerçek email gerekli — confirm email aktif).
-
----
-
-## 📦 Kurulum (Geliştirme)
-
-### Gereksinimler
-- Node.js 20+
-- npm veya pnpm
-- Supabase hesabı (ücretsiz tier yeterli)
-
-### 1. Repo'yu klonla
-\`\`\`bash
-git clone https://github.com/YusufKosarDev/garajim.git
-cd garajim
-\`\`\`
-
-### 2. Bağımlılıkları yükle
-\`\`\`bash
-npm install --legacy-peer-deps
-\`\`\`
-
-### 3. Environment variables
-`.env.example`'ı `.env` olarak kopyala:
-\`\`\`bash
-cp .env.example .env
-\`\`\`
-
-İçini Supabase bilgilerinle doldur:
-\`\`\`env
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
-\`\`\`
-
-### 4. Database setup
-Supabase SQL Editor'da:
-- Tüm tabloları oluştur (vehicles, maintenance_records, fuel_records, tire_sets, tire_changes, custom_intervals, profiles)
-- RLS policy'lerini yaz
-- Storage bucket'larını oluştur (vehicle-photos, maintenance-photos)
-
-> Detaylı SQL scriptler için: [docs/database-setup.md](docs/database-setup.md) (yakında)
-
-### 5. Geliştirme sunucusunu başlat
-\`\`\`bash
-npm run dev
-\`\`\`
-
-→ http://localhost:5173 açılır
-
-### 6. Production build
-\`\`\`bash
-npm run build
-\`\`\`
-
----
-
-## 📂 Proje Yapısı
-
-\`\`\`
-garajim/
-├── public/                  # Statik dosyalar, PWA manifest
-├── src/
-│   ├── components/          # UI component'ler
-│   ├── context/             # React Context (Auth, Vehicle, Notification)
-│   ├── fonts/               # Türkçe PDF için Roboto fontu
-│   ├── hooks/               # Custom hook'lar (useAuth, usePWA, vs.)
-│   ├── lib/                 # Supabase client, mappers, helpers
-│   ├── pages/               # Sayfalar (Dashboard, Login, Register, vs.)
-│   ├── utils/               # Yardımcı fonksiyonlar
-│   ├── App.jsx              # Ana uygulama
-│   └── main.jsx             # Giriş noktası
-├── .env.example             # Environment variables şablonu
-├── .gitignore
-├── .npmrc                   # legacy-peer-deps for Vite 8 + plugins
-├── index.html
-├── package.json
-├── tailwind.config.js
-└── vite.config.js
-\`\`\`
-
----
-
-## 🎨 Öne Çıkan Teknik Detaylar
-
-### 1. Custom Fuzzy Search
-Türkçe karakter normalize (ç→c, ğ→g) + weighted multi-field scoring + LRU cache.
-
-### 2. Türkçe PDF Rapor
-jsPDF VFS'e Roboto fontu gömülerek Türkçe karakterler düzgün renderlanır.
-
-### 3. PWA Optimizasyonu
-Workbox cache stratejileri, install prompt UX, offline indicator, otomatik update kontrolü.
-
-### 4. DOT Kod Algoritması
-Lastik üretim haftası/yılını otomatik parse edip yaş/risk değerlendirmesi yapar.
-
-### 5. Supabase Migration
-LocalStorage'dan Supabase'e veri taşıma için ID mapping algoritması, kısmi başarı yönetimi, fotoğraf otomatik upload.
-
-### 6. RLS Strategy
-Her CRUD operasyon `auth.uid() = user_id` kontrolüyle korunur. Defense in depth — DB seviyesinde güvenlik.
-
-### 7. Optimistic Updates
-UI anında güncellenir, async DB call arka planda — kullanıcıya akıcı deneyim.
-
----
-
-## 🗺️ Roadmap
-
-### v1.0 (Mevcut) ✅
-- [x] Auth (email + password + email confirmation)
-- [x] Tüm CRUD operasyonları
-- [x] Fotoğraf yönetimi (Supabase Storage)
-- [x] PDF rapor üretimi
-- [x] Migration tool
-- [x] PWA desteği
-
-### v1.1 (Yakında)
-- [ ] Google OAuth
-- [ ] Real-time sync (multi-cihaz)
-- [ ] Açık tema
-- [ ] Profil sayfası (şifre değiştir)
-- [ ] Hesap silme (KVKK uyumu)
-
-### v1.2 (Planlanan)
-- [ ] Email push notifications (yaklaşan bakım)
-- [ ] Çoklu kullanıcı (aile hesabı)
-- [ ] Servis istasyonu önerileri (Google Places)
-- [ ] OBD-II Bluetooth entegrasyonu
-
----
-
-## 📝 License
-
-MIT © [Yusuf Koşar](https://github.com/YusufKosarDev)
-
----
-
-## 👨‍💻 Geliştirici
-
-**Yusuf Koşar**
-
-- GitHub: [@YusufKosarDev](https://github.com/YusufKosarDev)
-- Proje: [garajim](https://github.com/YusufKosarDev/garajim)
-- Demo: [garajim-sage.vercel.app](https://garajim-sage.vercel.app)
-
----
-
-<div align="center">
-
-⭐ **Faydalı bulduysan repo'yu yıldızlamayı unutma!** ⭐
-
-Yapıldı ❤️ ile, kahve ☕ ile, ve çok fazla `console.log` ile.
-
-</div>
