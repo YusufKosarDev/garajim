@@ -18,6 +18,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
+import Profile from './pages/Profile'
 import WelcomeTour from './components/WelcomeTour'
 import KeyboardShortcutsModal from './components/KeyboardShortcutsModal'
 import CommandPalette from './components/CommandPalette'
@@ -165,6 +166,7 @@ function App() {
               <Route path="/vehicles/:id" element={<VehicleDetail globalActionsRef={globalActionsRef} />} />
               <Route path="/statistics" element={<Statistics />} />
               <Route path="/calendar" element={<Calendar />} />
+              <Route path="/profile" element={<Profile />} />
               <Route path="/settings" element={<Settings onShowTour={() => setShowTour(true)} />} />
             </Routes>
           </ErrorBoundary>

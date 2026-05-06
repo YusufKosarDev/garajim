@@ -128,6 +128,16 @@ export default function Navbar({ onOpenCommandPalette }) {
                   </div>
                 </div>
 
+                {/* Profile Link */}
+                <Link
+                  to="/profile"
+                  onClick={() => setShowUserMenu(false)}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-300 hover:bg-slate-700/50 hover:text-white transition-colors border-b border-slate-700"
+                >
+                  <User className="w-4 h-4" />
+                  <span className="text-sm font-medium">Profilim</span>
+                </Link>
+
                 {/* Logout Button */}
                 <button
                   onClick={handleLogout}
