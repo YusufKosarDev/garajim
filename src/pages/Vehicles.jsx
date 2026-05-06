@@ -44,10 +44,9 @@ export default function Vehicles({ globalActionsRef }) {
     }
   }, [globalActionsRef])
 
-  if (!isLoaded) {
-    return <VehicleGridSkeleton />
-  }
-
+  // 🔥 KRİTİK: useMemo TÜM hook'ların yanında, EN ÜSTTE olmalı.
+  // Erken return'den (if !isLoaded) ÖNCE çağrılmalı, yoksa
+  // hook order ihlali olur ve React Error #300 verir.
   const filteredAndSorted = useMemo(() => {
     let result = [...vehicles]
 
@@ -99,6 +98,11 @@ export default function Vehicles({ globalActionsRef }) {
 
     return result
   }, [vehicles, searchQuery, sortBy])
+
+  // ✅ Tüm hook'lardan SONRA early return
+  if (!isLoaded) {
+    return <VehicleGridSkeleton />
+  }
 
   const handleEdit = (vehicle) => {
     setEditVehicle(vehicle)
