@@ -101,6 +101,73 @@ export const VehicleProvider = ({ children }) => {
     loadAllData()
   }, [isAuthenticated, user])
 
+  // ============ REAL-TIME SUBSCRIPTIONS ============
+  // Aynı kullanıcı başka cihazdan değişiklik yaparsa otomatik senkronize et
+  useEffect(() => {
+    if (!isAuthenticated || !user) return
+
+    // Generic helper: state'i INSERT/UPDATE/DELETE event'ine göre güncelle
+    const handleChange = (setState, fromDbMapper) => (payload) => {
+      const { eventType, new: newRow, old: oldRow } = payload
+
+      if (eventType === 'INSERT') {
+        const item = fromDbMapper(newRow)
+        setState(prev => {
+          // Echo prevention: Eğer bu ID zaten state'deyse (kendi eklediğimiz),
+          // tekrar ekleme. Sadece başka cihazdan gelen yenileri ekle.
+          if (prev.some(x => x.id === item.id)) return prev
+          return [...prev, item]
+        })
+      } else if (eventType === 'UPDATE') {
+        const item = fromDbMapper(newRow)
+        setState(prev => prev.map(x => (x.id === item.id ? item : x)))
+      } else if (eventType === 'DELETE') {
+        setState(prev => prev.filter(x => x.id !== oldRow.id))
+      }
+    }
+
+    // Tüm tablolar için tek bir channel (Supabase önerisi - performans)
+    const channel = supabase
+      .channel(`user-${user.id}-changes`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'vehicles', filter: `user_id=eq.${user.id}` },
+        handleChange(setVehicles, vehicleFromDb)
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'maintenance_records', filter: `user_id=eq.${user.id}` },
+        handleChange(setMaintenanceRecords, maintenanceFromDb)
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'fuel_records', filter: `user_id=eq.${user.id}` },
+        handleChange(setFuelRecords, fuelFromDb)
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tire_sets', filter: `user_id=eq.${user.id}` },
+        handleChange(setTireSets, tireSetFromDb)
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tire_changes', filter: `user_id=eq.${user.id}` },
+        handleChange(setTireChanges, tireChangeFromDb)
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('🔴 Real-time aktif: Tüm cihazlardan değişiklikler dinleniyor')
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Real-time bağlantı hatası')
+        }
+      })
+
+    // Cleanup: component unmount veya user değişince subscription'ı kapat
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [isAuthenticated, user])
+
   // ============ ARAÇ CRUD ============
   const addVehicle = useCallback(async (vehicle) => {
     if (!user) {
@@ -135,7 +202,11 @@ export const VehicleProvider = ({ children }) => {
       if (error) throw error
 
       const newVehicle = vehicleFromDb(data)
-      setVehicles(prev => [...prev, newVehicle])
+      setVehicles(prev => {
+        // Real-time event önce gelmiş olabilir, ikinci kez ekleme
+        if (prev.some(v => v.id === newVehicle.id)) return prev
+        return [...prev, newVehicle]
+      })
       toast.success('Araç eklendi ✓')
       return newVehicle
     } catch (error) {
@@ -291,7 +362,10 @@ export const VehicleProvider = ({ children }) => {
       if (error) throw error
 
       const newRecord = maintenanceFromDb(data)
-      setMaintenanceRecords(prev => [...prev, newRecord])
+      setMaintenanceRecords(prev => {
+        if (prev.some(r => r.id === newRecord.id)) return prev
+        return [...prev, newRecord]
+      })
       toast.success('Bakım kaydı eklendi ✓')
       return newRecord
     } catch (error) {
@@ -395,7 +469,10 @@ export const VehicleProvider = ({ children }) => {
       if (error) throw error
 
       const newRecord = fuelFromDb(data)
-      setFuelRecords(prev => [...prev, newRecord])
+      setFuelRecords(prev => {
+        if (prev.some(r => r.id === newRecord.id)) return prev
+        return [...prev, newRecord]
+      })
       toast.success('Yakıt kaydı eklendi ✓')
       return newRecord
     } catch (error) {
@@ -464,7 +541,10 @@ export const VehicleProvider = ({ children }) => {
       if (error) throw error
 
       const newSet = tireSetFromDb(data)
-      setTireSets(prev => [...prev, newSet])
+      setTireSets(prev => {
+        if (prev.some(t => t.id === newSet.id)) return prev
+        return [...prev, newSet]
+      })
       toast.success(`${tireSet.season === 'winter' ? 'Kışlık' : 'Yazlık'} lastik seti eklendi ✓`)
       return newSet
     } catch (error) {
@@ -533,7 +613,10 @@ export const VehicleProvider = ({ children }) => {
       if (error) throw error
 
       const newChange = tireChangeFromDb(data)
-      setTireChanges(prev => [...prev, newChange])
+      setTireChanges(prev => {
+        if (prev.some(t => t.id === newChange.id)) return prev
+        return [...prev, newChange]
+      })
       toast.success('Lastik değişimi kaydedildi ✓')
       return newChange
     } catch (error) {
