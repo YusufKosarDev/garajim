@@ -79,14 +79,23 @@
 
 🔥 **Ne Yapar?** Yaklaşan bakımları hatırlatır, yıllık masrafını gösterir, yakıt tüketimini hesaplar, lastik diş derinliğini takip eder.
 
+⚡ **Production-grade fullstack:** Supabase tabanlı (PostgreSQL + RLS + Storage + Edge Functions), real-time multi-device senkron, otomatik email hatırlatmaları (cron + Resend), Google OAuth, PWA.
+
 ---
 
 ## ✨ Özellikler
 
+### 🔐 Authentication & Hesap
+- ✅ **Email + Şifre** — Email doğrulama zorunlu (production-ready)
+- ✅ **🆕 Google OAuth** — Tek tıkla giriş ("Sign in with Google")
+- ✅ **Şifre sıfırlama** — Email ile güvenli reset
+- ✅ **🆕 Profil yönetimi** — Şifre/email değiştir (re-authentication ile)
+- ✅ **🆕 Hesap silme (KVKK)** — Tüm verilerle birlikte kalıcı silme
+
 ### 🚙 Araç Yönetimi
 - ✅ **Çoklu araç desteği** — Sahip olduğun tüm araçları tek yerde
 - ✅ **Detaylı bilgi** — Plaka, marka, model, yıl, yakıt tipi, KM
-- ✅ **Çoklu fotoğraf** — Aracının fotoğraflarını ekle
+- ✅ **Çoklu fotoğraf** — Cloud storage'a otomatik yükleme (CDN)
 - ✅ **Otomatik plaka formatı** — TR plaka formatı doğrulaması
 
 ### 📅 Tarih Takibi
@@ -94,6 +103,19 @@
 - ✅ **MTV** — Motorlu Taşıt Vergisi takibi (Ocak/Temmuz)
 - ✅ **Sigorta + Kasko** — Yenileme tarihleri
 - ✅ **Akıllı bildirimler** — 30 gün, 7 gün ve 1 gün kala uyarı
+
+### 📧 🆕 Email Bildirimleri (Otomatik)
+- ✅ **Cron job** — Her gün 09:00'da otomatik kontrol (pg_cron)
+- ✅ **Yaklaşan tarih hatırlatması** — Muayene, MTV, sigorta, kasko
+- ✅ **Branded HTML email** — Aciliyet renkleri (1 gün → kırmızı, 7 gün → turuncu, 30 gün → mavi)
+- ✅ **Kullanıcı tercihleri** — Master switch + 4 spesifik toggle (DB'de saklı)
+- ✅ **Resend entegrasyonu** — Modern email API
+
+### 🔄 🆕 Real-time Multi-cihaz Senkron
+- ✅ **WebSocket subscription** — postgres_changes ile canlı dinleyici
+- ✅ **Anlık güncelleme** — Telefondan ekleyince bilgisayarda F5'siz görünür
+- ✅ **Echo prevention** — Optimistic UI + duplicate engellemesi
+- ✅ **Tüm tablolar** — Araç, bakım, yakıt, lastik, lastik değişim
 
 ### 🔧 Bakım Modülü
 - ✅ **15+ bakım türü** — Yağ, filtre, balata, vs.
@@ -122,8 +144,8 @@
 - ✅ **PDF rapor üretimi** — Türkçe karakter destekli (jsPDF + Roboto)
 - ✅ **Paylaşılabilir rapor** — QR kod ile link paylaş
 
-### 🔔 Bildirimler
-- ✅ **In-app bildirim merkezi** — Slack/Linear tarzı
+### 🔔 In-app Bildirimler
+- ✅ **Bildirim merkezi** — Slack/Linear tarzı
 - ✅ **Browser notifications** — Native API
 - ✅ **Akıllı deduplication** — Tekrar eden uyarılar tek seferde
 
@@ -136,9 +158,11 @@
 - ✅ **Bottom navigation** — Mobile için optimize
 
 ### 🔐 Güvenlik
-- ✅ **Email + Şifre auth** — Email doğrulama zorunlu
-- ✅ **Şifre sıfırlama** — Email ile güvenli reset
-- ✅ **Row Level Security** — PostgreSQL seviyesinde
+- ✅ **Row Level Security** — PostgreSQL seviyesinde 8 policy
+- ✅ **Storage RLS** — User bazlı klasör izolasyonu
+- ✅ **JWT token auth** — Supabase managed
+- ✅ **Re-authentication** — Hassas işlemlerde mevcut şifre doğrulama
+- ✅ **Vault** — Service role key güvenli saklama
 - ✅ **HTTPS** — Otomatik SSL (Vercel)
 
 ### 📱 PWA
@@ -165,13 +189,21 @@
 - **lz-string** — URL'de paylaşım için sıkıştırma
 - **qrcode.react** — QR kod üretimi
 - **Vite PWA Plugin** — Service Worker, manifest
+- **@supabase/supabase-js** — Supabase client + real-time
 
 ### Backend (Supabase)
-- **PostgreSQL** — Database (7 tablo)
-- **Row Level Security** — Kullanıcı bazlı veri izolasyonu
-- **Supabase Auth** — Email/Password + email confirmation
-- **Supabase Storage** — Fotoğraf yönetimi (CDN)
-- **Real-time** (hazır) — Multi-cihaz sync için
+- **PostgreSQL** — Database (8 tablo, 12+ FK, 13+ index)
+- **Row Level Security** — Kullanıcı bazlı veri izolasyonu (8 policy)
+- **Supabase Auth** — Email/Password + Google OAuth + email confirmation
+- **Supabase Storage** — Fotoğraf yönetimi (2 bucket, 8 RLS policy, CDN)
+- **Real-time** — postgres_changes WebSocket (multi-cihaz sync)
+- **Edge Functions** — Deno serverless (email reminder + account deletion)
+- **pg_cron** — Scheduled tasks (her gün 09:00 email reminder)
+- **Vault** — Service role key güvenli secret saklama
+
+### Email
+- **Resend** — Modern email API (3000 email/ay free tier)
+- **Branded HTML templates** — Türkçe + responsive
 
 ### DevOps
 - **GitHub** — Source control
