@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { 
   User, Mail, Lock, Shield, Calendar, ArrowLeft, 
-  Eye, EyeOff, CheckCircle2, XCircle, Save 
+  Eye, EyeOff, CheckCircle2, XCircle, Save,
+  Trash2, AlertTriangle
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -13,7 +14,7 @@ import PageTransition from '../components/PageTransition'
 export default function Profile() {
   usePageTitle('Profilim')
 
-  const { user } = useAuth()
+  const { user, signOut } = useAuth()
   const navigate = useNavigate()
 
   // Şifre Değiştir state
@@ -26,6 +27,13 @@ export default function Profile() {
   // Email Değiştir state
   const [newEmail, setNewEmail] = useState('')
   const [emailLoading, setEmailLoading] = useState(false)
+
+  // Hesap Silme state
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deletePassword, setDeletePassword] = useState('')
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [showDeletePassword, setShowDeletePassword] = useState(false)
 
   // Provider tespiti (email vs google)
   const provider = user?.app_metadata?.provider || 'email'
@@ -49,6 +57,12 @@ export default function Profile() {
     length: newPassword.length >= 6,
     match: newPassword.length > 0 && newPassword === confirmNewPassword,
   }
+
+  // Hesap silme onay validasyonu
+  const REQUIRED_CONFIRM_TEXT = 'HESABIMI SIL'
+  const isDeleteFormValid = 
+    deleteConfirmText === REQUIRED_CONFIRM_TEXT &&
+    (isGoogleUser || deletePassword.length > 0)
 
   // Şifre Değiştirme
   const handleChangePassword = async (e) => {
@@ -144,6 +158,73 @@ export default function Profile() {
     } finally {
       setEmailLoading(false)
     }
+  }
+
+  // Hesap silme
+  const handleDeleteAccount = async () => {
+    if (!isDeleteFormValid) {
+      toast.error('Lütfen onay metnini ve şifreni doğru gir')
+      return
+    }
+
+    setDeleteLoading(true)
+
+    try {
+      // Mevcut session token'ı al
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (!session) {
+        toast.error('Oturum bulunamadı, lütfen tekrar giriş yap')
+        setDeleteLoading(false)
+        return
+      }
+
+      // Edge Function'ı çağır
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-account`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(
+            isGoogleUser ? {} : { password: deletePassword }
+          ),
+        }
+      )
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        // Hata mesajını göster ama oturumu kapatma
+        toast.error(result.error || 'Hesap silinemedi')
+        setDeleteLoading(false)
+        return
+      }
+
+      // Başarı: kullanıcıya bilgi ver, sonra logout + redirect
+      toast.success('Hesabın kalıcı olarak silindi 👋', { duration: 4000 })
+      
+      // Kısa bir gecikmeyle logout (toast okunabilsin)
+      setTimeout(async () => {
+        await signOut()
+        navigate('/login', { replace: true })
+      }, 1500)
+    } catch (err) {
+      console.error('Delete account error:', err)
+      toast.error('Bir hata oluştu, tekrar deneyin')
+      setDeleteLoading(false)
+    }
+  }
+
+  // Modal kapatma (state temizle)
+  const closeDeleteModal = () => {
+    if (deleteLoading) return  // İşlem sırasında kapatma
+    setShowDeleteModal(false)
+    setDeletePassword('')
+    setDeleteConfirmText('')
+    setShowDeletePassword(false)
   }
 
   // Avatar baş harfi
@@ -406,7 +487,129 @@ export default function Profile() {
             </div>
           </div>
         )}
+
+        {/* Tehlikeli Bölge - Hesap Silme */}
+        <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-5 mb-6">
+          <h2 className="text-lg font-bold mb-1 flex items-center gap-2 text-red-400">
+            <AlertTriangle className="w-5 h-5" />
+            Tehlikeli Bölge
+          </h2>
+          <p className="text-sm text-slate-400 mb-4">
+            Hesabını silmek <strong className="text-red-400">geri alınamaz</strong> bir işlemdir.
+            Tüm araçların, bakım kayıtların, yakıt kayıtların ve fotoğrafların kalıcı olarak silinir.
+          </p>
+          <button
+            onClick={() => setShowDeleteModal(true)}
+            className="flex items-center gap-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 px-5 py-2.5 rounded-lg font-semibold transition"
+          >
+            <Trash2 className="w-4 h-4" />
+            Hesabımı Sil
+          </button>
+        </div>
       </div>
+
+      {/* Delete Account Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-red-500/30 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="w-6 h-6 text-red-400" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white">Hesabını sil?</h3>
+                <p className="text-sm text-slate-400">Bu işlem geri alınamaz</p>
+              </div>
+            </div>
+
+            {/* Liste */}
+            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-4">
+              <div className="text-sm text-slate-200 mb-2 font-medium">Şunlar kalıcı olarak silinecek:</div>
+              <ul className="text-sm text-slate-300 space-y-1">
+                <li className="flex items-center gap-2"><XCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" /> Tüm araç bilgilerin</li>
+                <li className="flex items-center gap-2"><XCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" /> Tüm bakım kayıtların</li>
+                <li className="flex items-center gap-2"><XCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" /> Tüm yakıt kayıtların</li>
+                <li className="flex items-center gap-2"><XCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" /> Tüm lastik kayıtların</li>
+                <li className="flex items-center gap-2"><XCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" /> Tüm yüklediğin fotoğraflar</li>
+                <li className="flex items-center gap-2"><XCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" /> Hesabın</li>
+              </ul>
+            </div>
+
+            {/* Şifre input (sadece email kullanıcılar) */}
+            {!isGoogleUser && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Şifren
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type={showDeletePassword ? 'text' : 'password'}
+                    value={deletePassword}
+                    onChange={(e) => setDeletePassword(e.target.value)}
+                    placeholder="Hesap şifren"
+                    autoComplete="current-password"
+                    disabled={deleteLoading}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-12 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition disabled:opacity-50"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowDeletePassword(!showDeletePassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition"
+                    tabIndex={-1}
+                  >
+                    {showDeletePassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Onay metni */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Onaylamak için "<span className="text-red-400 font-bold">{REQUIRED_CONFIRM_TEXT}</span>" yaz
+              </label>
+              <input
+                type="text"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder={REQUIRED_CONFIRM_TEXT}
+                disabled={deleteLoading}
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition disabled:opacity-50"
+              />
+            </div>
+
+            {/* Butonlar */}
+            <div className="flex gap-3">
+              <button
+                onClick={closeDeleteModal}
+                disabled={deleteLoading}
+                className="flex-1 bg-slate-800 hover:bg-slate-700 text-white px-5 py-2.5 rounded-lg font-semibold transition disabled:opacity-50"
+              >
+                İptal
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={!isDeleteFormValid || deleteLoading}
+                className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-lg font-semibold transition"
+              >
+                {deleteLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Siliniyor...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Sil
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </PageTransition>
   )
 }
