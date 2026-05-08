@@ -19,6 +19,7 @@ import Register from './pages/Register'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import Profile from './pages/Profile'
+import AcceptInvite from './pages/AcceptInvite'
 import WelcomeTour from './components/WelcomeTour'
 import KeyboardShortcutsModal from './components/KeyboardShortcutsModal'
 import CommandPalette from './components/CommandPalette'
@@ -42,11 +43,14 @@ function App() {
   // Paylaşım sayfasında navbar/bottomnav gizlensin
   const isSharedPage = location.pathname.startsWith('/share/')
 
+  // Davet kabul sayfası — kendi başına yönetiyor (login değilken de açılır)
+  const isAcceptInvitePage = location.pathname.startsWith('/accept-invite/')
+
   // Auth sayfaları (login, register, forgot-password) — minimal layout
   const isAuthPage = ['/login', '/register', '/forgot-password', '/reset-password'].includes(location.pathname)
 
   // Layout gizlenmesi gereken sayfalar
-  const isMinimalLayout = isSharedPage || isAuthPage
+  const isMinimalLayout = isSharedPage || isAuthPage || isAcceptInvitePage
 
   useEffect(() => {
     if (isMinimalLayout) return // Minimal layout sayfalarda tour gösterme
@@ -92,6 +96,37 @@ function App() {
               border: '1px solid #334155',
               borderRadius: '12px',
               padding: '12px 16px',
+            },
+          }}
+        />
+      </>
+    )
+  }
+
+  // Davet kabul sayfası — minimal layout, sayfa kendi auth'unu yönetir
+  if (isAcceptInvitePage) {
+    return (
+      <>
+        <ErrorBoundary>
+          <Routes>
+            <Route path="/accept-invite/:token" element={<AcceptInvite />} />
+          </Routes>
+        </ErrorBoundary>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            style: {
+              background: '#1e293b',
+              color: '#fff',
+              border: '1px solid #334155',
+              borderRadius: '12px',
+              padding: '12px 16px',
+            },
+            success: {
+              iconTheme: { primary: '#22c55e', secondary: '#fff' },
+            },
+            error: {
+              iconTheme: { primary: '#ef4444', secondary: '#fff' },
             },
           }}
         />

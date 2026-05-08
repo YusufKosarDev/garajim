@@ -14,6 +14,7 @@ import StorageIndicator from '../components/StorageIndicator'
 import MaintenanceIntervals from '../components/MaintenanceIntervals'
 import NotificationSettings from '../components/NotificationSettings'
 import EmailNotificationSettings from '../components/EmailNotificationSettings'
+import GarageMembers from '../components/GarageMembers'
 import MigrationModal from '../components/MigrationModal'
 
 export default function Settings({ onShowTour }) {
@@ -277,6 +278,8 @@ export default function Settings({ onShowTour }) {
         </div>
 
         <StorageIndicator />
+
+        <GarageMembers />
 
         <EmailNotificationSettings />
 
