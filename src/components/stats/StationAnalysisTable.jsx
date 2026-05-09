@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { MapPin, Trophy, TrendingDown, TrendingUp } from 'lucide-react'
+import { MapPin, Trophy, TrendingDown, TrendingUp, Sparkles } from 'lucide-react'
 import { getStationAnalysis } from '../../utils/statisticsHelpers'
 
 export default function StationAnalysisTable({ fuelRecords = [] }) {
@@ -16,6 +16,28 @@ export default function StationAnalysisTable({ fuelRecords = [] }) {
     }
   }, [analysis])
 
+  // 🆕 Akıllı içgörü: tasarruf hesaplaması
+  const smartInsight = useMemo(() => {
+    if (!cheapest || !mostExpensive || cheapest === mostExpensive) return null
+
+    const priceDiff = mostExpensive.avgPrice - cheapest.avgPrice
+    const percentDiff = (priceDiff / mostExpensive.avgPrice) * 100
+
+    // Eğer hep en ucuza gitseydi ne kadar tasarruf ederdi?
+    // Toplam litreyi al, en pahalıdaki ortalamayı yerine en ucuzdakini koy
+    const totalLiters = analysis.reduce((sum, a) => sum + a.liters, 0)
+    const totalSpent = analysis.reduce((sum, a) => sum + a.total, 0)
+    const totalIfCheapest = totalLiters * cheapest.avgPrice
+    const potentialSavings = Math.max(0, totalSpent - totalIfCheapest)
+
+    return {
+      priceDiff: priceDiff.toFixed(2),
+      percentDiff: percentDiff.toFixed(1),
+      potentialSavings: Math.round(potentialSavings),
+      totalLiters: Math.round(totalLiters),
+    }
+  }, [cheapest, mostExpensive, analysis])
+
   if (analysis.length === 0) {
     return (
       <div className="text-center py-8 text-slate-500 text-sm">
@@ -28,6 +50,34 @@ export default function StationAnalysisTable({ fuelRecords = [] }) {
 
   return (
     <div>
+      {/* 🆕 AKILLI İÇGÖRÜ KUTUSU */}
+      {smartInsight && (
+        <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/30 rounded-lg p-3 mb-4">
+          <div className="flex items-start gap-2">
+            <Sparkles className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+            <div className="text-xs">
+              <div className="text-blue-300 font-semibold mb-1">
+                💡 Akıllı İçgörü
+              </div>
+              <p className="text-slate-300 leading-relaxed">
+                <strong className="text-green-400">{cheapest.station}</strong>'te ortalama
+                {' '}<strong>%{smartInsight.percentDiff}</strong>{' '}
+                ({smartInsight.priceDiff} ₺/L) daha ucuz!
+                {smartInsight.potentialSavings > 0 && (
+                  <>
+                    {' '}Hep oradan alsaydın yaklaşık{' '}
+                    <strong className="text-green-400">
+                      {smartInsight.potentialSavings.toLocaleString('tr-TR')} ₺
+                    </strong>{' '}
+                    tasarruf edebilirdin 💰
+                  </>
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* En ucuz / en pahalı banner */}
       {cheapest && mostExpensive && cheapest !== mostExpensive && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
