@@ -18,6 +18,7 @@ import FuelSummaryCards from '../components/stats/FuelSummaryCards'
 import StationAnalysisTable from '../components/stats/StationAnalysisTable'
 import FuelPriceTrendChart from '../components/stats/FuelPriceTrendChart'
 import ExportDataModal from '../components/stats/ExportDataModal'
+import YearEndPrediction from '../components/stats/YearEndPrediction'
 import MonthlyCostChart from '../components/charts/MonthlyCostChart'
 import MaintenanceTypeChart from '../components/charts/MaintenanceTypeChart'
 import VehicleCostChart from '../components/charts/VehicleCostChart'
@@ -175,6 +176,8 @@ function OverviewTab({ maintenanceRecords, fuelRecords, vehicles, selectedVehicl
   return (
     <div className="space-y-6">
       <SummaryStats maintenanceRecords={maintenanceRecords} fuelRecords={fuelRecords} />
+
+      <YearEndPrediction maintenanceRecords={maintenanceRecords} fuelRecords={fuelRecords} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">
