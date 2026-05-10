@@ -1,11 +1,12 @@
 import { NavLink, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Car, Calendar, BarChart3, Settings as SettingsIcon } from 'lucide-react'
+import { LayoutDashboard, Car, Calendar, BarChart3, Settings as SettingsIcon, MapPin } from 'lucide-react'
 import { useNotifications } from '../context/NotificationContext'
 
 const navItems = [
   { path: '/', icon: LayoutDashboard, label: 'Anasayfa', exact: true },
   { path: '/vehicles', icon: Car, label: 'Araçlar' },
   { path: '/calendar', icon: Calendar, label: 'Takvim' },
+  { path: '/nearby', icon: MapPin, label: 'Yakın' },
   { path: '/statistics', icon: BarChart3, label: 'İstatistik' },
   { path: '/settings', icon: SettingsIcon, label: 'Ayarlar' },
 ]

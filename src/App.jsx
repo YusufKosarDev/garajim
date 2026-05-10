@@ -20,6 +20,7 @@ import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import Profile from './pages/Profile'
 import AcceptInvite from './pages/AcceptInvite'
+import SearchNearby from './pages/SearchNearby'
 import WelcomeTour from './components/WelcomeTour'
 import KeyboardShortcutsModal from './components/KeyboardShortcutsModal'
 import CommandPalette from './components/CommandPalette'
@@ -201,6 +202,7 @@ function App() {
               <Route path="/vehicles/:id" element={<VehicleDetail globalActionsRef={globalActionsRef} />} />
               <Route path="/statistics" element={<Statistics />} />
               <Route path="/calendar" element={<Calendar />} />
+              <Route path="/nearby" element={<SearchNearby />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/settings" element={<Settings onShowTour={() => setShowTour(true)} />} />
             </Routes>

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { NavLink, Link, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Car, BarChart3, Settings, Calendar, Search, User, LogOut, ChevronDown } from 'lucide-react'
+import { LayoutDashboard, Car, BarChart3, Settings, Calendar, Search, User, LogOut, ChevronDown, MapPin } from 'lucide-react'
 import NotificationButton from './NotificationButton'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
@@ -72,6 +72,10 @@ export default function Navbar({ onOpenCommandPalette }) {
           <NavLink to="/calendar" className={linkClass} title="Takvim">
             <Calendar className="w-4 h-4" />
             <span className="hidden lg:inline">Takvim</span>
+          </NavLink>
+          <NavLink to="/nearby" className={linkClass} title="Yakındaki Servisler">
+            <MapPin className="w-4 h-4" />
+            <span className="hidden lg:inline">Yakındaki</span>
           </NavLink>
           <NavLink to="/statistics" className={linkClass} title="İstatistikler">
             <BarChart3 className="w-4 h-4" />
