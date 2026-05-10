@@ -68,37 +68,59 @@ function getDistance(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
+// Overpass API'den yakındaki POI'leri çek (fallback mekanizmalı)
+// Birden fazla mirror dene — biri çalışmazsa sıradakine geç
 async function fetchNearbyPOIs(lat, lon, radiusKm) {
   const radius = Math.round(radiusKm * 1000)
   const query = '[out:json][timeout:25];(node["amenity"="fuel"](around:' + radius + ',' + lat + ',' + lon + ');node["shop"="car_repair"](around:' + radius + ',' + lat + ',' + lon + ');node["shop"="tyres"](around:' + radius + ',' + lat + ',' + lon + '););out body;'
 
-  const response = await fetch('https://overpass-api.de/api/interpreter', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: 'data=' + encodeURIComponent(query),
-  })
+  const endpoints = [
+    'https://overpass.kumi.systems/api/interpreter',
+    'https://overpass.private.coffee/api/interpreter',
+    'https://overpass-api.de/api/interpreter',
+  ]
 
-  if (!response.ok) {
-    throw new Error('Harita servisi cevap vermiyor')
+  let lastError = null
+
+  for (let i = 0; i < endpoints.length; i++) {
+    const endpoint = endpoints[i]
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'data=' + encodeURIComponent(query),
+      })
+
+      if (!response.ok) {
+        lastError = new Error('Endpoint ' + endpoint + ' returned ' + response.status)
+        continue
+      }
+
+      const data = await response.json()
+
+      return (data.elements || []).map(function (el) {
+        let category = 'service'
+        if (el.tags && el.tags.amenity === 'fuel') category = 'fuel'
+        else if (el.tags && el.tags.shop === 'tyres') category = 'tire'
+
+        return {
+          id: el.id,
+          lat: el.lat,
+          lon: el.lon,
+          name: (el.tags && (el.tags.name || el.tags.brand || el.tags.operator)) || 'İsim yok',
+          category: category,
+          address: (el.tags && (el.tags['addr:street'] || el.tags['addr:city'])) || '',
+          phone: (el.tags && (el.tags.phone || el.tags['contact:phone'])) || '',
+        }
+      })
+    } catch (err) {
+      lastError = err
+      continue
+    }
   }
 
-  const data = await response.json()
-
-  return (data.elements || []).map(function (el) {
-    let category = 'service'
-    if (el.tags && el.tags.amenity === 'fuel') category = 'fuel'
-    else if (el.tags && el.tags.shop === 'tyres') category = 'tire'
-
-    return {
-      id: el.id,
-      lat: el.lat,
-      lon: el.lon,
-      name: (el.tags && (el.tags.name || el.tags.brand || el.tags.operator)) || 'İsim yok',
-      category: category,
-      address: (el.tags && (el.tags['addr:street'] || el.tags['addr:city'])) || '',
-      phone: (el.tags && (el.tags.phone || el.tags['contact:phone'])) || '',
-    }
-  })
+  console.error('All Overpass endpoints failed. Last error:', lastError)
+  throw new Error('Harita servisi şu an cevap vermiyor, biraz sonra tekrar dene.')
 }
 
 function MapRecenter(props) {
