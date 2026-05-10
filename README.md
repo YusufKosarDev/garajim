@@ -14,6 +14,7 @@
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com)
 [![Tailwind](https://img.shields.io/badge/Tailwind-v4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 [![PWA](https://img.shields.io/badge/PWA-Enabled-5A0FC8?logo=pwa&logoColor=white)](https://web.dev/progressive-web-apps/)
+[![Cypress](https://img.shields.io/badge/Cypress-E2E_Tested-17202C?logo=cypress&logoColor=white)](https://cypress.io)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
 </div>
@@ -79,7 +80,7 @@
 
 🔥 **Ne Yapar?** Yaklaşan bakımları hatırlatır, yıllık masrafını gösterir, yakıt tüketimini hesaplar, lastik diş derinliğini takip eder, **yakındaki servisleri haritada bulur**.
 
-⚡ **Production-grade fullstack:** Supabase tabanlı (PostgreSQL + RLS + Storage + Edge Functions), real-time multi-device & multi-user senkron, otomatik email hatırlatmaları (cron + Resend), Google OAuth, PWA, **multi-tenancy workspace pattern**.
+⚡ **Production-grade fullstack:** Supabase tabanlı (PostgreSQL + RLS + Storage + Edge Functions), real-time multi-device & multi-user senkron, otomatik email hatırlatmaları (cron + Resend), Google OAuth, PWA, **multi-tenancy workspace pattern**, **Cypress E2E test coverage**.
 
 ---
 
@@ -194,6 +195,13 @@
 - ✅ **Otomatik güncelleme** — Workbox ile
 - ✅ **Push notifications ready** — Browser API entegrasyon
 
+### 🆕 🧪 Test Coverage
+- ✅ **E2E tests** — Cypress ile 10 test (login, vehicles, statistics)
+- ✅ **Session caching** — `cy.session()` ile hızlı test çalıştırma
+- ✅ **Custom commands** — `cy.login()`, `cy.logout()`, `cy.checkToast()`
+- ✅ **Retry mekanizması** — Flaky test'lere karşı otomatik retry
+- ✅ **CI-ready** — `npm run test:e2e` ile headless mode
+
 ---
 
 ## 🛠️ Tech Stack
@@ -238,6 +246,11 @@
 - **Overpass API** — POI (Point of Interest) sorgulama
 - **Leaflet** — Interactive map library
 - **Browser Geolocation API** — Konum izni
+
+### Testing
+- **Cypress 15** — End-to-End testing framework
+- **Custom commands** — Reusable test helpers (`cy.login()`)
+- **Session caching** — `cy.session()` ile performance optimizasyonu
 
 ### DevOps
 - **GitHub** — Source control
@@ -394,6 +407,73 @@ Vercel ile otomatik deploy:
 
 ---
 
+## 🧪 Testing
+
+Garajım'da **Cypress** ile End-to-End testing uygulanmıştır. Kritik kullanıcı akışları otomatik test edilir.
+
+### Test Coverage
+
+**3 Test Suite, 10 Test Case:**
+
+| Suite | Test Sayısı | İçerik |
+|-------|-------------|--------|
+| `login.cy.js` | 4 | Login UI, geçerli credentials, yanlış şifre, auth redirect |
+| `vehicles.cy.js` | 3 | Sayfa render, araç listesi, detay sayfasına geçiş |
+| `statistics.cy.js` | 3 | Sayfa render, tab navigation, CSV İndir modali |
+
+### Komutlar
+
+```bash
+# Interactive mode (Cypress GUI ile görsel test)
+npm run cypress:open
+
+# Headless mode (terminalde, CI için)
+npm run cypress:run
+
+# Veya alias
+npm run test:e2e
+```
+
+> 💡 Test çalıştırmadan önce `npm run dev` ile dev server'ı başlatmayı unutma — Cypress `localhost:5173`'e bağlanır.
+
+### Custom Commands
+
+Kendi `cy.login()` ve helper'larımız var (`cypress/support/commands.js`):
+
+```js
+beforeEach(() => {
+  cy.login()  // Demo hesapla otomatik login (session caching ile hızlı)
+})
+
+it('test örneği', () => {
+  cy.visit('/vehicles')
+  cy.checkToast('Hoş geldin')  // Toast mesajı kontrol
+})
+```
+
+### Test Stratejisi
+
+- **Session caching** — `cy.session()` ile login state cache'lenir (her test'te tekrar login yapmaz)
+- **Defensive testing** — Spesifik veri yerine yapısal kontroller (örn: "BMW yerine `a[href*='/vehicles/']`")
+- **Retry mekanizması** — Flaky test'lere karşı CI mode'da 1 retry otomatik
+- **Force click** — Modal overlay sorunlarına karşı `{ force: true }` kullanımı
+
+### Dosya Yapısı
+
+```
+cypress/
+├─ e2e/                      # Test dosyaları
+│  ├─ login.cy.js
+│  ├─ vehicles.cy.js
+│  └─ statistics.cy.js
+├─ support/
+│  ├─ commands.js            # Custom cy.login(), cy.logout(), vs.
+│  └─ e2e.js                 # Global config
+└─ fixtures/                 # Test data
+```
+
+---
+
 ## 🧪 Demo Hesabı
 
 Live demo'yu test etmek için:
@@ -421,6 +501,7 @@ Demo hesabında 2 araç (BMW + Audi), bakım kayıtları, yakıt kayıtları ve 
 - [x] Çoklu kullanıcı / Workspace
 - [x] Predictive analytics (yıl sonu tahmini)
 - [x] Yakındaki servisler (OpenStreetMap)
+- [x] Cypress E2E test coverage
 
 ### 🔮 Gelecek Özellikler
 - [ ] Bildirimler için PWA push notifications
@@ -428,6 +509,7 @@ Demo hesabında 2 araç (BMW + Audi), bakım kayıtları, yakıt kayıtları ve 
 - [ ] Servis randevu sistemi
 - [ ] Sürücü davranış skorlaması
 - [ ] Yakıt fiyatı uyarıları (geo-bazlı)
+- [ ] GitHub Actions CI/CD (Cypress automated runs)
 
 ---
 
