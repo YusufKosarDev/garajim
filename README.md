@@ -45,31 +45,6 @@
 
 </details>
 
-### 📱 Mobile
-
-<table>
-  <tr>
-    <td align="center">
-      <img src="docs/screenshots/mobile/01-dashboard.png" alt="Dashboard" width="220" /><br />
-      <sub><b>Dashboard</b></sub>
-    </td>
-    <td align="center">
-      <img src="docs/screenshots/mobile/02-vehicles.png" alt="Vehicles" width="220" /><br />
-      <sub><b>Araçlarım</b></sub>
-    </td>
-    <td align="center">
-      <img src="docs/screenshots/mobile/03-maintenance.png" alt="Maintenance" width="220" /><br />
-      <sub><b>Bakım Takibi</b></sub>
-    </td>
-    <td align="center">
-      <img src="docs/screenshots/mobile/04-stats.png" alt="Stats" width="220" /><br />
-      <sub><b>İstatistikler</b></sub>
-    </td>
-  </tr>
-</table>
-
-</div>
-
 ---
 
 ## 🌟 Hakkında
