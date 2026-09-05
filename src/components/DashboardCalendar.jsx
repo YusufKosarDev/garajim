@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react'
 import { formatDate, toDateKey } from '../utils/dateHelpers'
@@ -10,7 +10,7 @@ const months = [
 
 const weekDays = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz']
 
-export default function DashboardCalendar({ events = [] }) {
+function DashboardCalendar({ events = [] }) {
   const [currentDate, setCurrentDate] = useState(new Date())
 
   const year = currentDate.getFullYear()
@@ -202,3 +202,5 @@ export default function DashboardCalendar({ events = [] }) {
     </div>
   )
 }
+// events prop'u Dashboard'da memoize edildi; bu memo artık gerçekten tutuyor.
+export default memo(DashboardCalendar)

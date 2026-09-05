@@ -1,9 +1,10 @@
+import { memo } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Pencil, Trash2, Car, Calendar, Fuel, Gauge, AlertTriangle, ImageIcon } from 'lucide-react'
 import { formatDate, getDateStatus, daysUntil } from '../utils/dateHelpers'
 
-export default function VehicleCard({ vehicle, onEdit, onDelete }) {
+function VehicleCard({ vehicle, onEdit, onDelete }) {
   // Çoklu fotoğraf desteği — eski `photo` ile uyumlu
   const photos = Array.isArray(vehicle.photos) ? vehicle.photos : (vehicle.photo ? [vehicle.photo] : [])
   const mainPhoto = photos[0] || null
@@ -150,3 +151,5 @@ export default function VehicleCard({ vehicle, onEdit, onDelete }) {
     </motion.div>
   )
 }
+// Listede çok sayıda render ediliyor; prop'ları değişmedikçe yeniden çizilmesin.
+export default memo(VehicleCard)

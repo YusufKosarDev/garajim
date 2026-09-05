@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Car, AlertTriangle, Calendar, Plus, TrendingUp, Sparkles, Droplet, Wrench, DollarSign, Clock } from 'lucide-react'
 import { useVehicles } from '../context/VehicleContext'
@@ -49,72 +49,91 @@ export default function Dashboard({ globalActionsRef }) {
     }
   }, [globalActionsRef, navigate, vehicles])
 
-  if (!isLoaded) {
-    return <DashboardSkeleton />
-  }
+  // NOT: Hesaplamalar erken dönüşün ÜSTÜNDE olmalı — aksi halde hook sırası bozulur.
+  // Önceden bunların hepsi her render'da baştan çalışıyordu; sayfada tek useMemo yoktu.
 
-  const upcomingDates = []
-  vehicles.forEach(v => {
-    const items = [
-      { type: 'Muayene', date: v.inspectionDate },
-      { type: 'MTV', date: v.mtvDate },
-      { type: 'Sigorta', date: v.insuranceDate },
-      { type: 'Kasko', date: v.kaskoDate },
-    ]
-    items.forEach(item => {
-      if (item.date) {
-        upcomingDates.push({
-          ...item,
-          vehicle: v,
-          days: daysUntil(item.date),
-          status: getDateStatus(item.date),
-        })
-      }
+  const upcomingDates = useMemo(() => {
+    const list = []
+    vehicles.forEach(v => {
+      const items = [
+        { type: 'Muayene', date: v.inspectionDate },
+        { type: 'MTV', date: v.mtvDate },
+        { type: 'Sigorta', date: v.insuranceDate },
+        { type: 'Kasko', date: v.kaskoDate },
+      ]
+      items.forEach(item => {
+        if (item.date) {
+          list.push({
+            ...item,
+            vehicle: v,
+            days: daysUntil(item.date),
+            status: getDateStatus(item.date),
+          })
+        }
+      })
     })
-  })
+    return list
+  }, [vehicles])
 
-  const criticalDates = upcomingDates
-    .filter(d => d.days !== null && d.days <= 60)
-    .sort((a, b) => a.days - b.days)
+  const { criticalDates, expiredCount, warningCount } = useMemo(() => ({
+    criticalDates: upcomingDates
+      .filter(d => d.days !== null && d.days <= 60)
+      .sort((a, b) => a.days - b.days),
+    expiredCount: upcomingDates.filter(d => d.status === 'expired').length,
+    warningCount: upcomingDates.filter(d => d.status === 'warning').length,
+  }), [upcomingDates])
 
-  const expiredCount = upcomingDates.filter(d => d.status === 'expired').length
-  const warningCount = upcomingDates.filter(d => d.status === 'warning').length
+  const totalCost = useMemo(() => {
+    const maintenance = maintenanceRecords.reduce((sum, r) => sum + (r.cost || 0), 0)
+    return maintenance + getTotalFuelCost(fuelRecords)
+  }, [maintenanceRecords, fuelRecords])
 
-  const totalMaintenanceCost = maintenanceRecords.reduce((sum, r) => sum + (r.cost || 0), 0)
-  const totalFuelCost = getTotalFuelCost(fuelRecords)
-  const totalCost = totalMaintenanceCost + totalFuelCost
+  // Sayfadaki en pahalı hesap: araç × bakım türü × geçmiş kayıt taraması
+  const criticalRecommendations = useMemo(
+    () => getCriticalRecommendations(vehicles, maintenanceRecords, customIntervals),
+    [vehicles, maintenanceRecords, customIntervals]
+  )
 
-  const criticalRecommendations = getCriticalRecommendations(vehicles, maintenanceRecords, customIntervals)
+  const allActivities = useMemo(() => {
+    // Önceden her kayıt için vehicles.find() çağrılıyordu -> O((M+F) × V).
+    // Map ile araç araması O(1)'e iniyor.
+    const vehicleById = new Map(vehicles.map(v => [v.id, v]))
+    return [
+      ...maintenanceRecords.map(r => ({
+        ...r,
+        activityType: 'maintenance',
+        vehicle: vehicleById.get(r.vehicleId),
+      })),
+      ...fuelRecords.map(r => ({
+        ...r,
+        activityType: 'fuel',
+        vehicle: vehicleById.get(r.vehicleId),
+      })),
+    ]
+      .filter(a => a.vehicle)
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 5)
+  }, [vehicles, maintenanceRecords, fuelRecords])
 
-  const allActivities = [
-    ...maintenanceRecords.map(r => ({
-      ...r,
-      activityType: 'maintenance',
-      vehicle: vehicles.find(v => v.id === r.vehicleId),
-    })),
-    ...fuelRecords.map(r => ({
-      ...r,
-      activityType: 'fuel',
-      vehicle: vehicles.find(v => v.id === r.vehicleId),
-    })),
-  ]
-    .filter(a => a.vehicle)
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
-    .slice(0, 5)
-
-  const openQuickMaintenance = (vehicleId, type = null) => {
+  // useCallback şart: bu handler'lar memo()'lu kart bileşenlerine prop olarak
+  // gidiyor; her render'da yeni referans üretilirse memo hiçbir işe yaramaz.
+  const openQuickMaintenance = useCallback((vehicleId, type = null) => {
     setSelectedVehicleId(vehicleId || vehicles[0]?.id)
     setPrefilledType(type)
     setQuickMaintenanceOpen(true)
-  }
+  }, [vehicles])
 
-  const openQuickFuel = (vehicleId) => {
+  const openQuickFuel = useCallback((vehicleId) => {
     setSelectedVehicleId(vehicleId || vehicles[0]?.id)
     setQuickFuelOpen(true)
-  }
+  }, [vehicles])
 
-  const handleQuickAddFromRecommendation = (recommendation) => {
+  const handleQuickAddFromRecommendation = useCallback((recommendation) => {
     openQuickMaintenance(recommendation.vehicleId, recommendation.type)
+  }, [openQuickMaintenance])
+
+  if (!isLoaded) {
+    return <DashboardSkeleton />
   }
 
   if (vehicles.length === 0) {

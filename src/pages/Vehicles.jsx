@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Car } from 'lucide-react'
 import { useVehicles } from '../context/VehicleContext'
@@ -99,14 +99,16 @@ export default function Vehicles({ globalActionsRef }) {
     return result
   }, [vehicles, searchQuery, sortBy])
 
+  // memo()'lu VehicleCard'a prop olarak gidiyor — referansı stabil olmalı,
+  // yoksa listedeki tüm kartlar her render'da yeniden çiziliyor.
+  const handleEdit = useCallback((vehicle) => {
+    setEditVehicle(vehicle)
+    setIsFormOpen(true)
+  }, [])
+
   // ✅ Tüm hook'lardan SONRA early return
   if (!isLoaded) {
     return <VehicleGridSkeleton />
-  }
-
-  const handleEdit = (vehicle) => {
-    setEditVehicle(vehicle)
-    setIsFormOpen(true)
   }
 
   const handleClose = () => {

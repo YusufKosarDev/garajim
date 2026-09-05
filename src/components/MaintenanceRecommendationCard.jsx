@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { Link } from 'react-router-dom'
 import { Wrench, AlertTriangle, Clock, Plus } from 'lucide-react'
 
@@ -32,7 +33,7 @@ const statusConfig = {
   },
 }
 
-export default function MaintenanceRecommendationCard({ recommendation, onQuickAdd, showVehicle = true }) {
+function MaintenanceRecommendationCard({ recommendation, onQuickAdd, showVehicle = true }) {
   const config = statusConfig[recommendation.status]
   const Icon = config.icon
 
@@ -82,3 +83,5 @@ export default function MaintenanceRecommendationCard({ recommendation, onQuickA
     </div>
   )
 }
+// Dashboard'da 8 adede kadar render ediliyor.
+export default memo(MaintenanceRecommendationCard)

@@ -159,22 +159,26 @@ export const NotificationProvider = ({ children }) => {
     }))
   }, [])
 
+  const value = useMemo(() => ({
+    notifications: activeNotifications,
+    allNotifications: notifications,
+    unreadCount,
+    settings,
+    markAsRead,
+    markAllAsRead,
+    dismissNotification,
+    clearAllDismissed,
+    clearAll,
+    updateSettings,
+    updateTypeSettings,
+  }), [
+    activeNotifications, notifications, unreadCount, settings,
+    markAsRead, markAllAsRead, dismissNotification,
+    clearAllDismissed, clearAll, updateSettings, updateTypeSettings,
+  ])
+
   return (
-    <NotificationContext.Provider
-      value={{
-        notifications: activeNotifications,
-        allNotifications: notifications,
-        unreadCount,
-        settings,
-        markAsRead,
-        markAllAsRead,
-        dismissNotification,
-        clearAllDismissed,
-        clearAll,
-        updateSettings,
-        updateTypeSettings,
-      }}
-    >
+    <NotificationContext.Provider value={value}>
       {children}
     </NotificationContext.Provider>
   )

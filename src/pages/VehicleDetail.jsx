@@ -66,12 +66,25 @@ export default function VehicleDetail({ globalActionsRef }) {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  const vehicle = vehicles.find(v => v.id === id)
-  const allRecords = maintenanceRecords.filter(r => r.vehicleId === id)
-  const vehicleFuelRecords = fuelRecords.filter(r => r.vehicleId === id)
+  // NOT: Bunlar memo'suz olduğunda her render'da yeni dizi referansı üretiyor ve
+  // aşağıdaki dört useMemo hiçbir zaman cache hit almıyordu — fiilen etkisizdiler.
+  const vehicle = useMemo(() => vehicles.find(v => v.id === id), [vehicles, id])
+
+  const allRecords = useMemo(
+    () => maintenanceRecords.filter(r => r.vehicleId === id),
+    [maintenanceRecords, id]
+  )
+
+  const vehicleFuelRecords = useMemo(
+    () => fuelRecords.filter(r => r.vehicleId === id),
+    [fuelRecords, id]
+  )
 
   // Çoklu fotoğraf desteği — eski `photo` ile uyumlu
-  const photos = Array.isArray(vehicle?.photos) ? vehicle.photos : (vehicle?.photo ? [vehicle.photo] : [])
+  const photos = useMemo(
+    () => (Array.isArray(vehicle?.photos) ? vehicle.photos : (vehicle?.photo ? [vehicle.photo] : [])),
+    [vehicle]
+  )
 
   usePageTitle(vehicle ? `${vehicle.brand} ${vehicle.model}` : 'Araç Detayı')
 

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react'
 import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
 import { useAuth } from './AuthContext'
@@ -779,35 +779,47 @@ export const VehicleProvider = ({ children }) => {
     }
   }, [user, vehicles, maintenanceRecords])
 
+  // Çıplak nesne literali her render'da yeni referans üretiyordu ve context'i
+  // tüketen HER bileşen yeniden render oluyordu — lastik verisi değişince
+  // onu hiç kullanmayan Dashboard bile.
+  const value = useMemo(() => ({
+    vehicles,
+    maintenanceRecords,
+    fuelRecords,
+    tireSets,
+    tireChanges,
+    customIntervals,
+    isLoaded,
+    addVehicle,
+    updateVehicle,
+    deleteVehicle,
+    addMaintenance,
+    updateMaintenance,
+    deleteMaintenance,
+    addFuel,
+    updateFuel,
+    deleteFuel,
+    addTireSet,
+    updateTireSet,
+    deleteTireSet,
+    addTireChange,
+    updateTireChange,
+    deleteTireChange,
+    updateCustomIntervals,
+    clearAllData,
+  }), [
+    vehicles, maintenanceRecords, fuelRecords, tireSets, tireChanges,
+    customIntervals, isLoaded,
+    addVehicle, updateVehicle, deleteVehicle,
+    addMaintenance, updateMaintenance, deleteMaintenance,
+    addFuel, updateFuel, deleteFuel,
+    addTireSet, updateTireSet, deleteTireSet,
+    addTireChange, updateTireChange, deleteTireChange,
+    updateCustomIntervals, clearAllData,
+  ])
+
   return (
-    <VehicleContext.Provider
-      value={{
-        vehicles,
-        maintenanceRecords,
-        fuelRecords,
-        tireSets,
-        tireChanges,
-        customIntervals,
-        isLoaded,
-        addVehicle,
-        updateVehicle,
-        deleteVehicle,
-        addMaintenance,
-        updateMaintenance,
-        deleteMaintenance,
-        addFuel,
-        updateFuel,
-        deleteFuel,
-        addTireSet,
-        updateTireSet,
-        deleteTireSet,
-        addTireChange,
-        updateTireChange,
-        deleteTireChange,
-        updateCustomIntervals,
-        clearAllData,
-      }}
-    >
+    <VehicleContext.Provider value={value}>
       {children}
     </VehicleContext.Provider>
   )
