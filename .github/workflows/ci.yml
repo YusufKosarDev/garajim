@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  # Lint + unit test + build — dış bağımlılık gerektirmez, her PR'da koşar
+  quality:
+    name: Lint, test, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Bağımlılıklar
+        run: npm ci
+
+      # NOT: Şu an 54 bilinen lint hatası var (çoğu react-hooks/set-state-in-effect;
+      # form katmanının yeniden yapılandırılmasını gerektiriyor ve Faz 3-4'e planlı).
+      # Baştan kırmızı bir CI kimsenin bakmadığı bir CI olur; o yüzden bu adım
+      # şimdilik bloklamıyor. Hatalar sıfırlanınca continue-on-error kaldırılacak.
+      - name: Lint (henüz bloklamıyor — bilinen hatalar temizlenene kadar)
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Unit testler
+        run: npm test
+
+      # Build, .env olmadan da geçmeli: supabase.js artık modül seviyesinde
+      # throw etmiyor, yapılandırma eksikse uygulama kurulum ekranı gösteriyor.
+      - name: Build
+        run: npm run build
+
+  # E2E gerçek bir Supabase projesi + demo hesap gerektirir.
+  # Secret'lar tanımlı değilse (fork PR'ları) sessizce atlanır.
+  e2e:
+    name: Cypress E2E
+    runs-on: ubuntu-latest
+    needs: quality
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      CYPRESS_DEMO_EMAIL: ${{ secrets.CYPRESS_DEMO_EMAIL }}
+      CYPRESS_DEMO_PASSWORD: ${{ secrets.CYPRESS_DEMO_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Secret kontrolü
+        id: secrets
+        run: |
+          if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
+            echo "Supabase secret'ları tanımlı değil — E2E atlanıyor."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.secrets.outputs.skip == 'false'
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Bağımlılıklar
+        if: steps.secrets.outputs.skip == 'false'
+        run: npm ci
+
+      - name: Cypress
+        if: steps.secrets.outputs.skip == 'false'
+        uses: cypress-io/github-action@v6
+        with:
+          install: false
+          start: npm run dev
+          wait-on: 'http://localhost:5173'
+          wait-on-timeout: 120
+
+      - name: Başarısız testlerin ekran görüntüleri
+        if: failure() && steps.secrets.outputs.skip == 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots
+          path: cypress/screenshots
+          if-no-files-found: ignore

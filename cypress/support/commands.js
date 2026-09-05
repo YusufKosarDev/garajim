@@ -38,6 +38,9 @@ Cypress.Commands.add('login', (email, password) => {
       })
     },
     {
+      // Oturumu spec dosyaları arasında da sakla — aksi halde her spec
+      // yeniden UI login yapıyor ve koşum süresinin yarısı buna gidiyor.
+      cacheAcrossSpecs: true,
       validate: () => {
         // Session hâlâ geçerli mi kontrol
         cy.window().its('localStorage').then((ls) => {

@@ -34,3 +34,10 @@ dist-ssr
 cypress/screenshots
 cypress/videos
 cypress/downloads
+
+# Vitest
+coverage
+
+# Supabase CLI
+supabase/.temp
+supabase/.branches

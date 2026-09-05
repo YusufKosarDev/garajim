@@ -6,6 +6,9 @@
 // Not: toISOString() önce UTC'ye çevirdiği için TR'de (UTC+3) yerel gece yarısı
 // bir önceki güne düşer — takvim anahtarlarında asla toISOString() kullanma.
 export const toDateKey = (date) => {
+  // new Date(null) epoch'a düşer (geçerli tarih sayılır), new Date(undefined)
+  // Invalid Date verir — boş girdiyi baştan eleyip ikisini de aynı davranışa çekiyoruz.
+  if (date === null || date === undefined || date === '') return ''
   const d = date instanceof Date ? date : new Date(date)
   if (isNaN(d.getTime())) return ''
   const year = d.getFullYear()

@@ -171,11 +171,13 @@
 - ✅ **Push notifications ready** — Browser API entegrasyon
 
 ### 🆕 🧪 Test Coverage
+- ✅ **Unit tests** — Vitest ile 215 test (saf mantık: tarih, km, yakıt, lastik, istatistik, mapper'lar)
+- ✅ **Component tests** — React Testing Library ile form render + validasyon
 - ✅ **E2E tests** — Cypress ile 10 test (login, vehicles, statistics)
-- ✅ **Session caching** — `cy.session()` ile hızlı test çalıştırma
+- ✅ **Sabit zaman** — `vi.setSystemTime()` ile takvime bağlı testler deterministik
+- ✅ **Session caching** — `cy.session({ cacheAcrossSpecs })` ile spec'ler arası tek login
 - ✅ **Custom commands** — `cy.login()`, `cy.logout()`, `cy.checkToast()`
-- ✅ **Retry mekanizması** — Flaky test'lere karşı otomatik retry
-- ✅ **CI-ready** — `npm run test:e2e` ile headless mode
+- ✅ **CI** — GitHub Actions: lint → unit test → build, ardından E2E
 
 ---
 
@@ -384,11 +386,29 @@ Vercel ile otomatik deploy:
 
 ## 🧪 Testing
 
-Garajım'da **Cypress** ile End-to-End testing uygulanmıştır. Kritik kullanıcı akışları otomatik test edilir.
+İki katman: saf mantık için **Vitest** unit testleri, kritik kullanıcı akışları için **Cypress** E2E.
 
 ### Test Coverage
 
-**3 Test Suite, 10 Test Case:**
+**Unit (Vitest) — 11 dosya, 215 test:**
+
+| Modül | İçerik |
+|-------|--------|
+| `dateHelpers` | Tarih formatlama, `daysUntil`, yerel tarih anahtarı (timezone regresyonu) |
+| `dateValidation` | Geçmiş/gelecek tarih ve araç yılı doğrulama |
+| `plateHelpers` | TR plaka biçimlendirme ve doğrulama |
+| `kmHelpers` | Km tutarlılık kontrolleri |
+| `fuelHelpers` | L/100km tüketim, ortalama fiyat |
+| `tireHelpers` | DOT yaş hesabı, diş derinliği, mevsim önerisi |
+| `maintenanceRecommendations` | Periyot anahtar sözleşmesi, öneri motoru |
+| `statisticsHelpers` | Aylık/yıllık harcama, araç ve istasyon analizi |
+| `fuzzySearch` | Türkçe karakter normalizasyonu, fuzzy eşleşme |
+| `supabaseMappers` | DB ↔ frontend dönüşümleri |
+| `FuelForm` | Form render, validasyon ve submit akışı (React Testing Library) |
+
+> Zamana bağlı fonksiyonlar `vi.setSystemTime()` ile sabit tarihte koşar; aksi halde testler takvime göre kırılırdı.
+
+**E2E (Cypress) — 3 suite, 10 test:**
 
 | Suite | Test Sayısı | İçerik |
 |-------|-------------|--------|
@@ -399,15 +419,26 @@ Garajım'da **Cypress** ile End-to-End testing uygulanmıştır. Kritik kullanı
 ### Komutlar
 
 ```bash
-# Interactive mode (Cypress GUI ile görsel test)
+# Unit testler
+npm test
+npm run test:watch
+npm run test:coverage
+
+# E2E — interactive mode (Cypress GUI)
 npm run cypress:open
 
-# Headless mode (terminalde, CI için)
-npm run cypress:run
-
-# Veya alias
+# E2E — headless mode (terminalde, CI için)
 npm run test:e2e
 ```
+
+> 💡 E2E testleri çalıştırmadan önce `npm run dev` ile dev server'ı başlat — Cypress `localhost:5173`'e bağlanır. Unit testler dev server gerektirmez.
+
+### CI
+
+`.github/workflows/ci.yml` her push ve PR'da çalışır:
+
+- **quality** — lint → unit test → build. Dış bağımlılık yok, her zaman koşar.
+- **e2e** — Cypress. Gerçek bir Supabase projesi gerektirdiği için `VITE_SUPABASE_URL` ve `VITE_SUPABASE_ANON_KEY` secret'ları tanımlı değilse (örn. fork PR'ları) sessizce atlanır.
 
 > 💡 Test çalıştırmadan önce `npm run dev` ile dev server'ı başlatmayı unutma — Cypress `localhost:5173`'e bağlanır.
 
@@ -477,6 +508,8 @@ Demo hesabında 2 araç (BMW + Audi), bakım kayıtları, yakıt kayıtları ve 
 - [x] Predictive analytics (yıl sonu tahmini)
 - [x] Yakındaki servisler (OpenStreetMap)
 - [x] Cypress E2E test coverage
+- [x] Vitest unit test katmanı (215 test)
+- [x] GitHub Actions CI (lint → test → build → E2E)
 
 ### 🔮 Gelecek Özellikler
 - [ ] Bildirimler için PWA push notifications
@@ -484,7 +517,6 @@ Demo hesabında 2 araç (BMW + Audi), bakım kayıtları, yakıt kayıtları ve 
 - [ ] Servis randevu sistemi
 - [ ] Sürücü davranış skorlaması
 - [ ] Yakıt fiyatı uyarıları (geo-bazlı)
-- [ ] GitHub Actions CI/CD (Cypress automated runs)
 
 ---
 
