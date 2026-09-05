@@ -9,7 +9,7 @@
 [![Live Demo](https://img.shields.io/badge/🌐_Canlı_Demo-garajim--sage.vercel.app-blue?style=for-the-badge)](https://garajim-sage.vercel.app)
 [![GitHub](https://img.shields.io/badge/GitHub-Source_Code-181717?style=for-the-badge&logo=github)](https://github.com/YusufKosarDev/garajim)
 
-[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)](https://react.dev)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev)
 [![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)](https://vitejs.dev)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com)
 [![Tailwind](https://img.shields.io/badge/Tailwind-v4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
@@ -173,7 +173,7 @@
 ### 🆕 🧪 Test Coverage
 - ✅ **Unit tests** — Vitest ile 215 test (saf mantık: tarih, km, yakıt, lastik, istatistik, mapper'lar)
 - ✅ **Component tests** — React Testing Library ile form render + validasyon
-- ✅ **E2E tests** — Cypress ile 10 test (login, vehicles, statistics)
+- ✅ **E2E tests** — Cypress ile 12 test (login, vehicles, statistics, nearby)
 - ✅ **Sabit zaman** — `vi.setSystemTime()` ile takvime bağlı testler deterministik
 - ✅ **Session caching** — `cy.session({ cacheAcrossSpecs })` ile spec'ler arası tek login
 - ✅ **Custom commands** — `cy.login()`, `cy.logout()`, `cy.checkToast()`
@@ -408,13 +408,14 @@ Vercel ile otomatik deploy:
 
 > Zamana bağlı fonksiyonlar `vi.setSystemTime()` ile sabit tarihte koşar; aksi halde testler takvime göre kırılırdı.
 
-**E2E (Cypress) — 3 suite, 10 test:**
+**E2E (Cypress) — 4 suite, 12 test:**
 
 | Suite | Test Sayısı | İçerik |
 |-------|-------------|--------|
 | `login.cy.js` | 4 | Login UI, geçerli credentials, yanlış şifre, auth redirect |
 | `vehicles.cy.js` | 3 | Sayfa render, araç listesi, detay sayfasına geçiş |
 | `statistics.cy.js` | 3 | Sayfa render, tab navigation, CSV İndir modali |
+| `nearby.cy.js` | 2 | Lazy route çözümü, konum izni ekranı, izin reddi |
 
 ### Komutlar
 

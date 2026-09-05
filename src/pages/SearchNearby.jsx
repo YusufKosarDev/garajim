@@ -6,11 +6,18 @@ import 'leaflet/dist/leaflet.css'
 import { usePageTitle } from '../hooks/usePageTitle'
 import PageTransition from '../components/PageTransition'
 
+// Leaflet'in varsayılan ikon yolları bundler altında çözülmez; standart düzeltme
+// görselleri paketten import etmektir. Önceden unpkg.com'dan çekiliyordu — offline
+// PWA'da ve CDN erişimi olmayan ağlarda kırılıyordu.
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
+import markerIcon from 'leaflet/dist/images/marker-icon.png'
+import markerShadow from 'leaflet/dist/images/marker-shadow.png'
+
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
 })
 
 function makeColoredIcon(color) {
