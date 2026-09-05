@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { useLocation, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import Navbar from './components/Navbar'
@@ -7,20 +7,27 @@ import BottomNav from './components/BottomNav'
 import ErrorBoundary from './components/ErrorBoundary'
 import ProtectedRoute from './components/ProtectedRoute'
 import PublicOnlyRoute from './components/PublicOnlyRoute'
+import PageLoader from './components/PageLoader'
+
+// Sıcak yollar eager: uygulamaya giriş noktaları
 import Dashboard from './pages/Dashboard'
 import Vehicles from './pages/Vehicles'
-import VehicleDetail from './pages/VehicleDetail'
-import Statistics from './pages/Statistics'
-import Settings from './pages/Settings'
-import Calendar from './pages/Calendar'
-import SharedReport from './pages/SharedReport'
 import Login from './pages/Login'
-import Register from './pages/Register'
-import ForgotPassword from './pages/ForgotPassword'
-import ResetPassword from './pages/ResetPassword'
-import Profile from './pages/Profile'
-import AcceptInvite from './pages/AcceptInvite'
-import SearchNearby from './pages/SearchNearby'
+
+// Geri kalanı lazy — ağır bağımlılıkları ana chunk'tan çıkarır:
+//   Statistics -> recharts, SearchNearby -> leaflet, VehicleDetail -> jspdf
+const VehicleDetail = lazy(() => import('./pages/VehicleDetail'))
+const Statistics = lazy(() => import('./pages/Statistics'))
+const Settings = lazy(() => import('./pages/Settings'))
+const Calendar = lazy(() => import('./pages/Calendar'))
+const SearchNearby = lazy(() => import('./pages/SearchNearby'))
+const Profile = lazy(() => import('./pages/Profile'))
+const SharedReport = lazy(() => import('./pages/SharedReport'))
+const AcceptInvite = lazy(() => import('./pages/AcceptInvite'))
+const Register = lazy(() => import('./pages/Register'))
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
+const ResetPassword = lazy(() => import('./pages/ResetPassword'))
+
 import WelcomeTour from './components/WelcomeTour'
 import KeyboardShortcutsModal from './components/KeyboardShortcutsModal'
 import CommandPalette from './components/CommandPalette'
@@ -84,9 +91,11 @@ function App() {
     return (
       <>
         <ErrorBoundary>
-          <Routes>
-            <Route path="/share/:encodedData" element={<SharedReport />} />
-          </Routes>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/share/:encodedData" element={<SharedReport />} />
+            </Routes>
+          </Suspense>
         </ErrorBoundary>
         <Toaster
           position="top-right"
@@ -109,9 +118,11 @@ function App() {
     return (
       <>
         <ErrorBoundary>
-          <Routes>
-            <Route path="/accept-invite/:token" element={<AcceptInvite />} />
-          </Routes>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/accept-invite/:token" element={<AcceptInvite />} />
+            </Routes>
+          </Suspense>
         </ErrorBoundary>
         <Toaster
           position="top-right"
@@ -140,6 +151,7 @@ function App() {
     return (
       <>
         <ErrorBoundary>
+          <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/login" element={
               <PublicOnlyRoute>
@@ -159,6 +171,7 @@ function App() {
             {/* ResetPassword PublicOnlyRoute DEĞİL — çünkü email linkinden gelinince session aktif olur */}
             <Route path="/reset-password" element={<ResetPassword />} />
           </Routes>
+          </Suspense>
         </ErrorBoundary>
         <Toaster
           position="top-right"
@@ -196,16 +209,18 @@ function App() {
 
         <main className="max-w-6xl mx-auto pb-20 md:pb-0">
           <ErrorBoundary>
-            <Routes>
-              <Route path="/" element={<Dashboard globalActionsRef={globalActionsRef} />} />
-              <Route path="/vehicles" element={<Vehicles globalActionsRef={globalActionsRef} />} />
-              <Route path="/vehicles/:id" element={<VehicleDetail globalActionsRef={globalActionsRef} />} />
-              <Route path="/statistics" element={<Statistics />} />
-              <Route path="/calendar" element={<Calendar />} />
-              <Route path="/nearby" element={<SearchNearby />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/settings" element={<Settings onShowTour={() => setShowTour(true)} />} />
-            </Routes>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/" element={<Dashboard globalActionsRef={globalActionsRef} />} />
+                <Route path="/vehicles" element={<Vehicles globalActionsRef={globalActionsRef} />} />
+                <Route path="/vehicles/:id" element={<VehicleDetail globalActionsRef={globalActionsRef} />} />
+                <Route path="/statistics" element={<Statistics />} />
+                <Route path="/calendar" element={<Calendar />} />
+                <Route path="/nearby" element={<SearchNearby />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/settings" element={<Settings onShowTour={() => setShowTour(true)} />} />
+              </Routes>
+            </Suspense>
           </ErrorBoundary>
         </main>
 
