@@ -1,25 +1,48 @@
 import { useState } from 'react'
-import { Settings2, RotateCcw, Check, X } from 'lucide-react'
+import { Settings2, RotateCcw, Check, X, Car } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useVehicles } from '../context/VehicleContext'
-import { DEFAULT_INTERVALS } from '../utils/maintenanceRecommendations'
+import {
+  DEFAULT_INTERVALS,
+  buildIntervalKey,
+  resolveInterval,
+} from '../utils/maintenanceRecommendations'
 import ConfirmDialog from './ConfirmDialog'
 
 export default function MaintenanceIntervals() {
-  const { customIntervals, setCustomInterval, resetAllIntervals } = useVehicles()
+  const { vehicles, customIntervals, updateCustomIntervals } = useVehicles()
+  const [selectedVehicleId, setSelectedVehicleId] = useState('')
   const [editingType, setEditingType] = useState(null)
   const [editValue, setEditValue] = useState('')
   const [isResetOpen, setIsResetOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  // Periyotlar araç bazlı tutulur; seçim yoksa ilk araç varsayılan
+  const activeVehicleId = selectedVehicleId || vehicles[0]?.id || ''
 
   const handleEdit = (type) => {
-    const current = customIntervals[type] || DEFAULT_INTERVALS[type]
-    setEditValue(current.toString())
+    setEditValue(String(resolveInterval(customIntervals, activeVehicleId, type)))
     setEditingType(type)
   }
 
-  const handleSave = (type) => {
+  const handleCancel = () => {
+    setEditingType(null)
+    setEditValue('')
+  }
+
+  // updateCustomIntervals tüm haritayı değiştirir — mevcut haritadan türetip gönderiyoruz
+  const commit = async (nextIntervals) => {
+    setSaving(true)
+    try {
+      await updateCustomIntervals(nextIntervals)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleSave = async (type) => {
     const value = Number(editValue)
-    if (isNaN(value) || value < 500) {
+    if (!Number.isFinite(value) || value < 500) {
       toast.error('Geçersiz değer (en az 500 km olmalı)')
       return
     }
@@ -28,30 +51,55 @@ export default function MaintenanceIntervals() {
       return
     }
 
-    // Varsayılan ile aynıysa custom'dan çıkar
+    const key = buildIntervalKey(activeVehicleId, type)
+    const next = { ...customIntervals }
+
+    // Varsayılan ile aynıysa özel kaydı tut, sadece sil
     if (value === DEFAULT_INTERVALS[type]) {
-      setCustomInterval(type, null)
-      toast.success(`${type} varsayılan değere dönüştürüldü`)
+      delete next[key]
     } else {
-      setCustomInterval(type, value)
-      toast.success(`${type} periyodu güncellendi`)
+      next[key] = { kilometers: value, months: next[key]?.months ?? null }
     }
 
     setEditingType(null)
     setEditValue('')
+    await commit(next)
   }
 
-  const handleCancel = () => {
-    setEditingType(null)
-    setEditValue('')
+  const handleResetSingle = async (type) => {
+    const next = { ...customIntervals }
+    delete next[buildIntervalKey(activeVehicleId, type)]
+    await commit(next)
   }
 
-  const handleResetSingle = (type) => {
-    setCustomInterval(type, null)
-    toast.success(`${type} varsayılan değere dönüştürüldü`)
+  const handleResetAll = async () => {
+    // Sadece seçili aracın kayıtlarını çıkar, diğer araçlarınkine dokunma
+    const prefix = `${activeVehicleId}-`
+    const next = {}
+    Object.keys(customIntervals).forEach(key => {
+      if (!key.startsWith(prefix)) next[key] = customIntervals[key]
+    })
+    setIsResetOpen(false)
+    await commit(next)
   }
 
-  const hasAnyCustom = Object.keys(customIntervals).length > 0
+  const hasAnyCustom = Object.keys(customIntervals).some(key =>
+    key.startsWith(`${activeVehicleId}-`)
+  )
+
+  if (vehicles.length === 0) {
+    return (
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 mb-6">
+        <h2 className="text-lg font-bold flex items-center gap-2 mb-1">
+          <Settings2 className="w-5 h-5 text-blue-400" />
+          Bakım Periyotları
+        </h2>
+        <p className="text-sm text-slate-400">
+          Periyotlar araç bazlı ayarlanır — önce bir araç ekle.
+        </p>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 mb-6">
@@ -68,7 +116,8 @@ export default function MaintenanceIntervals() {
         {hasAnyCustom && (
           <button
             onClick={() => setIsResetOpen(true)}
-            className="flex items-center gap-2 text-xs bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-lg transition text-slate-400 hover:text-white"
+            disabled={saving}
+            className="flex items-center gap-2 text-xs bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-lg transition text-slate-400 hover:text-white disabled:opacity-50"
           >
             <RotateCcw className="w-3 h-3" />
             Tümünü Sıfırla
@@ -76,11 +125,38 @@ export default function MaintenanceIntervals() {
         )}
       </div>
 
+      {/* Araç seçici — periyotlar her araç için ayrı tutulur */}
+      <div className="mb-4">
+        <label
+          htmlFor="interval-vehicle"
+          className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1"
+        >
+          Araç
+        </label>
+        <div className="relative">
+          <Car className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          <select
+            id="interval-vehicle"
+            value={activeVehicleId}
+            onChange={(e) => {
+              setSelectedVehicleId(e.target.value)
+              handleCancel()
+            }}
+            className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-blue-500 transition"
+          >
+            {vehicles.map(v => (
+              <option key={v.id} value={v.id}>
+                {v.brand} {v.model} — {v.plate}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
         {Object.entries(DEFAULT_INTERVALS).map(([type, defaultValue]) => {
-          const customValue = customIntervals[type]
-          const currentValue = customValue ?? defaultValue
-          const isCustomized = customValue !== undefined && customValue !== defaultValue
+          const currentValue = resolveInterval(customIntervals, activeVehicleId, type)
+          const isCustomized = currentValue !== defaultValue
           const isEditing = editingType === type
 
           return (
@@ -122,7 +198,8 @@ export default function MaintenanceIntervals() {
                   <span className="text-xs text-slate-400">km</span>
                   <button
                     onClick={() => handleSave(type)}
-                    className="p-1 hover:bg-green-500/20 rounded text-green-400"
+                    disabled={saving}
+                    className="p-1 hover:bg-green-500/20 rounded text-green-400 disabled:opacity-50"
                     title="Kaydet"
                   >
                     <Check className="w-4 h-4" />
@@ -150,7 +227,8 @@ export default function MaintenanceIntervals() {
                   {isCustomized && (
                     <button
                       onClick={() => handleResetSingle(type)}
-                      className="p-1.5 hover:bg-slate-700 rounded text-slate-500 hover:text-white transition"
+                      disabled={saving}
+                      className="p-1.5 hover:bg-slate-700 rounded text-slate-500 hover:text-white transition disabled:opacity-50"
                       title="Varsayılana dön"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
@@ -170,9 +248,9 @@ export default function MaintenanceIntervals() {
       <ConfirmDialog
         isOpen={isResetOpen}
         onClose={() => setIsResetOpen(false)}
-        onConfirm={resetAllIntervals}
+        onConfirm={handleResetAll}
         title="Tüm periyotları sıfırla?"
-        message="Özelleştirdiğin tüm bakım periyotları varsayılan değerlere dönecek."
+        message="Bu araç için özelleştirdiğin tüm bakım periyotları varsayılan değerlere dönecek."
         confirmText="Evet, sıfırla"
         variant="warning"
       />

@@ -1,3 +1,5 @@
+import { toDateKey } from './dateHelpers'
+
 export const exportData = (vehicles, maintenanceRecords, fuelRecords, customIntervals, tireSets = [], tireChanges = []) => {
   const data = {
     version: 3,
@@ -16,7 +18,7 @@ export const exportData = (vehicles, maintenanceRecords, fuelRecords, customInte
   const url = URL.createObjectURL(blob)
 
   const link = document.createElement('a')
-  const timestamp = new Date().toISOString().split('T')[0]
+  const timestamp = toDateKey(new Date())
   link.href = url
   link.download = `garajim-yedek-${timestamp}.json`
   document.body.appendChild(link)

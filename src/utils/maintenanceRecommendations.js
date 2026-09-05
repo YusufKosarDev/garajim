@@ -23,9 +23,47 @@ export const getRecommendationStatus = (kmRemaining, interval) => {
   return 'ok'                                     // Sorun yok
 }
 
+// ============ customIntervals ANAHTAR SÖZLEŞMESİ ============
+// Şekil: { 'vehicleId-Bakım Türü': { kilometers, months } }
+// vehicleId bir UUID olduğu ve kendisi de tire içerdiği için anahtar
+// split('-') ile ayrıştırılamaz — parse için daima parseIntervalKey kullan.
+
+export const buildIntervalKey = (vehicleId, maintenanceType) =>
+  `${vehicleId}-${maintenanceType}`
+
+const UUID_PREFIX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-/i
+
+export const parseIntervalKey = (key) => {
+  if (typeof key !== 'string' || !key) return null
+
+  // 1) Bilinen bakım türlerinden biriyle bitiyor mu? (en güvenilir yol —
+  //    hem UUID hem eski sayısal id'lerde, tür içinde tire olsa bile çalışır)
+  const known = Object.keys(DEFAULT_INTERVALS).find(t => key.endsWith(`-${t}`))
+  if (known) {
+    return { vehicleId: key.slice(0, key.length - known.length - 1), maintenanceType: known }
+  }
+
+  // 2) UUID ön eki (DEFAULT_INTERVALS dışı bir tür ise)
+  if (UUID_PREFIX.test(key)) {
+    return { vehicleId: key.slice(0, 36), maintenanceType: key.slice(37) }
+  }
+
+  // 3) Eski format: sayısal id + tek tire
+  const dash = key.indexOf('-')
+  if (dash <= 0) return null
+  return { vehicleId: key.slice(0, dash), maintenanceType: key.slice(dash + 1) }
+}
+
+// Eski yedeklerde değer düz sayı olarak durabildiği için ikisini de kabul ediyoruz.
+export const resolveInterval = (customIntervals, vehicleId, maintenanceType) => {
+  const custom = customIntervals?.[buildIntervalKey(vehicleId, maintenanceType)]
+  const km = typeof custom === 'number' ? custom : custom?.kilometers
+  return km || DEFAULT_INTERVALS[maintenanceType]
+}
+
 // Bir araç için, bir bakım türünün durumunu hesapla
 export const getMaintenanceRecommendation = (vehicle, maintenanceType, maintenanceRecords, customIntervals = {}) => {
-  const interval = customIntervals[maintenanceType] || DEFAULT_INTERVALS[maintenanceType]
+  const interval = resolveInterval(customIntervals, vehicle.id, maintenanceType)
   if (!interval) return null  // Periyodu olmayan bakım türleri (Genel Bakım, Diğer)
 
   const currentKm = Number(vehicle.currentKm) || 0

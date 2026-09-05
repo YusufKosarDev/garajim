@@ -25,6 +25,7 @@ import {
   isBase64,
   BUCKETS,
 } from '../lib/storageHelpers'
+import { parseIntervalKey } from '../utils/maintenanceRecommendations'
 
 const VehicleContext = createContext(null)
 
@@ -684,10 +685,11 @@ export const VehicleProvider = ({ children }) => {
 
       const rowsToInsert = []
       Object.keys(intervals).forEach(key => {
-        const [vehicleId, ...typeParts] = key.split('-')
-        const maintenanceType = typeParts.join('-')
+        const parsed = parseIntervalKey(key)
+        if (!parsed) return
+        const { vehicleId, maintenanceType } = parsed
         const interval = intervals[key]
-        
+
         if (interval && (interval.kilometers || interval.months)) {
           rowsToInsert.push(
             customIntervalToDb(vehicleId, maintenanceType, interval, user.id)
@@ -710,98 +712,6 @@ export const VehicleProvider = ({ children }) => {
       toast.error('Periyotlar güncellenemedi: ' + formatSupabaseError(error))
     }
   }, [user])
-
-  // ============ IMPORT/EXPORT ============
-  const importDataMerge = (importedVehicles, importedMaintenance, importedFuel = [], importedIntervals = {}, importedTireSets = [], importedTireChanges = []) => {
-    toast('Import özelliği Faz 8\'de Supabase\'e bağlanacak. Şimdilik sadece geçici görsel gösterim.', { icon: 'ℹ️' })
-    
-    let addedVehicles = 0
-    let skippedVehicles = 0
-    let addedRecords = 0
-    let skippedRecords = 0
-    let addedFuel = 0
-    let skippedFuel = 0
-    let addedTireSets = 0
-    let addedTireChanges = 0
-
-    const existingVehicleIds = new Set(vehicles.map(v => v.id))
-    const newVehicles = importedVehicles.filter(v => {
-      if (existingVehicleIds.has(v.id)) {
-        skippedVehicles++
-        return false
-      }
-      addedVehicles++
-      return true
-    })
-
-    const existingMaintenanceIds = new Set(maintenanceRecords.map(r => r.id))
-    const newMaintenance = importedMaintenance.filter(r => {
-      if (existingMaintenanceIds.has(r.id)) {
-        skippedRecords++
-        return false
-      }
-      addedRecords++
-      return true
-    })
-
-    const existingFuelIds = new Set(fuelRecords.map(r => r.id))
-    const newFuel = importedFuel.filter(r => {
-      if (existingFuelIds.has(r.id)) {
-        skippedFuel++
-        return false
-      }
-      addedFuel++
-      return true
-    })
-
-    const existingTireSetIds = new Set(tireSets.map(t => t.id))
-    const newTireSets = importedTireSets.filter(t => {
-      if (existingTireSetIds.has(t.id)) return false
-      addedTireSets++
-      return true
-    })
-
-    const existingTireChangeIds = new Set(tireChanges.map(t => t.id))
-    const newTireChanges = importedTireChanges.filter(t => {
-      if (existingTireChangeIds.has(t.id)) return false
-      addedTireChanges++
-      return true
-    })
-
-    setVehicles(prev => [...prev, ...newVehicles])
-    setMaintenanceRecords(prev => [...prev, ...newMaintenance])
-    setFuelRecords(prev => [...prev, ...newFuel])
-    setTireSets(prev => [...prev, ...newTireSets])
-    setTireChanges(prev => [...prev, ...newTireChanges])
-
-    setCustomIntervals(prev => ({ ...prev, ...importedIntervals }))
-
-    return {
-      addedVehicles, skippedVehicles,
-      addedRecords, skippedRecords,
-      addedFuel, skippedFuel,
-      addedTireSets, addedTireChanges,
-    }
-  }
-
-  const importDataReplace = (importedVehicles, importedMaintenance, importedFuel = [], importedIntervals = {}, importedTireSets = [], importedTireChanges = []) => {
-    toast('Import özelliği Faz 8\'de Supabase\'e bağlanacak. Şimdilik sadece geçici görsel gösterim.', { icon: 'ℹ️' })
-    
-    setVehicles(importedVehicles)
-    setMaintenanceRecords(importedMaintenance)
-    setFuelRecords(importedFuel)
-    setTireSets(importedTireSets)
-    setTireChanges(importedTireChanges)
-    setCustomIntervals(importedIntervals)
-
-    return {
-      totalVehicles: importedVehicles.length,
-      totalRecords: importedMaintenance.length,
-      totalFuel: importedFuel.length,
-      totalTireSets: importedTireSets.length,
-      totalTireChanges: importedTireChanges.length,
-    }
-  }
 
   const clearAllData = useCallback(async () => {
     if (!user) return
@@ -872,8 +782,6 @@ export const VehicleProvider = ({ children }) => {
         updateTireChange,
         deleteTireChange,
         updateCustomIntervals,
-        importDataMerge,
-        importDataReplace,
         clearAllData,
       }}
     >

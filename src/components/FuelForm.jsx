@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import toast from 'react-hot-toast'
 import { useVehicles } from '../context/VehicleContext'
 import { checkFuelKm } from '../utils/kmHelpers'
 import { validatePastDate, getTodayString } from '../utils/dateValidation'
@@ -6,7 +7,7 @@ import { useAutoFocus } from '../hooks/useAutoFocus'
 import Modal from './Modal'
 
 const emptyForm = {
-  date: new Date().toISOString().split('T')[0],
+  date: getTodayString(),
   km: '',
   liters: '',
   pricePerLiter: '',
@@ -98,7 +99,10 @@ export default function FuelForm({ isOpen, onClose, vehicleId, editRecord = null
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (!validate()) return
+    if (!validate()) {
+      toast.error('Lütfen hataları düzelt')
+      return
+    }
 
     const recordData = {
       date: form.date,

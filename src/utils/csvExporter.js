@@ -1,4 +1,4 @@
-import { formatDate } from './dateHelpers'
+import { formatDate, toDateKey } from './dateHelpers'
 
 // CSV değeri escape (virgül, tırnak, satır sonu için)
 const escapeCSV = (value) => {
@@ -62,7 +62,7 @@ export const exportVehiclesCSV = (vehicles) => {
   ]
 
   const csv = arrayToCSV(vehicles, columns)
-  const timestamp = new Date().toISOString().split('T')[0]
+  const timestamp = toDateKey(new Date())
   downloadCSV(csv, `garajim-araclar-${timestamp}.csv`)
 
   return vehicles.length
@@ -90,7 +90,7 @@ export const exportMaintenanceCSV = (maintenanceRecords, vehicles) => {
   ]
 
   const csv = arrayToCSV(withVehicle, columns)
-  const timestamp = new Date().toISOString().split('T')[0]
+  const timestamp = toDateKey(new Date())
   downloadCSV(csv, `garajim-bakimlar-${timestamp}.csv`)
 
   return maintenanceRecords.length
@@ -121,7 +121,7 @@ export const exportFuelCSV = (fuelRecords, vehicles) => {
   ]
 
   const csv = arrayToCSV(withVehicle, columns)
-  const timestamp = new Date().toISOString().split('T')[0]
+  const timestamp = toDateKey(new Date())
   downloadCSV(csv, `garajim-yakit-${timestamp}.csv`)
 
   return fuelRecords.length

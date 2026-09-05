@@ -90,6 +90,9 @@ export default defineConfig({
     }),
   ],
   build: {
-    sourcemap: true,
+    // 'hidden': map dosyaları üretilir ama bundle'dan referans verilmez.
+    // Hata izleme servisine (Sentry) yüklenmeleri için üretilmeye devam eder;
+    // deploy adımında dist'ten silinmeleri gerekir ki public olarak sunulmasınlar.
+    sourcemap: 'hidden',
   },
 })

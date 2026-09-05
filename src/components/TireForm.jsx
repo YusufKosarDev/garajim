@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import { useVehicles } from '../context/VehicleContext'
 import { useAutoFocus } from '../hooks/useAutoFocus'
 import { TIRE_POSITIONS, SEASONS, calculateTireAge } from '../utils/tireHelpers'
+import { getTodayString } from '../utils/dateValidation'
 import Modal from './Modal'
 
 const createEmptyTires = () => TIRE_POSITIONS.map(pos => ({
@@ -238,7 +239,7 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
               type="date"
               value={purchaseDate}
               onChange={(e) => setPurchaseDate(e.target.value)}
-              max={new Date().toISOString().split('T')[0]}
+              max={getTodayString()}
               className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition"
             />
           </div>

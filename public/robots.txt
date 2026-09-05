@@ -1,4 +1,19 @@
 User-agent: *
-Allow: /
+Allow: /$
+Allow: /login
+Allow: /register
+Allow: /forgot-password
 
-Sitemap: https://garajim.app/sitemap.xml
+# Giriş gerektiren sayfalar — anonim ziyaretçi göremez, indekslenmesi anlamsız
+Disallow: /vehicles
+Disallow: /calendar
+Disallow: /statistics
+Disallow: /settings
+Disallow: /profile
+Disallow: /nearby
+
+# Paylaşım ve davet linkleri kişiye özeldir
+Disallow: /share/
+Disallow: /accept-invite/
+
+Sitemap: https://garajim-sage.vercel.app/sitemap.xml

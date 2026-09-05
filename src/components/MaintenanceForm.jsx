@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 import { useVehicles } from '../context/VehicleContext'
 import { useAutoFocus } from '../hooks/useAutoFocus'
 import { checkMaintenanceKm } from '../utils/kmHelpers'
-import { validatePastDate } from '../utils/dateValidation'
+import { validatePastDate, getTodayString } from '../utils/dateValidation'
 import Modal from './Modal'
 import SingleImageUploader from './SingleImageUploader'
 
@@ -59,7 +59,7 @@ export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord
     } else {
       setType(prefilledType || '')
       setCustomType('')
-      setDate(new Date().toISOString().split('T')[0])
+      setDate(getTodayString())
       setKm(String(currentKm || ''))
       setCost('')
       setNotes('')
@@ -207,7 +207,7 @@ export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              max={new Date().toISOString().split('T')[0]}
+              max={getTodayString()}
               className={`w-full bg-slate-800 border rounded-lg px-3 py-2 text-sm focus:outline-none transition ${
                 errors.date ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
               }`}

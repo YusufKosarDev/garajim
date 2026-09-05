@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import { useVehicles } from '../context/VehicleContext'
 import { useAutoFocus } from '../hooks/useAutoFocus'
 import { SEASONS } from '../utils/tireHelpers'
+import { getTodayString } from '../utils/dateValidation'
 import Modal from './Modal'
 
 export default function TireChangeForm({ isOpen, onClose, vehicleId, currentSeason, targetSeason }) {
@@ -21,7 +22,7 @@ export default function TireChangeForm({ isOpen, onClose, vehicleId, currentSeas
 
   useEffect(() => {
     if (!isOpen) return
-    setDate(new Date().toISOString().split('T')[0])
+    setDate(getTodayString())
     setKm(String(currentKm))
     setCost('')
     setNotes('')
@@ -104,7 +105,7 @@ export default function TireChangeForm({ isOpen, onClose, vehicleId, currentSeas
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            max={new Date().toISOString().split('T')[0]}
+            max={getTodayString()}
             className={`w-full bg-slate-800 border rounded-lg px-3 py-2 text-sm focus:outline-none transition ${
               errors.date ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
             }`}

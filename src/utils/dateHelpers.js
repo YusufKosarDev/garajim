@@ -2,6 +2,18 @@
 // TARİH FORMATLAMA FONKSİYONLARI
 // ============================================
 
+// Bir Date'i YEREL saate göre 'YYYY-MM-DD' anahtarına çevirir.
+// Not: toISOString() önce UTC'ye çevirdiği için TR'de (UTC+3) yerel gece yarısı
+// bir önceki güne düşer — takvim anahtarlarında asla toISOString() kullanma.
+export const toDateKey = (date) => {
+  const d = date instanceof Date ? date : new Date(date)
+  if (isNaN(d.getTime())) return ''
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 // "22 Nisan 2026" - Tam tarih, uzun ay adı (ana format)
 export const formatDate = (dateString) => {
   if (!dateString) return '-'

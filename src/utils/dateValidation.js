@@ -1,14 +1,8 @@
-// Bugünün tarihini YYYY-MM-DD formatında döndür (HTML date input için)
-export const getTodayString = () => {
-  return new Date().toISOString().split('T')[0]
-}
+import { toDateKey } from './dateHelpers'
 
-// X yıl sonrasının tarihini YYYY-MM-DD formatında döndür
-export const getFutureDateString = (yearsAhead) => {
-  const date = new Date()
-  date.setFullYear(date.getFullYear() + yearsAhead)
-  return date.toISOString().split('T')[0]
-}
+// Bugünün tarihini YYYY-MM-DD formatında döndür (HTML date input için)
+// Yerel saate göre — toISOString() TR'de tarihi bir gün geriye kaydırırdı.
+export const getTodayString = () => toDateKey(new Date())
 
 // Geçmişte olması gereken tarihler için (bakım, yakıt)
 // "Bugüne kadar" kabul edilir, gelecek tarih hata

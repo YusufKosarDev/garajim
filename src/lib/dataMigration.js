@@ -14,6 +14,7 @@ import {
   isBase64,
   BUCKETS,
 } from './storageHelpers'
+import { parseIntervalKey } from '../utils/maintenanceRecommendations'
 
 /**
  * Migration sonuç tipi
@@ -282,8 +283,12 @@ export const migrateDataToSupabase = async (data, userId, onProgress = () => {})
       const key = intervalKeys[i]
       onProgress('customIntervals', i + 1, intervalKeys.length)
 
-      const [oldVehicleId, ...typeParts] = key.split('-')
-      const maintenanceType = typeParts.join('-')
+      const parsed = parseIntervalKey(key)
+      if (!parsed) {
+        result.customIntervals.failed++
+        continue
+      }
+      const { vehicleId: oldVehicleId, maintenanceType } = parsed
       const newVehicleId = vehicleIdMap.get(String(oldVehicleId))
 
       if (!newVehicleId) {

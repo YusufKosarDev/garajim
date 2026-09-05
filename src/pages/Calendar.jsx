@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Filter, List, Grid, Wrench, Droplet, Shield, FileCheck, Receipt, X } from 'lucide-react'
 import { useVehicles } from '../context/VehicleContext'
-import { formatDate, getDateStatus, daysUntil } from '../utils/dateHelpers'
+import { formatDate, getDateStatus, daysUntil, toDateKey } from '../utils/dateHelpers'
 import { usePageTitle } from '../hooks/usePageTitle'
 import PageTransition from '../components/PageTransition'
 import EmptyState from '../components/EmptyState'
@@ -103,10 +103,7 @@ export default function Calendar() {
   for (let i = 0; i < startDay; i++) days.push(null)
   for (let d = 1; d <= daysInMonth; d++) days.push(d)
 
-  const formatDateKey = (day) => {
-    const d = new Date(year, month, day)
-    return d.toISOString().split('T')[0]
-  }
+  const formatDateKey = (day) => toDateKey(new Date(year, month, day))
 
   const isToday = (day) => {
     if (!day) return false
@@ -127,7 +124,7 @@ export default function Calendar() {
 
   const goToToday = () => {
     setCurrentDate(new Date())
-    setSelectedDay(new Date().toISOString().split('T')[0])
+    setSelectedDay(toDateKey(new Date()))
   }
 
   const toggleType = (type) => {

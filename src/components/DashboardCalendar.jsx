@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react'
-import { formatDate } from '../utils/dateHelpers'
+import { formatDate, toDateKey } from '../utils/dateHelpers'
 
 const months = [
   'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
@@ -52,10 +52,7 @@ export default function DashboardCalendar({ events = [] }) {
     days.push(day)
   }
 
-  const formatDateKey = (day) => {
-    const d = new Date(year, month, day)
-    return d.toISOString().split('T')[0]
-  }
+  const formatDateKey = (day) => toDateKey(new Date(year, month, day))
 
   const getDayStatus = (day) => {
     if (!day) return null
