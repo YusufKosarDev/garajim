@@ -103,7 +103,8 @@ export const VehicleProvider = ({ children }) => {
   }, [isAuthenticated, user])
 
   // ============ REAL-TIME SUBSCRIPTIONS ============
-  // Aynı kullanıcı başka cihazdan değişiklik yaparsa otomatik senkronize et
+  // Garajdaki herhangi bir değişiklik (kendi başka cihazın veya garajı
+  // paylaştığın bir üye) otomatik senkronize edilir.
   useEffect(() => {
     if (!isAuthenticated || !user) return
 
@@ -127,45 +128,67 @@ export const VehicleProvider = ({ children }) => {
       }
     }
 
-    // Tüm tablolar için tek bir channel (Supabase önerisi - performans)
-    const channel = supabase
-      .channel(`user-${user.id}-changes`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'vehicles', filter: `user_id=eq.${user.id}` },
-        handleChange(setVehicles, vehicleFromDb)
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'maintenance_records', filter: `user_id=eq.${user.id}` },
-        handleChange(setMaintenanceRecords, maintenanceFromDb)
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'fuel_records', filter: `user_id=eq.${user.id}` },
-        handleChange(setFuelRecords, fuelFromDb)
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'tire_sets', filter: `user_id=eq.${user.id}` },
-        handleChange(setTireSets, tireSetFromDb)
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'tire_changes', filter: `user_id=eq.${user.id}` },
-        handleChange(setTireChanges, tireChangeFromDb)
-      )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log('🔴 Real-time aktif: Tüm cihazlardan değişiklikler dinleniyor')
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Real-time bağlantı hatası')
-        }
+    let channel = null
+    let cancelled = false
+
+    const subscribe = async () => {
+      // Veriler garaj bazlıdır (tüm tablolarda garage_id var) ve bir garajı
+      // birden fazla kullanıcı paylaşabilir. user_id ile filtrelemek, garajı
+      // paylaştığın kişinin satırlarını — onların user_id'si farklı olduğu için —
+      // dışarıda bırakıyor ve "çoklu kullanıcı senkronu" hiç çalışmıyordu.
+      const { data, error } = await supabase
+        .from('garage_members')
+        .select('garage_id')
+        .eq('user_id', user.id)
+
+      if (cancelled) return
+
+      const garageIds = (data || []).map(r => r.garage_id).filter(Boolean)
+
+      // Üyelik okunamazsa eski davranışa düş: hiç dinlememektense
+      // en azından kendi değişikliklerini dinlemeye devam et.
+      const filter = garageIds.length > 0
+        ? `garage_id=in.(${garageIds.join(',')})`
+        : `user_id=eq.${user.id}`
+
+      if (error || garageIds.length === 0) {
+        console.warn('Real-time: garaj üyeliği alınamadı, user_id filtresine düşülüyor', error)
+      }
+
+      const table = (name, setState, mapper) => ({
+        config: { event: '*', schema: 'public', table: name, filter },
+        handler: handleChange(setState, mapper),
       })
+
+      const tables = [
+        table('vehicles', setVehicles, vehicleFromDb),
+        table('maintenance_records', setMaintenanceRecords, maintenanceFromDb),
+        table('fuel_records', setFuelRecords, fuelFromDb),
+        table('tire_sets', setTireSets, tireSetFromDb),
+        table('tire_changes', setTireChanges, tireChangeFromDb),
+      ]
+
+      // Tüm tablolar için tek bir channel (Supabase önerisi - performans)
+      channel = tables
+        .reduce(
+          (ch, t) => ch.on('postgres_changes', t.config, t.handler),
+          supabase.channel(`user-${user.id}-changes`)
+        )
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('🔴 Real-time aktif: Garajdaki tüm değişiklikler dinleniyor')
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('❌ Real-time bağlantı hatası')
+          }
+        })
+    }
+
+    subscribe()
 
     // Cleanup: component unmount veya user değişince subscription'ı kapat
     return () => {
-      supabase.removeChannel(channel)
+      cancelled = true
+      if (channel) supabase.removeChannel(channel)
     }
   }, [isAuthenticated, user])
 
