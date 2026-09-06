@@ -7,6 +7,7 @@ import { formatDate, getDateStatus, daysUntil } from '../utils/dateHelpers'
 import { generateVehicleReport } from '../utils/pdfGenerator'
 import { getAverageConsumption, getTotalFuelCost, getAveragePrice } from '../utils/fuelHelpers'
 import { usePageTitle } from '../hooks/usePageTitle'
+import VehicleValueCard from '../components/VehicleValueCard'
 import VehicleForm from '../components/VehicleForm'
 import MaintenanceForm from '../components/MaintenanceForm'
 import FuelForm from '../components/FuelForm'
@@ -310,6 +311,11 @@ export default function VehicleDetail({ globalActionsRef }) {
               )
             })}
           </div>
+        </div>
+
+        {/* Değer tahmini — bakım geçmişini kullandığı için bu sayfaya ait (madde 30) */}
+        <div className="mb-6">
+          <VehicleValueCard vehicle={vehicle} maintenanceRecords={allRecords} />
         </div>
 
         {photos.length > 0 && (
