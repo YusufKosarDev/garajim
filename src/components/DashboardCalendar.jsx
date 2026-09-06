@@ -135,7 +135,7 @@ function DashboardCalendar({ events = [] }) {
               className={`aspect-square flex flex-col items-center justify-center rounded-lg text-sm relative group cursor-pointer transition ${
                 status ? statusColors[status] : 'hover:bg-slate-800'
               } ${todayClass}`}
-              title={dayEvents.map(e => `${e.type} - ${e.vehicle.brand} ${e.vehicle.model}`).join('\n')}
+              title={dayEvents.map(e => `${e.label} - ${e.vehicle.brand} ${e.vehicle.model}`).join('\n')}
             >
               <span className={`font-semibold ${isToday(day) ? 'text-blue-400' : ''}`}>{day}</span>
               {dayEvents.length > 0 && (
@@ -173,7 +173,7 @@ function DashboardCalendar({ events = [] }) {
                     e.status === 'expired' ? 'text-red-400' :
                     e.status === 'warning' ? 'text-yellow-400' : 'text-green-400'
                   }`}>
-                    {e.type}
+                    {e.label}
                   </span>
                   <span className="text-slate-400 ml-1">
                     — {e.vehicle.brand} {e.vehicle.model}

@@ -1,4 +1,5 @@
 import { toDateKey } from './dateHelpers'
+import { downloadFile } from './downloadFile'
 
 import type { Vehicle, MaintenanceRecord, FuelRecord, TireSet, TireChange, CustomIntervals } from '../types'
 
@@ -22,18 +23,8 @@ export const exportData = (
     customIntervals,
   }
 
-  const jsonString = JSON.stringify(data, null, 2)
-  const blob = new Blob([jsonString], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-
-  const link = document.createElement('a')
   const timestamp = toDateKey(new Date())
-  link.href = url
-  link.download = `garajim-yedek-${timestamp}.json`
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
+  downloadFile(JSON.stringify(data, null, 2), `garajim-yedek-${timestamp}.json`, 'application/json')
 }
 
 export const parseImportFile = (file: File): Promise<Record<string, unknown>> => {

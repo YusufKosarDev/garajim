@@ -1,8 +1,11 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Filter, List, Grid, Wrench, Droplet, Shield, FileCheck, Receipt, X } from 'lucide-react'
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Filter, List, Grid, Wrench, Droplet, Shield, FileCheck, Receipt, X, CalendarPlus } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { useVehicles } from '../context/VehicleContext'
 import { formatDate, getDateStatus, daysUntil, toDateKey } from '../utils/dateHelpers'
+import { buildVehicleEvents } from '../utils/calendarEvents'
+import { exportICS } from '../utils/icsExport'
 import { usePageTitle } from '../hooks/usePageTitle'
 import PageTransition from '../components/PageTransition'
 import EmptyState from '../components/EmptyState'
@@ -35,47 +38,26 @@ export default function Calendar() {
     Object.keys(eventTypeConfig).reduce((acc, key) => ({ ...acc, [key]: true }), {})
   )
 
-  // Tüm olayları tek diziye topla
-  const allEvents = useMemo(() => {
-    const events = []
-
-    // Araç tarihleri (muayene, MTV, sigorta, kasko)
-    vehicles.forEach(v => {
-      if (v.inspectionDate) events.push({ type: 'inspection', date: v.inspectionDate, vehicle: v, label: 'Muayene' })
-      if (v.mtvDate) events.push({ type: 'mtv', date: v.mtvDate, vehicle: v, label: 'MTV Son Ödeme' })
-      if (v.insuranceDate) events.push({ type: 'insurance', date: v.insuranceDate, vehicle: v, label: 'Trafik Sigortası' })
-      if (v.kaskoDate) events.push({ type: 'kasko', date: v.kaskoDate, vehicle: v, label: 'Kasko' })
-    })
-
-    // Bakım kayıtları
-    maintenanceRecords.forEach(r => {
-      const vehicle = vehicles.find(v => v.id === r.vehicleId)
-      if (vehicle) {
-        events.push({ type: 'maintenance', date: r.date, vehicle, label: r.type, record: r })
-      }
-    })
-
-    // Yakıt kayıtları
-    fuelRecords.forEach(r => {
-      const vehicle = vehicles.find(v => v.id === r.vehicleId)
-      if (vehicle) {
-        events.push({
-          type: 'fuel',
-          date: r.date,
-          vehicle,
-          label: `${r.liters} L - ${r.totalCost.toLocaleString('tr-TR')} ₺`,
-          record: r,
-        })
-      }
-    })
-
-    return events
-  }, [vehicles, maintenanceRecords, fuelRecords])
+  // Etkinlik üretimi utils/calendarEvents'te tek yerde (madde 28). Aynı iş
+  // Dashboard'da da yapılıyordu ve iki farklı şekil üretiyordu.
+  const allEvents = useMemo(
+    () => buildVehicleEvents(vehicles, { bakimlar: maintenanceRecords, yakitlar: fuelRecords }),
+    [vehicles, maintenanceRecords, fuelRecords]
+  )
 
   // Aktif filtrelere göre olaylar
   const filteredEvents = useMemo(() => {
     return allEvents.filter(e => enabledTypes[e.type])
   }, [allEvents, enabledTypes])
+
+  const indirIcs = () => {
+    const sayi = exportICS(filteredEvents)
+    if (sayi === 0) {
+      toast.error('Aktarılacak olay yok')
+      return
+    }
+    toast.success(`${sayi} olay .ics dosyasına aktarıldı 📅`)
+  }
 
   // Tarihe göre grupla
   const eventsByDate = useMemo(() => {
@@ -187,6 +169,18 @@ export default function Calendar() {
                 <span className="hidden sm:inline">Liste</span>
               </button>
             </div>
+
+            {/* Takvime aktar — EKRANDA GÖRÜNEN olaylar dosyaya gider, hepsi değil.
+                Kullanıcı filtreyle "sadece muayene ve MTV" seçtiyse .ics de öyle olmalı. */}
+            <button
+              onClick={indirIcs}
+              disabled={filteredEvents.length === 0}
+              title="Görünen olayları .ics dosyası olarak indir"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <CalendarPlus className="w-4 h-4" aria-hidden="true" />
+              <span className="hidden sm:inline">Takvime aktar</span>
+            </button>
           </div>
         </div>
 

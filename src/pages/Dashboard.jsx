@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Car, AlertTriangle, Calendar, Plus, TrendingUp, Sparkles, Droplet, Wrench, DollarSign, Clock } from 'lucide-react'
 import { useVehicles } from '../context/VehicleContext'
-import { daysUntil, formatDate, getDateStatus } from '../utils/dateHelpers'
+import { buildVehicleEvents } from '../utils/calendarEvents'
+import { formatDate } from '../utils/dateHelpers'
 import { getTotalFuelCost } from '../utils/fuelHelpers'
 import { getCriticalRecommendations } from '../utils/maintenanceRecommendations'
 import { usePageTitle } from '../hooks/usePageTitle'
@@ -52,28 +53,9 @@ export default function Dashboard({ globalActionsRef }) {
   // NOT: Hesaplamalar erken dönüşün ÜSTÜNDE olmalı — aksi halde hook sırası bozulur.
   // Önceden bunların hepsi her render'da baştan çalışıyordu; sayfada tek useMemo yoktu.
 
-  const upcomingDates = useMemo(() => {
-    const list = []
-    vehicles.forEach(v => {
-      const items = [
-        { type: 'Muayene', date: v.inspectionDate },
-        { type: 'MTV', date: v.mtvDate },
-        { type: 'Sigorta', date: v.insuranceDate },
-        { type: 'Kasko', date: v.kaskoDate },
-      ]
-      items.forEach(item => {
-        if (item.date) {
-          list.push({
-            ...item,
-            vehicle: v,
-            days: daysUntil(item.date),
-            status: getDateStatus(item.date),
-          })
-        }
-      })
-    })
-    return list
-  }, [vehicles])
+  // Etkinlik üretimi artık utils/calendarEvents'te tek yerde (madde 28).
+  // Burada ve Calendar.jsx'te iki ayrı kopya vardı ve iki farklı şekil üretiyorlardı.
+  const upcomingDates = useMemo(() => buildVehicleEvents(vehicles), [vehicles])
 
   const { criticalDates, expiredCount, warningCount } = useMemo(() => ({
     criticalDates: upcomingDates
@@ -393,7 +375,7 @@ function DateRow({ item }) {
     >
       <div className="min-w-0 flex-1">
         <div className="font-semibold truncate">
-          {item.type} — {item.vehicle.brand} {item.vehicle.model}
+          {item.label} — {item.vehicle.brand} {item.vehicle.model}
         </div>
         <div className="text-xs text-slate-400">
           {item.vehicle.plate} • {formatDate(item.date)}
