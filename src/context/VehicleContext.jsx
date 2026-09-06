@@ -27,6 +27,7 @@ import {
   BUCKETS,
 } from '../lib/storageHelpers'
 import { parseIntervalKey } from '../utils/maintenanceRecommendations'
+import { fetchAllRows } from '../lib/fetchAllRows'
 
 const VehicleContext = createContext(null)
 
@@ -70,12 +71,8 @@ export const VehicleProvider = ({ children }) => {
         queryKey: vehicleQueryKeys.list(userId, name),
         enabled,
         queryFn: async () => {
-          const { data, error } = await supabase
-            .from(table)
-            .select('*')
-            .order(orderBy, { ascending })
-          if (error) throw error
-          return (data || []).map(map)
+          const rows = await fetchAllRows(supabase, table, orderBy, ascending)
+          return rows.map(map)
         },
       })),
       {

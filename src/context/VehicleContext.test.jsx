@@ -320,3 +320,39 @@ describe('updateCustomIntervals', () => {
     expect(h.sb.callsFor('custom_intervals', 'insert')).toHaveLength(0)
   })
 })
+
+// ===========================================================================
+describe('fetchAllRows — parçalı çekim', () => {
+  it('sayfa dolu geldikçe devam eder, eksik gelince durur', async () => {
+    const { fetchAllRows } = await import('../lib/fetchAllRows')
+    const dolu = Array.from({ length: 1000 }, (_, i) => ({ id: 'a' + i }))
+    const yarim = Array.from({ length: 7 }, (_, i) => ({ id: 'b' + i }))
+
+    h.sb.setSequence('fuel_records', 'select', [
+      { data: dolu, error: null },
+      { data: yarim, error: null },
+    ])
+
+    const rows = await fetchAllRows(h.sb.client, 'fuel_records', 'date', false)
+
+    expect(rows).toHaveLength(1007)
+    expect(h.sb.callsFor('fuel_records', 'select')).toHaveLength(2)
+  })
+
+  it('tek sayfa yeterse ikinci istek atmaz', async () => {
+    const { fetchAllRows } = await import('../lib/fetchAllRows')
+    h.sb.setResponse('fuel_records', 'select', { data: [{ id: 'f1' }], error: null })
+
+    const rows = await fetchAllRows(h.sb.client, 'fuel_records', 'date', false)
+
+    expect(rows).toHaveLength(1)
+    expect(h.sb.callsFor('fuel_records', 'select')).toHaveLength(1)
+  })
+
+  it('hata olursa yükseltir (sessizce eksik veri döndürmez)', async () => {
+    const { fetchAllRows } = await import('../lib/fetchAllRows')
+    h.sb.setResponse('fuel_records', 'select', { data: null, error: { message: 'kopdu' } })
+
+    await expect(fetchAllRows(h.sb.client, 'fuel_records', 'date', false)).rejects.toMatchObject({ message: 'kopdu' })
+  })
+})

@@ -21,7 +21,16 @@ export function createSupabaseMock() {
     responses[table][op] = value
   }
 
+  // Aynı tablo+op için ardışık farklı yanıtlar (parçalı çekimi sınamak için)
+  const sequences = {}
+  const setSequence = (table, op, list) => {
+    sequences[`${table}.${op}`] = [...list]
+  }
+
   const resultFor = (table, op) => {
+    const seq = sequences[`${table}.${op}`]
+    if (seq && seq.length) return seq.shift()
+
     const forTable = responses[table] || {}
     if (op in forTable) return forTable[op]
     // Varsayılan: boş başarı
@@ -72,6 +81,7 @@ export function createSupabaseMock() {
     client: { from, channel, removeChannel },
     // test yardımcıları
     setResponse,
+    setSequence,
     calls,
     callsFor: (table, op) => calls.filter(c => c.table === table && (!op || c.op === op)),
     /** Realtime olayı tetikle */
