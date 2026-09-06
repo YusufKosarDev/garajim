@@ -1,151 +1,85 @@
-import { useState, useEffect } from 'react'
-import { Plus, Calendar, AlertTriangle } from 'lucide-react'
+import { useEffect, useMemo, useRef } from 'react'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Plus, Calendar } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useVehicles } from '../context/VehicleContext'
-import { useAutoFocus } from '../hooks/useAutoFocus'
-import { formatPlate, isValidPlate, platesMatch } from '../utils/plateHelpers'
-import { validateExpiryDate, validateVehicleYear } from '../utils/dateValidation'
+import { formatPlate } from '../utils/plateHelpers'
+import { makeVehicleSchema } from '../lib/formSchemas'
 import Modal from './Modal'
+import FormField from './FormField'
 import MultiImageUploader from './MultiImageUploader'
 
 const fuelTypes = ['Benzin', 'Dizel', 'LPG', 'Hibrit', 'Elektrik']
 
+const bosForm = () => ({
+  plate: '', brand: '', model: '', year: '', fuelType: 'Benzin', currentKm: '',
+  photos: [], inspectionDate: '', mtvDate: '', insuranceDate: '', kaskoDate: '', notes: '',
+})
+
 export default function VehicleForm({ isOpen, onClose, editVehicle = null }) {
   const { addVehicle, updateVehicle, vehicles } = useVehicles()
-  const firstInputRef = useAutoFocus(isOpen)
-
-  const [plate, setPlate] = useState('')
-  const [brand, setBrand] = useState('')
-  const [model, setModel] = useState('')
-  const [year, setYear] = useState('')
-  const [fuelType, setFuelType] = useState('Benzin')
-  const [currentKm, setCurrentKm] = useState('')
-  const [photos, setPhotos] = useState([])
-  const [inspectionDate, setInspectionDate] = useState('')
-  const [mtvDate, setMtvDate] = useState('')
-  const [insuranceDate, setInsuranceDate] = useState('')
-  const [kaskoDate, setKaskoDate] = useState('')
-  const [notes, setNotes] = useState('')
-  const [errors, setErrors] = useState({})
-
   const isEdit = !!editVehicle
 
+  const schema = useMemo(
+    () => makeVehicleSchema({ vehicles, editId: editVehicle?.id ?? null }),
+    [vehicles, editVehicle]
+  )
+
+  const {
+    register, handleSubmit, reset, setValue, control,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(schema),
+    defaultValues: bosForm(),
+    mode: 'onSubmit',
+  })
+
+  // Formu SADECE modal açılırken doldur — araç listesi değişince (realtime
+  // senkron, başka bir araç eklenmesi) kullanıcının girdileri silinmesin.
+  const acikMiydiRef = useRef(false)
   useEffect(() => {
-    if (!isOpen) return
+    const yeniAcildi = isOpen && !acikMiydiRef.current
+    acikMiydiRef.current = isOpen
+    if (!yeniAcildi) return
 
     if (editVehicle) {
-      setPlate(editVehicle.plate || '')
-      setBrand(editVehicle.brand || '')
-      setModel(editVehicle.model || '')
-      setYear(editVehicle.year || '')
-      setFuelType(editVehicle.fuelType || 'Benzin')
-      setCurrentKm(editVehicle.currentKm || '')
-      // Eski uyumluluk: photo varsa photos'a taşı
-      const existingPhotos = editVehicle.photos || (editVehicle.photo ? [editVehicle.photo] : [])
-      setPhotos(existingPhotos)
-      setInspectionDate(editVehicle.inspectionDate || '')
-      setMtvDate(editVehicle.mtvDate || '')
-      setInsuranceDate(editVehicle.insuranceDate || '')
-      setKaskoDate(editVehicle.kaskoDate || '')
-      setNotes(editVehicle.notes || '')
+      reset({
+        plate: editVehicle.plate || '',
+        brand: editVehicle.brand || '',
+        model: editVehicle.model || '',
+        year: editVehicle.year ? String(editVehicle.year) : '',
+        fuelType: editVehicle.fuelType || 'Benzin',
+        currentKm: editVehicle.currentKm ? String(editVehicle.currentKm) : '',
+        // Eski uyumluluk: photo varsa photos'a taşı
+        photos: editVehicle.photos || (editVehicle.photo ? [editVehicle.photo] : []),
+        inspectionDate: editVehicle.inspectionDate || '',
+        mtvDate: editVehicle.mtvDate || '',
+        insuranceDate: editVehicle.insuranceDate || '',
+        kaskoDate: editVehicle.kaskoDate || '',
+        notes: editVehicle.notes || '',
+      })
     } else {
-      setPlate('')
-      setBrand('')
-      setModel('')
-      setYear('')
-      setFuelType('Benzin')
-      setCurrentKm('')
-      setPhotos([])
-      setInspectionDate('')
-      setMtvDate('')
-      setInsuranceDate('')
-      setKaskoDate('')
-      setNotes('')
+      reset(bosForm())
     }
-    setErrors({})
-  }, [isOpen, editVehicle])
+  }, [isOpen, editVehicle, reset])
 
-  const validate = () => {
-    const newErrors = {}
-
-    // Plaka
-    const formattedPlate = formatPlate(plate)
-    if (!formattedPlate.trim()) {
-      newErrors.plate = 'Plaka zorunlu'
-    } else if (!isValidPlate(formattedPlate)) {
-      newErrors.plate = 'Geçerli bir plaka formatı gir (örn: 34 ABC 123)'
-    } else {
-      // Duplicate kontrolü — platesMatch ile
-      const duplicate = vehicles.find(
-        v => platesMatch(v.plate, formattedPlate) && v.id !== editVehicle?.id
-      )
-      if (duplicate) newErrors.plate = 'Bu plaka zaten kayıtlı'
-    }
-
-    // Marka
-    if (!brand.trim()) newErrors.brand = 'Marka zorunlu'
-
-    // Model
-    if (!model.trim()) newErrors.model = 'Model zorunlu'
-
-    // Yıl — validateVehicleYear kullan
-    const yearCheck = validateVehicleYear(year)
-    if (!yearCheck.isValid) {
-      newErrors.year = yearCheck.message
-    }
-
-    // Güncel KM (opsiyonel, ama girildiyse geçerli olmalı)
-    if (currentKm) {
-      const kmValue = Number(currentKm)
-      if (isNaN(kmValue) || kmValue < 0) {
-        newErrors.currentKm = 'Geçerli bir KM gir'
-      }
-    }
-
-    // Tarihler — validateExpiryDate kullan
-    if (inspectionDate) {
-      const check = validateExpiryDate(inspectionDate, 'Muayene tarihi')
-      if (!check.isValid) newErrors.inspectionDate = check.message
-    }
-    if (mtvDate) {
-      const check = validateExpiryDate(mtvDate, 'MTV tarihi')
-      if (!check.isValid) newErrors.mtvDate = check.message
-    }
-    if (insuranceDate) {
-      const check = validateExpiryDate(insuranceDate, 'Sigorta tarihi')
-      if (!check.isValid) newErrors.insuranceDate = check.message
-    }
-    if (kaskoDate) {
-      const check = validateExpiryDate(kaskoDate, 'Kasko tarihi')
-      if (!check.isValid) newErrors.kaskoDate = check.message
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    if (!validate()) {
-      toast.error('Lütfen hataları düzelt')
-      return
-    }
-
+  const onValid = (form) => {
     const data = {
-      plate: formatPlate(plate),
-      brand: brand.trim(),
-      model: model.trim(),
-      year: Number(year),
-      fuelType,
-      currentKm: currentKm ? Number(currentKm) : null,
-      photos,
+      plate: formatPlate(form.plate),
+      brand: form.brand.trim(),
+      model: form.model.trim(),
+      year: Number(form.year),
+      fuelType: form.fuelType,
+      currentKm: form.currentKm ? Number(form.currentKm) : null,
+      photos: form.photos,
       // Eski uyumluluk için photo'yu photos[0] ile sync tut
-      photo: photos[0] || null,
-      inspectionDate,
-      mtvDate,
-      insuranceDate,
-      kaskoDate,
-      notes: notes.trim(),
+      photo: form.photos[0] || null,
+      inspectionDate: form.inspectionDate,
+      mtvDate: form.mtvDate,
+      insuranceDate: form.insuranceDate,
+      kaskoDate: form.kaskoDate,
+      notes: form.notes.trim(),
     }
 
     if (isEdit) {
@@ -158,6 +92,15 @@ export default function VehicleForm({ isOpen, onClose, editVehicle = null }) {
     onClose()
   }
 
+  const onInvalid = () => toast.error('Lütfen hataları düzelt')
+
+  const tarihAlanlari = [
+    ['inspectionDate', 'Muayene'],
+    ['mtvDate', 'MTV'],
+    ['insuranceDate', 'Trafik Sigortası'],
+    ['kaskoDate', 'Kasko'],
+  ]
+
   return (
     <Modal
       isOpen={isOpen}
@@ -165,120 +108,65 @@ export default function VehicleForm({ isOpen, onClose, editVehicle = null }) {
       title={isEdit ? 'Aracı Düzenle' : 'Yeni Araç'}
       maxWidth="max-w-2xl"
     >
-      <form onSubmit={handleSubmit} className="p-5 space-y-5">
-        {/* Plaka */}
-        <div>
-          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
-            Plaka *
-          </label>
-          <input
-            ref={firstInputRef}
-            type="text"
-            value={plate}
-            onChange={(e) => setPlate(e.target.value.toUpperCase())}
-            onBlur={(e) => setPlate(formatPlate(e.target.value))}
-            placeholder="34 ABC 123"
-            className={`w-full bg-slate-800 border rounded-lg px-3 py-2 text-sm uppercase tracking-wide focus:outline-none transition ${
-              errors.plate ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
-            }`}
-          />
-          {errors.plate && (
-            <p className="text-xs text-red-400 mt-1 flex items-center gap-1">
-              <AlertTriangle className="w-3 h-3" />
-              {errors.plate}
-            </p>
-          )}
-        </div>
+      <form onSubmit={handleSubmit(onValid, onInvalid)} className="p-5 space-y-5">
+        <FormField
+          label="Plaka"
+          required
+          placeholder="34 ABC 123"
+          autoFocus
+          error={errors.plate?.message}
+          {...register('plate', {
+            // Yazarken büyük harfe çevir, alandan çıkınca biçimlendir
+            onChange: (e) => setValue('plate', e.target.value.toUpperCase()),
+            onBlur: (e) => setValue('plate', formatPlate(e.target.value)),
+          })}
+        />
 
-        {/* Marka & Model */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
-              Marka *
-            </label>
-            <input
-              type="text"
-              value={brand}
-              onChange={(e) => setBrand(e.target.value)}
-              placeholder="BMW"
-              className={`w-full bg-slate-800 border rounded-lg px-3 py-2 text-sm focus:outline-none transition ${
-                errors.brand ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
-              }`}
-            />
-            {errors.brand && <p className="text-xs text-red-400 mt-1">{errors.brand}</p>}
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
-              Model *
-            </label>
-            <input
-              type="text"
-              value={model}
-              onChange={(e) => setModel(e.target.value)}
-              placeholder="320i"
-              className={`w-full bg-slate-800 border rounded-lg px-3 py-2 text-sm focus:outline-none transition ${
-                errors.model ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
-              }`}
-            />
-            {errors.model && <p className="text-xs text-red-400 mt-1">{errors.model}</p>}
-          </div>
+          <FormField label="Marka" required placeholder="BMW" error={errors.brand?.message} {...register('brand')} />
+          <FormField label="Model" required placeholder="320i" error={errors.model?.message} {...register('model')} />
         </div>
 
-        {/* Yıl, Yakıt, KM */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
-              Yıl *
-            </label>
-            <input
-              type="number"
-              value={year}
-              onChange={(e) => setYear(e.target.value)}
-              placeholder="2020"
-              min="1950"
-              max={new Date().getFullYear() + 1}
-              className={`w-full bg-slate-800 border rounded-lg px-3 py-2 text-sm focus:outline-none transition ${
-                errors.year ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
-              }`}
-            />
-            {errors.year && <p className="text-xs text-red-400 mt-1">{errors.year}</p>}
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
-              Yakıt
-            </label>
-            <select
-              value={fuelType}
-              onChange={(e) => setFuelType(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition"
-            >
-              {fuelTypes.map(f => <option key={f} value={f}>{f}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
-              Güncel KM
-            </label>
-            <input
-              type="number"
-              value={currentKm}
-              onChange={(e) => setCurrentKm(e.target.value)}
-              placeholder="0"
-              min="0"
-              className={`w-full bg-slate-800 border rounded-lg px-3 py-2 text-sm focus:outline-none transition ${
-                errors.currentKm ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
-              }`}
-            />
-            {errors.currentKm && <p className="text-xs text-red-400 mt-1">{errors.currentKm}</p>}
-          </div>
+          <FormField
+            label="Yıl"
+            required
+            type="number"
+            placeholder="2020"
+            min="1950"
+            max={new Date().getFullYear() + 1}
+            error={errors.year?.message}
+            {...register('year')}
+          />
+          <FormField label="Yakıt">
+            {(alanProps) => (
+              <select {...alanProps} {...register('fuelType')}>
+                {fuelTypes.map(f => <option key={f} value={f}>{f}</option>)}
+              </select>
+            )}
+          </FormField>
+          <FormField
+            label="Güncel KM"
+            type="number"
+            placeholder="0"
+            min="0"
+            error={errors.currentKm?.message}
+            {...register('currentKm')}
+          />
         </div>
 
         {/* Fotoğraflar */}
         <div>
-          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">
+          <span className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">
             Fotoğraflar
-          </label>
-          <MultiImageUploader photos={photos} onChange={setPhotos} />
+          </span>
+          <Controller
+            name="photos"
+            control={control}
+            render={({ field }) => (
+              <MultiImageUploader photos={field.value} onChange={field.onChange} />
+            )}
+          />
         </div>
 
         {/* Tarihler */}
@@ -288,70 +176,26 @@ export default function VehicleForm({ isOpen, onClose, editVehicle = null }) {
             Önemli Tarihler (opsiyonel)
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs text-slate-500 mb-1">Muayene</label>
-              <input
+            {tarihAlanlari.map(([ad, etiket]) => (
+              <FormField
+                key={ad}
+                label={etiket}
+                labelStyle="plain"
                 type="date"
-                value={inspectionDate}
-                onChange={(e) => setInspectionDate(e.target.value)}
-                className={`w-full bg-slate-800 border rounded-lg px-3 py-2 text-sm focus:outline-none transition ${
-                  errors.inspectionDate ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
-                }`}
+                error={errors[ad]?.message}
+                {...register(ad)}
               />
-              {errors.inspectionDate && <p className="text-xs text-red-400 mt-1">{errors.inspectionDate}</p>}
-            </div>
-            <div>
-              <label className="block text-xs text-slate-500 mb-1">MTV</label>
-              <input
-                type="date"
-                value={mtvDate}
-                onChange={(e) => setMtvDate(e.target.value)}
-                className={`w-full bg-slate-800 border rounded-lg px-3 py-2 text-sm focus:outline-none transition ${
-                  errors.mtvDate ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
-                }`}
-              />
-              {errors.mtvDate && <p className="text-xs text-red-400 mt-1">{errors.mtvDate}</p>}
-            </div>
-            <div>
-              <label className="block text-xs text-slate-500 mb-1">Trafik Sigortası</label>
-              <input
-                type="date"
-                value={insuranceDate}
-                onChange={(e) => setInsuranceDate(e.target.value)}
-                className={`w-full bg-slate-800 border rounded-lg px-3 py-2 text-sm focus:outline-none transition ${
-                  errors.insuranceDate ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
-                }`}
-              />
-              {errors.insuranceDate && <p className="text-xs text-red-400 mt-1">{errors.insuranceDate}</p>}
-            </div>
-            <div>
-              <label className="block text-xs text-slate-500 mb-1">Kasko</label>
-              <input
-                type="date"
-                value={kaskoDate}
-                onChange={(e) => setKaskoDate(e.target.value)}
-                className={`w-full bg-slate-800 border rounded-lg px-3 py-2 text-sm focus:outline-none transition ${
-                  errors.kaskoDate ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
-                }`}
-              />
-              {errors.kaskoDate && <p className="text-xs text-red-400 mt-1">{errors.kaskoDate}</p>}
-            </div>
+            ))}
           </div>
         </div>
 
-        {/* Notlar */}
-        <div>
-          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
-            Notlar (opsiyonel)
-          </label>
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Ek bilgiler..."
-            rows={2}
-            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition resize-none"
-          />
-        </div>
+        <FormField
+          label="Notlar (opsiyonel)"
+          as="textarea"
+          rows={2}
+          placeholder="Ek bilgiler..."
+          {...register('notes')}
+        />
 
         <div className="flex gap-2 pt-2">
           <button

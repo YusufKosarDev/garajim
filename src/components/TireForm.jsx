@@ -1,154 +1,125 @@
-import { useState, useEffect } from 'react'
-import { Plus, X, Info, Calendar, DollarSign } from 'lucide-react'
+import { useEffect, useMemo, useRef } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Plus, Info, Calendar, DollarSign } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useVehicles } from '../context/VehicleContext'
-import { useAutoFocus } from '../hooks/useAutoFocus'
 import { TIRE_POSITIONS, SEASONS, calculateTireAge } from '../utils/tireHelpers'
 import { getTodayString } from '../utils/dateValidation'
+import { makeTireSetSchema } from '../lib/formSchemas'
 import Modal from './Modal'
+import FormField from './FormField'
 
 const createEmptyTires = () => TIRE_POSITIONS.map(pos => ({
   position: pos.code,
   dot: '',
-  treadDepth: 0,
+  treadDepth: '',
 }))
 
 export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = null }) {
   const { addTireSet, updateTireSet, tireSets } = useVehicles()
-  const firstInputRef = useAutoFocus(isOpen)
-
-  const [season, setSeason] = useState('summer')
-  const [brand, setBrand] = useState('')
-  const [size, setSize] = useState('')
-  const [purchaseDate, setPurchaseDate] = useState('')
-  const [purchasePrice, setPurchasePrice] = useState('')
-  const [hasSpare, setHasSpare] = useState(false)
-  const [tires, setTires] = useState(createEmptyTires())
-  const [notes, setNotes] = useState('')
-  const [errors, setErrors] = useState({})
-
   const isEdit = !!editTireSet
 
-  // Form aç/kapa
+  const schema = useMemo(
+    () => makeTireSetSchema({ tireSets, vehicleId, isEdit }),
+    [tireSets, vehicleId, isEdit]
+  )
+
+  const {
+    register, handleSubmit, reset, setValue, control,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      season: 'summer', brand: '', size: '', purchaseDate: '', purchasePrice: '',
+      hasSpare: false, notes: '', tires: createEmptyTires(),
+    },
+    mode: 'onSubmit',
+  })
+
+  const season = useWatch({ control, name: 'season' })
+  const hasSpare = useWatch({ control, name: 'hasSpare' })
+  const tires = useWatch({ control, name: 'tires' }) ?? []
+
+  // Formu SADECE modal açılırken doldur.
+  // Önceden bağımlılıklar arasında tireSets vardı; herhangi bir lastik seti
+  // değişince (realtime senkron) kullanıcı formu doldururken sıfırlanıyordu.
+  const acikMiydiRef = useRef(false)
   useEffect(() => {
-    if (!isOpen) return
+    const yeniAcildi = isOpen && !acikMiydiRef.current
+    acikMiydiRef.current = isOpen
+    if (!yeniAcildi) return
 
     if (editTireSet) {
-      setSeason(editTireSet.season)
-      setBrand(editTireSet.brand || '')
-      setSize(editTireSet.size || '')
-      setPurchaseDate(editTireSet.purchaseDate || '')
-      setPurchasePrice(editTireSet.purchasePrice || '')
-      setNotes(editTireSet.notes || '')
-
-      const existingTires = editTireSet.tires || []
-      const spareExists = existingTires.some(t => t.position === 'S')
-      setHasSpare(spareExists)
-
-      // Eksik pozisyonları doldur
-      const filledTires = TIRE_POSITIONS.map(pos => {
-        const existing = existingTires.find(t => t.position === pos.code)
-        return existing || { position: pos.code, dot: '', treadDepth: 0 }
+      const mevcutLastikler = editTireSet.tires || []
+      reset({
+        season: editTireSet.season,
+        brand: editTireSet.brand || '',
+        size: editTireSet.size || '',
+        purchaseDate: editTireSet.purchaseDate || '',
+        purchasePrice: editTireSet.purchasePrice ? String(editTireSet.purchasePrice) : '',
+        hasSpare: mevcutLastikler.some(t => t.position === 'S'),
+        notes: editTireSet.notes || '',
+        // Eksik pozisyonları doldur
+        tires: TIRE_POSITIONS.map(pos => {
+          const varOlan = mevcutLastikler.find(t => t.position === pos.code)
+          return varOlan
+            ? { position: pos.code, dot: varOlan.dot || '', treadDepth: varOlan.treadDepth ?? '' }
+            : { position: pos.code, dot: '', treadDepth: '' }
+        }),
       })
-      setTires(filledTires)
     } else {
-      // Yeni set — araçta zaten hangi sezonlar var?
-      const existingSeasons = tireSets
+      // Yeni set — araçta hangi sezonlar zaten var, eksik olanı seç
+      const mevcutSezonlar = tireSets
         .filter(t => t.vehicleId === vehicleId)
         .map(t => t.season)
 
-      // Önce eksik sezonu seç
-      if (!existingSeasons.includes('summer')) setSeason('summer')
-      else if (!existingSeasons.includes('winter')) setSeason('winter')
-      else setSeason('summer')
+      const varsayilanSezon = !mevcutSezonlar.includes('summer')
+        ? 'summer'
+        : (!mevcutSezonlar.includes('winter') ? 'winter' : 'summer')
 
-      setBrand('')
-      setSize('')
-      setPurchaseDate('')
-      setPurchasePrice('')
-      setHasSpare(false)
-      setTires(createEmptyTires())
-      setNotes('')
+      reset({
+        season: varsayilanSezon, brand: '', size: '', purchaseDate: '', purchasePrice: '',
+        hasSpare: false, notes: '', tires: createEmptyTires(),
+      })
     }
-    setErrors({})
-  }, [isOpen, editTireSet, tireSets, vehicleId])
+  }, [isOpen, editTireSet, tireSets, vehicleId, reset])
 
-  const updateTire = (position, field, value) => {
-    setTires(prev => prev.map(t =>
-      t.position === position ? { ...t, [field]: value } : t
-    ))
-  }
-
-  const validate = () => {
-    const newErrors = {}
-
-    if (!brand.trim()) newErrors.brand = 'Marka zorunlu'
-    if (!size.trim()) newErrors.size = 'Ebat zorunlu'
-
-    // Aynı sezondan 2. set eklenmeye çalışılıyor mu?
-    if (!isEdit) {
-      const existing = tireSets.find(
-        t => t.vehicleId === vehicleId && t.season === season
-      )
-      if (existing) {
-        newErrors.season = `Bu araç için zaten ${SEASONS[season].label} set tanımlı — düzenlemek için onu aç`
-      }
-    }
-
-    // DOT kodu kontrolü (opsiyonel ama girildiyse 4 karakter olmalı)
-    tires.forEach((tire, i) => {
-      if (tire.position === 'S' && !hasSpare) return // Stepney yoksa kontrol etme
-
-      if (tire.dot && tire.dot.length !== 4) {
-        newErrors[`dot_${tire.position}`] = 'DOT 4 haneli olmalı'
-      }
-
-      const depth = Number(tire.treadDepth)
-      if (tire.treadDepth && (isNaN(depth) || depth < 0 || depth > 15)) {
-        newErrors[`depth_${tire.position}`] = '0-15 mm arası'
-      }
-    })
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    if (!validate()) {
-      toast.error('Lütfen hataları düzelt')
-      return
-    }
-
+  const onValid = (form) => {
     // Stepney yoksa filtrele
-    const filteredTires = tires
-      .filter(t => t.position !== 'S' || hasSpare)
+    const filtrelenmis = form.tires
+      .filter(t => t.position !== 'S' || form.hasSpare)
       .map(t => ({
         position: t.position,
-        dot: t.dot.trim(),
+        dot: (t.dot || '').trim(),
         treadDepth: Number(t.treadDepth) || 0,
       }))
 
     const data = {
       vehicleId,
-      season,
-      brand: brand.trim(),
-      size: size.trim(),
-      purchaseDate,
-      purchasePrice: Number(purchasePrice) || 0,
-      tires: filteredTires,
-      notes: notes.trim(),
+      season: form.season,
+      brand: form.brand.trim(),
+      size: form.size.trim(),
+      purchaseDate: form.purchaseDate,
+      purchasePrice: Number(form.purchasePrice) || 0,
+      tires: filtrelenmis,
+      notes: form.notes.trim(),
     }
 
-    if (isEdit) {
-      updateTireSet(editTireSet.id, data)
-    } else {
-      addTireSet(data)
-    }
+    if (isEdit) updateTireSet(editTireSet.id, data)
+    else addTireSet(data)
     onClose()
   }
 
-  const currentSeason = SEASONS[season]
+  const onInvalid = () => toast.error('Lütfen hataları düzelt')
+
+  // DOT alanı: sadece rakam, en fazla 4 hane
+  const dotDegisti = (index) => (e) => {
+    setValue(`tires.${index}.dot`, e.target.value.replace(/\D/g, '').slice(0, 4))
+  }
+
+  const currentSeason = SEASONS[season] ?? SEASONS.summer
+  const spareIndex = TIRE_POSITIONS.findIndex(p => p.code === 'S')
 
   return (
     <Modal
@@ -157,19 +128,20 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
       title={isEdit ? 'Lastik Setini Düzenle' : 'Yeni Lastik Seti'}
       maxWidth="max-w-2xl"
     >
-      <form onSubmit={handleSubmit} className="p-5 space-y-5">
+      <form onSubmit={handleSubmit(onValid, onInvalid)} className="p-5 space-y-5">
         {/* Sezon seçimi */}
-        <div>
-          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">
+        <fieldset>
+          <legend className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">
             Sezon
-          </label>
+          </legend>
           <div className="grid grid-cols-2 gap-2">
             {Object.entries(SEASONS).filter(([k]) => k !== 'all-season').map(([key, config]) => (
               <button
                 key={key}
                 type="button"
-                onClick={() => !isEdit && setSeason(key)}
+                onClick={() => !isEdit && setValue('season', key)}
                 disabled={isEdit}
+                aria-pressed={season === key}
                 className={`p-4 rounded-lg border-2 transition ${
                   season === key
                     ? key === 'summer'
@@ -178,96 +150,57 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
                     : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-600'
                 } ${isEdit ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
               >
-                <div className="text-2xl mb-1">{config.icon}</div>
+                <div className="text-2xl mb-1" aria-hidden="true">{config.icon}</div>
                 <div className="text-sm font-bold">{config.label}</div>
               </button>
             ))}
           </div>
-          {errors.season && (
-            <p className="text-xs text-red-400 mt-2">{errors.season}</p>
-          )}
+          {errors.season && <p className="text-xs text-red-400 mt-2" role="alert">{errors.season.message}</p>}
           {isEdit && (
             <p className="text-xs text-slate-500 mt-2">
               Sezon değiştirilemez — silip yeniden ekle
             </p>
           )}
+        </fieldset>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <FormField
+            label="Marka"
+            required
+            placeholder="Michelin, Bridgestone..."
+            autoFocus
+            error={errors.brand?.message}
+            {...register('brand')}
+          />
+          <FormField
+            label="Ebat"
+            required
+            placeholder="205/55 R16"
+            error={errors.size?.message}
+            {...register('size')}
+          />
         </div>
 
-        {/* Marka ve Ebat */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
-              Marka *
-            </label>
-            <input
-              ref={firstInputRef}
-              type="text"
-              value={brand}
-              onChange={(e) => setBrand(e.target.value)}
-              placeholder="Michelin, Bridgestone..."
-              className={`w-full bg-slate-800 border rounded-lg px-3 py-2 text-sm focus:outline-none transition ${
-                errors.brand ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
-              }`}
-            />
-            {errors.brand && <p className="text-xs text-red-400 mt-1">{errors.brand}</p>}
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
-              Ebat *
-            </label>
-            <input
-              type="text"
-              value={size}
-              onChange={(e) => setSize(e.target.value)}
-              placeholder="205/55 R16"
-              className={`w-full bg-slate-800 border rounded-lg px-3 py-2 text-sm focus:outline-none transition ${
-                errors.size ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
-              }`}
-            />
-            {errors.size && <p className="text-xs text-red-400 mt-1">{errors.size}</p>}
-          </div>
-        </div>
-
-        {/* Alım tarihi ve fiyat */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1 flex items-center gap-1">
-              <Calendar className="w-3 h-3" />
-              Alım Tarihi
-            </label>
-            <input
-              type="date"
-              value={purchaseDate}
-              onChange={(e) => setPurchaseDate(e.target.value)}
-              max={getTodayString()}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1 flex items-center gap-1">
-              <DollarSign className="w-3 h-3" />
-              Toplam Fiyat (₺)
-            </label>
-            <input
-              type="number"
-              value={purchasePrice}
-              onChange={(e) => setPurchasePrice(e.target.value)}
-              placeholder="0"
-              min="0"
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition"
-            />
-          </div>
+          <FormField
+            label={<span className="inline-flex items-center gap-1"><Calendar className="w-3 h-3" />Alım Tarihi</span>}
+            type="date"
+            max={getTodayString()}
+            {...register('purchaseDate')}
+          />
+          <FormField
+            label={<span className="inline-flex items-center gap-1"><DollarSign className="w-3 h-3" />Toplam Fiyat (₺)</span>}
+            type="number"
+            placeholder="0"
+            min="0"
+            {...register('purchasePrice')}
+          />
         </div>
 
         {/* Stepney toggle */}
         <div>
           <label className="flex items-center gap-3 cursor-pointer bg-slate-800/50 p-3 rounded-lg border border-slate-700 hover:bg-slate-800 transition">
-            <input
-              type="checkbox"
-              checked={hasSpare}
-              onChange={(e) => setHasSpare(e.target.checked)}
-              className="w-4 h-4 accent-blue-500"
-            />
+            <input type="checkbox" className="w-4 h-4 accent-blue-500" {...register('hasSpare')} />
             <div className="flex-1">
               <div className="text-sm font-semibold">Stepney dahil</div>
               <div className="text-xs text-slate-400">Yedek lastiği de takip et</div>
@@ -289,59 +222,55 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
           {/* Araç üstten görünüm */}
           <div className="bg-slate-800/30 rounded-lg p-4 mb-3">
             <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
-              {tires.filter(t => t.position !== 'S').map((tire) => {
-                const pos = TIRE_POSITIONS.find(p => p.code === tire.position)
-                const ageInfo = tire.dot.length === 4 ? calculateTireAge(tire.dot) : null
-                const hasError = errors[`dot_${tire.position}`] || errors[`depth_${tire.position}`]
+              {TIRE_POSITIONS.filter(p => p.code !== 'S').map((pos, index) => {
+                const tire = tires[index] ?? { dot: '', treadDepth: '' }
+                const dotHata = errors.tires?.[index]?.dot?.message
+                const derinlikHata = errors.tires?.[index]?.treadDepth?.message
+                const yasBilgisi = (tire.dot || '').length === 4 ? calculateTireAge(tire.dot) : null
 
                 return (
                   <div
-                    key={tire.position}
+                    key={pos.code}
                     className={`bg-slate-900 border-2 rounded-lg p-3 transition ${
-                      hasError ? 'border-red-500/50' : 'border-slate-700'
+                      dotHata || derinlikHata ? 'border-red-500/50' : 'border-slate-700'
                     }`}
                   >
-                    <div className="text-xs font-semibold text-slate-400 mb-2">
-                      {pos.label}
-                    </div>
+                    <div className="text-xs font-semibold text-slate-400 mb-2">{pos.label}</div>
                     <div className="space-y-2">
                       <div>
                         <input
                           type="text"
-                          value={tire.dot}
-                          onChange={(e) => {
-                            const val = e.target.value.replace(/\D/g, '').slice(0, 4)
-                            updateTire(tire.position, 'dot', val)
-                          }}
                           placeholder="DOT (3523)"
                           maxLength={4}
+                          aria-label={`${pos.label} DOT kodu`}
                           className={`w-full bg-slate-800 border rounded px-2 py-1.5 text-xs focus:outline-none transition ${
-                            errors[`dot_${tire.position}`] ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
+                            dotHata ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
                           }`}
+                          {...register(`tires.${index}.dot`, { onChange: dotDegisti(index) })}
                         />
-                        {ageInfo && (
+                        {yasBilgisi && (
                           <div className="text-[9px] text-slate-500 mt-0.5">
-                            {ageInfo.ageYears} yaşında
+                            {yasBilgisi.ageYears} yaşında
                           </div>
                         )}
+                        {dotHata && <div className="text-[9px] text-red-400 mt-0.5" role="alert">{dotHata}</div>}
                       </div>
-                      <div>
-                        <div className="flex items-center gap-1">
-                          <input
-                            type="number"
-                            value={tire.treadDepth || ''}
-                            onChange={(e) => updateTire(tire.position, 'treadDepth', e.target.value)}
-                            placeholder="0"
-                            min="0"
-                            max="15"
-                            step="0.1"
-                            className={`w-full bg-slate-800 border rounded px-2 py-1.5 text-xs focus:outline-none transition ${
-                              errors[`depth_${tire.position}`] ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
-                            }`}
-                          />
-                          <span className="text-[10px] text-slate-500">mm</span>
-                        </div>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          placeholder="0"
+                          min="0"
+                          max="15"
+                          step="0.1"
+                          aria-label={`${pos.label} diş derinliği (mm)`}
+                          className={`w-full bg-slate-800 border rounded px-2 py-1.5 text-xs focus:outline-none transition ${
+                            derinlikHata ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
+                          }`}
+                          {...register(`tires.${index}.treadDepth`)}
+                        />
+                        <span className="text-[10px] text-slate-500">mm</span>
                       </div>
+                      {derinlikHata && <div className="text-[9px] text-red-400" role="alert">{derinlikHata}</div>}
                     </div>
                   </div>
                 )
@@ -353,35 +282,32 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
           </div>
 
           {/* Stepney */}
-          {hasSpare && (
+          {hasSpare && spareIndex >= 0 && (
             <div className="bg-slate-800/30 rounded-lg p-4">
               <div className="max-w-[180px] mx-auto">
                 <div className="bg-slate-900 border-2 border-slate-700 rounded-lg p-3">
                   <div className="text-xs font-semibold text-slate-400 mb-2 flex items-center gap-1">
-                    🛞 Stepney
+                    <span aria-hidden="true">🛞</span> Stepney
                   </div>
                   <div className="space-y-2">
                     <input
                       type="text"
-                      value={tires.find(t => t.position === 'S')?.dot || ''}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, '').slice(0, 4)
-                        updateTire('S', 'dot', val)
-                      }}
                       placeholder="DOT"
                       maxLength={4}
+                      aria-label="Stepney DOT kodu"
                       className="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-blue-500 transition"
+                      {...register(`tires.${spareIndex}.dot`, { onChange: dotDegisti(spareIndex) })}
                     />
                     <div className="flex items-center gap-1">
                       <input
                         type="number"
-                        value={tires.find(t => t.position === 'S')?.treadDepth || ''}
-                        onChange={(e) => updateTire('S', 'treadDepth', e.target.value)}
                         placeholder="0"
                         min="0"
                         max="15"
                         step="0.1"
+                        aria-label="Stepney diş derinliği (mm)"
                         className="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-blue-500 transition"
+                        {...register(`tires.${spareIndex}.treadDepth`)}
                       />
                       <span className="text-[10px] text-slate-500">mm</span>
                     </div>
@@ -394,7 +320,7 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
           {/* Info */}
           <div className="mt-3 bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
             <div className="flex items-start gap-2 text-xs text-slate-300">
-              <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+              <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" aria-hidden="true" />
               <div>
                 <p><strong>DOT kodu:</strong> Lastiğin yan yüzünde 4 haneli sayı (örn. 3523 = 2023'ün 35. haftası)</p>
                 <p className="mt-1"><strong>Diş derinliği:</strong> Yasal minimum 1.6mm, kış için 4mm üstü önerilir</p>
@@ -403,21 +329,14 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
           </div>
         </div>
 
-        {/* Notlar */}
-        <div>
-          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
-            Notlar (opsiyonel)
-          </label>
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Mağaza, garanti, vb."
-            rows={2}
-            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition resize-none"
-          />
-        </div>
+        <FormField
+          label="Notlar (opsiyonel)"
+          as="textarea"
+          rows={2}
+          placeholder="Mağaza, garanti, vb."
+          {...register('notes')}
+        />
 
-        {/* Butonlar */}
         <div className="flex gap-2 pt-2">
           <button
             type="button"
