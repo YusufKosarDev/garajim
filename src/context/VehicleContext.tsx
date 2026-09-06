@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useCallback, useMemo, useRef } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useQueries, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
@@ -29,6 +29,9 @@ import {
 import { parseIntervalKey } from '../utils/maintenanceRecommendations'
 import { fetchAllRows } from '../lib/fetchAllRows'
 import { captureError } from '../lib/errorTracking'
+import { cevrimdisiMi, agHatasiMi } from '../lib/offlineQueue'
+import { vehicleQueue as kuyruk } from '../lib/vehicleQueue'
+import { createDispatcher, REFERANS_ALANLARI } from '../lib/offlineDispatcher'
 import type { ReactNode } from 'react'
 import type {
   Vehicle, MaintenanceRecord, FuelRecord, TireSet, TireChange,
@@ -45,6 +48,8 @@ export interface VehicleContextDegeri {
   tireChanges: TireChange[]
   customIntervals: CustomIntervals
   isLoaded: boolean
+  /** Çevrimdışıyken kuyruğa alınmış, henüz gönderilmemiş kayıt sayısı */
+  bekleyenSayisi: number
   addVehicle: (vehicle: Partial<Vehicle>) => Promise<Vehicle | null>
   updateVehicle: (id: string, updates: Partial<Vehicle>) => Promise<void>
   deleteVehicle: (id: string) => Promise<void>
@@ -163,7 +168,101 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
     })
   }, [queryClient, userId])
 
+  // ============ ÇEVRİMDIŞI KUYRUK ============
+  const [bekleyenSayisi, setBekleyenSayisi] = useState(0)
+
+  const sayiyiTazele = useCallback(async () => {
+    setBekleyenSayisi(await kuyruk.uzunluk())
+  }, [])
+
+  /**
+   * Mutasyonu çalıştırır; ağ yoksa kuyruğa alır.
+   * Kuyruğa alınırsa `null` döner ve çağıran iyimser güncellemeyi yapar.
+   */
+  const kuyruklaCalistir = useCallback(async <T,>(
+    tanim: {
+      tablo: string
+      islem: 'insert' | 'update' | 'delete'
+      payload?: Record<string, unknown>
+      hedefId?: string
+      geciciId?: string
+    },
+    calistir: () => Promise<T>
+  ): Promise<{ kuyrukta: true } | { kuyrukta: false; sonuc: T }> => {
+    const kuyrugaAl = async () => {
+      await kuyruk.kuyrugaAl({
+        ...tanim,
+        referansAlanlari: REFERANS_ALANLARI[tanim.tablo] ?? [],
+      })
+      await sayiyiTazele()
+      toast('Çevrimdışısın — kayıt sıraya alındı, bağlantı gelince gönderilecek', { icon: '📴' })
+      return { kuyrukta: true } as const
+    }
+
+    if (cevrimdisiMi()) return kuyrugaAl()
+
+    try {
+      return { kuyrukta: false, sonuc: await calistir() }
+    } catch (error) {
+      // Yalnızca AĞ hatasında kuyruğa al — doğrulama/RLS hatası tekrar denenirse
+      // yine başarısız olur, kullanıcıya gösterilmeli.
+      if (agHatasiMi(error)) return kuyrugaAl()
+      throw error
+    }
+  }, [sayiyiTazele])
+
+  // Bağlantı gelince kuyruğu boşalt
+  useEffect(() => {
+    if (!userId) return
+
+    const gonder = async () => {
+      if (cevrimdisiMi()) return
+      if ((await kuyruk.uzunluk()) === 0) return
+
+      const sonuc = await kuyruk.replay(createDispatcher(userId))
+      await sayiyiTazele()
+
+      if (sonuc.gonderilen > 0) {
+        toast.success(`${sonuc.gonderilen} bekleyen kayıt gönderildi ✓`)
+        // Gerçek satırları almak için sorguları tazele
+        queryClient.invalidateQueries({ queryKey: vehicleQueryKeys.all(userId) })
+      }
+      if (sonuc.kalan > 0) {
+        console.warn('Kuyruk boşaltılamadı, kalan:', sonuc.kalan, sonuc.hata)
+      }
+    }
+
+    void gonder()
+    window.addEventListener('online', gonder)
+    return () => window.removeEventListener('online', gonder)
+  }, [userId, queryClient, sayiyiTazele])
+
   const setVehicles = useCallback((u: Guncelleyici<Vehicle[]>) => writeCache('vehicles', u), [writeCache])
+  const setMaintenanceRecordsErken = useCallback(
+    (u: Guncelleyici<MaintenanceRecord[]>) => writeCache('maintenanceRecords', u),
+    [writeCache]
+  )
+
+  /**
+   * Bakım kaydını kuyruğa alıp listeye iyimser olarak ekler.
+   * Geçici id verilir; bağlantı gelince gerçek id ile değiştirilir
+   * (sorgular invalidate edilerek).
+   */
+  const kuyrugaAlVeIyimserEkle = useCallback(async (record: Partial<MaintenanceRecord>) => {
+    const geciciId = `gecici-${crypto.randomUUID()}`
+    await kuyruklaCalistir(
+      {
+        tablo: 'maintenance_records',
+        islem: 'insert',
+        payload: record as Record<string, unknown>,
+        geciciId,
+      },
+      async () => null
+    )
+    const iyimser = { ...record, id: geciciId, cost: record.cost ?? 0 } as MaintenanceRecord
+    setMaintenanceRecordsErken(prev => [...prev, iyimser])
+    return iyimser
+  }, [kuyruklaCalistir, setMaintenanceRecordsErken])
   const setMaintenanceRecords = useCallback((u: Guncelleyici<MaintenanceRecord[]>) => writeCache('maintenanceRecords', u), [writeCache])
   const setFuelRecords = useCallback((u: Guncelleyici<FuelRecord[]>) => writeCache('fuelRecords', u), [writeCache])
   const setTireSets = useCallback((u: Guncelleyici<TireSet[]>) => writeCache('tireSets', u), [writeCache])
@@ -443,6 +542,12 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
   const addMaintenance = useCallback(async (record: Partial<MaintenanceRecord>) => {
     if (!user) return null
 
+    // Çevrimdışıysa kuyruğa al ve iyimser olarak listeye ekle.
+    // Bu tam da servisteyken/yolda kayıt girilen senaryo — en çok burada gerekli.
+    if (cevrimdisiMi()) {
+      return kuyrugaAlVeIyimserEkle(record)
+    }
+
     try {
       // 🆕 Bakım fotoğrafını Storage'a yükle (varsa)
       let uploadedPhoto = record.photo
@@ -475,11 +580,14 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
       toast.success('Bakım kaydı eklendi ✓')
       return newRecord
     } catch (error) {
+      if (agHatasiMi(error)) {
+        return kuyrugaAlVeIyimserEkle(record)
+      }
       console.error('addMaintenance:', error)
       toast.error('Bakım eklenemedi: ' + formatSupabaseError(error as Error))
       return null
     }
-  }, [user, setMaintenanceRecords])
+  }, [user, setMaintenanceRecords, kuyrugaAlVeIyimserEkle])
 
   const updateMaintenance = useCallback(async (id: string, updates: Partial<MaintenanceRecord>) => {
     if (!user) return
@@ -882,6 +990,7 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
     tireChanges,
     customIntervals,
     isLoaded,
+    bekleyenSayisi,
     addVehicle,
     updateVehicle,
     deleteVehicle,
@@ -901,7 +1010,7 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
     clearAllData,
   }), [
     vehicles, maintenanceRecords, fuelRecords, tireSets, tireChanges,
-    customIntervals, isLoaded,
+    customIntervals, isLoaded, bekleyenSayisi,
     addVehicle, updateVehicle, deleteVehicle,
     addMaintenance, updateMaintenance, deleteMaintenance,
     addFuel, updateFuel, deleteFuel,

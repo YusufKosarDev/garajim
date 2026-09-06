@@ -31,6 +31,7 @@ vi.mock('../lib/storageHelpers', () => h.storage)
 
 // Mock'lardan SONRA import edilmeli
 const { VehicleProvider, useVehicles } = await import('./VehicleContext')
+const { vehicleQueue: kuyruk } = await import('../lib/vehicleQueue')
 
 // ---------------------------------------------------------------------------
 // Yardımcılar
@@ -71,7 +72,7 @@ async function kur() {
   await screen.findByText(/hazir/)
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   // TanStack Query bildirimleri varsayılan olarak macrotask'a erteler; senkron act()
   // bunu yakalamaz ve cache'e yazılan veri testte state'e yansımamış gibi görünür.
   // Uygulamada sorun değil (bir tick sonra geliyor), testte deterministik olsun diye
@@ -82,6 +83,8 @@ beforeEach(() => {
   queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
+  // Kuyruk modül seviyesinde tekil; testler arasında sızmasın
+  await kuyruk.temizle()
   h.sb = createSupabaseMock()
   h.auth = { user: { id: 'user-1' }, isAuthenticated: true }
   Object.values(h.toast).forEach(f => f.mockClear?.())
@@ -354,5 +357,54 @@ describe('fetchAllRows — parçalı çekim', () => {
     h.sb.setResponse('fuel_records', 'select', { data: null, error: { message: 'kopdu' } })
 
     await expect(fetchAllRows(h.sb.client, 'fuel_records', 'date', false)).rejects.toMatchObject({ message: 'kopdu' })
+  })
+})
+
+// ===========================================================================
+describe('çevrimdışı kuyruk', () => {
+  it('çevrimdışıyken bakım kaydı sunucuya GİTMEZ, listeye iyimser eklenir', async () => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false)
+    await kur()
+
+    let sonuc
+    await act(async () => {
+      sonuc = await ctx.addMaintenance({ vehicleId: 'v1', type: 'Yağ Değişimi', date: '2026-01-01', km: 1000 })
+    })
+
+    // Sunucuya insert gitmemeli
+    expect(h.sb.callsFor('maintenance_records', 'insert')).toHaveLength(0)
+    // Ama kullanıcı kaydını listede görmeli
+    expect(ctx.maintenanceRecords).toHaveLength(1)
+    expect(ctx.maintenanceRecords[0].type).toBe('Yağ Değişimi')
+    expect(sonuc.id).toMatch(/^gecici-/)
+
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true)
+  })
+
+  it('çevrimiçiyken normal yoldan gider, kuyruğa alınmaz', async () => {
+    await kur()
+    h.sb.setResponse('maintenance_records', 'insert', { data: bakimSatiri(), error: null })
+
+    await act(async () => {
+      await ctx.addMaintenance({ vehicleId: 'v1', type: 'Yağ Değişimi', date: '2026-01-01', km: 1000 })
+    })
+
+    expect(h.sb.callsFor('maintenance_records', 'insert')).toHaveLength(1)
+    expect(ctx.maintenanceRecords[0].id).toBe('m1')
+  })
+
+  it('doğrulama hatası kuyruğa ALINMAZ — tekrar denense de başarısız olur', async () => {
+    await kur()
+    h.sb.setResponse('maintenance_records', 'insert', {
+      data: null, error: { message: 'violates check constraint' },
+    })
+
+    await act(async () => {
+      await ctx.addMaintenance({ vehicleId: 'v1', type: 'Yağ Değişimi', date: '2026-01-01', km: 1000 })
+    })
+
+    // Kullanıcıya hata gösterilmeli, sessizce kuyruğa alınmamalı
+    expect(h.toast.error).toHaveBeenCalledWith(expect.stringContaining('Geçersiz değer'))
+    expect(ctx.maintenanceRecords).toHaveLength(0)
   })
 })
