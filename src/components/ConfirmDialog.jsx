@@ -1,3 +1,4 @@
+import { useId } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import Modal from './Modal'
 
@@ -31,16 +32,29 @@ export default function ConfirmDialog({
 
   const config = variantConfig[variant] || variantConfig.danger
 
+  // Başlık Modal'a prop olarak verilmiyor (tasarım gereği kendi gövdesinde
+  // render ediliyor). Bu yüzden diyaloğun erişilebilir adı YOKTU — ekran okuyucu
+  // sadece "dialog" diyordu. Adı ve açıklamayı buradan bağlıyoruz.
+  const baseId = useId()
+  const titleId = `${baseId}-baslik`
+  const messageId = `${baseId}-mesaj`
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="max-w-md"
+      labelledBy={titleId}
+      describedBy={message ? messageId : undefined}
+    >
       <div className="p-5">
         <div className="flex items-start gap-4 mb-5">
           <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${config.iconBg}`}>
-            <AlertTriangle className={`w-6 h-6 ${config.iconColor}`} />
+            <AlertTriangle className={`w-6 h-6 ${config.iconColor}`} aria-hidden="true" />
           </div>
           <div className="flex-1 pt-1">
-            <h3 className="text-lg font-bold mb-2">{title}</h3>
-            {message && <p className="text-sm text-slate-400 leading-relaxed">{message}</p>}
+            <h3 id={titleId} className="text-lg font-bold mb-2">{title}</h3>
+            {message && <p id={messageId} className="text-sm text-slate-400 leading-relaxed">{message}</p>}
           </div>
         </div>
 

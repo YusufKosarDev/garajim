@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useId } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
@@ -37,10 +37,19 @@ export default function Modal({
   maxWidth = 'max-w-lg',
   closeOnBackdrop = true,
   closeOnEsc = true,
+  // Başlık kendi içeriğinde render ediliyorsa (örn. ConfirmDialog) erişilebilir
+  // adı oradan almak için kullanılır.
+  labelledBy,
+  describedBy,
 }) {
   const modalIdRef = useRef(`modal-${Date.now()}-${Math.random()}`)
   const modalRef = useRef(null)
   const previousFocusRef = useRef(null)
+
+  // Başlık id'si modal'a özel olmalı: sabit "modal-title" kullanılınca iç içe
+  // iki modal açıkken DOM'da aynı id iki kez oluşuyor ve etiketleme bozuluyor.
+  // useId kullanıyoruz — ref'i render sırasında okumak React kuralına aykırı.
+  const titleId = `${useId()}-baslik`
 
   // Modal açıldığında stack'e ekle, kapandığında çıkar
   useEffect(() => {
@@ -61,6 +70,17 @@ export default function Modal({
         }
       }
     }
+  }, [isOpen])
+
+  // Açılışta odağı modal'a al — yoksa odak body'de kalıyor, ekran okuyucu
+  // diyaloğu duyurmuyor ve ilk Tab kullanıcıyı modalın dışına çıkarabiliyor.
+  useEffect(() => {
+    if (!isOpen) return
+    const node = modalRef.current
+    if (!node) return
+    // Form'lardaki autoFocus zaten odağı içeri aldıysa karışma
+    if (node.contains(document.activeElement)) return
+    node.focus()
   }, [isOpen])
 
   // ESC tuşu — sadece en üstteki modal tepki versin
@@ -148,11 +168,13 @@ export default function Modal({
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
-            aria-labelledby={title ? 'modal-title' : undefined}
+            aria-labelledby={title ? titleId : labelledBy}
+            aria-describedby={describedBy}
+            tabIndex={-1}
           >
             {title && (
               <div className="flex items-center justify-between p-5 border-b border-slate-800 sticky top-0 bg-slate-900/95 backdrop-blur-sm z-10">
-                <h2 id="modal-title" className="text-lg font-bold">{title}</h2>
+                <h2 id={titleId} className="text-lg font-bold">{title}</h2>
                 <button
                   onClick={onClose}
                   className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition"

@@ -10,7 +10,7 @@ export default function MobileTopBar({ onOpenCommandPalette }) {
         <Link to="/" className="flex items-center gap-2 group shrink-0">
           <img
             src="/logo.svg"
-            alt="Garajım"
+            alt=""
             className="w-7 h-7 group-hover:scale-105 transition-transform"
           />
           <div className="text-base font-bold text-white leading-none">Garajım</div>

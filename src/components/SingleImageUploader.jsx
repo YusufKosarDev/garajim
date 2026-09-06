@@ -79,7 +79,7 @@ export default function SingleImageUploader({
             >
               <img
                 src={photo}
-                alt="Fatura"
+                alt="Yüklenen fatura fotoğrafı"
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-black/0 group-hover/thumb:bg-black/40 transition flex items-center justify-center">

@@ -48,7 +48,7 @@ export default function Navbar({ onOpenCommandPalette }) {
         <Link to="/" className="flex items-center gap-2 group shrink-0">
           <img
             src="/logo.svg"
-            alt="Garajım"
+            alt=""
             className="w-8 h-8 md:w-9 md:h-9 group-hover:scale-105 transition-transform"
           />
           <div className="hidden md:block">

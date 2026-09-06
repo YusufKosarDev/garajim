@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import ConfirmDialog from './ConfirmDialog'
 
 /**
  * GarageMembers — Garajın üyelerini ve davetleri yönetir
@@ -31,6 +32,8 @@ export default function GarageMembers() {
   const [inviting, setInviting] = useState(false)
   const [lastInviteUrl, setLastInviteUrl] = useState('')
   const [copied, setCopied] = useState(false)
+  const [cancelInviteTarget, setCancelInviteTarget] = useState(null)
+  const [removeMemberTarget, setRemoveMemberTarget] = useState(null)
 
   // Owner mu kullanıcı?
   const isOwner = garage && garage.owner_id === user?.id
@@ -161,9 +164,7 @@ export default function GarageMembers() {
 
   // Davet iptali (status = cancelled)
   const handleCancelInvite = async (invitationId) => {
-    const confirmed = window.confirm('Bu daveti iptal etmek istediğine emin misin?')
-    if (!confirmed) return
-
+    setCancelInviteTarget(null)
     try {
       const { error } = await supabase
         .from('garage_invitations')
@@ -180,16 +181,9 @@ export default function GarageMembers() {
     }
   }
 
-  // Üyeyi çıkar
-  const handleRemoveMember = async (memberId, memberRole) => {
-    if (memberRole === 'owner') {
-      toast.error('Owner çıkarılamaz')
-      return
-    }
-
-    const confirmed = window.confirm('Bu üyeyi garajdan çıkarmak istediğine emin misin?')
-    if (!confirmed) return
-
+  // Üyeyi çıkar (onay diyaloğundan sonra çağrılır)
+  const handleRemoveMember = async (memberId) => {
+    setRemoveMemberTarget(null)
     try {
       const { error } = await supabase
         .from('garage_members')
@@ -289,7 +283,7 @@ export default function GarageMembers() {
                     )}
                     {isOwner && member.role !== 'owner' && (
                       <button
-                        onClick={() => handleRemoveMember(member.id, member.role)}
+                        onClick={() => setRemoveMemberTarget(member)}
                         className="p-1.5 text-red-400 hover:bg-red-500/10 rounded transition"
                         title="Üyeyi çıkar"
                       >
@@ -421,7 +415,7 @@ export default function GarageMembers() {
                       </div>
                     </div>
                     <button
-                      onClick={() => handleCancelInvite(invite.id)}
+                      onClick={() => setCancelInviteTarget(invite)}
                       className="p-1.5 text-red-400 hover:bg-red-500/10 rounded transition flex-shrink-0"
                       title="Daveti iptal et"
                     >
@@ -434,6 +428,29 @@ export default function GarageMembers() {
           )}
         </>
       )}
+
+      <ConfirmDialog
+        isOpen={!!cancelInviteTarget}
+        onClose={() => setCancelInviteTarget(null)}
+        onConfirm={() => handleCancelInvite(cancelInviteTarget.id)}
+        title="Davet iptal edilsin mi?"
+        message={
+          cancelInviteTarget
+            ? `${cancelInviteTarget.email} adresine gönderilen davet iptal edilecek.`
+            : ''
+        }
+        confirmText="Evet, iptal et"
+        variant="warning"
+      />
+
+      <ConfirmDialog
+        isOpen={!!removeMemberTarget}
+        onClose={() => setRemoveMemberTarget(null)}
+        onConfirm={() => handleRemoveMember(removeMemberTarget.id)}
+        title="Üye garajdan çıkarılsın mı?"
+        message="Bu üye artık garajdaki araçlara ve kayıtlara erişemeyecek."
+        confirmText="Evet, çıkar"
+      />
     </div>
   )
 }

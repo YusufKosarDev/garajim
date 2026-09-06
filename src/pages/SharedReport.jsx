@@ -116,7 +116,7 @@ export default function SharedReport() {
       <header className="sticky top-0 z-30 bg-slate-900/80 backdrop-blur-md border-b border-slate-800">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <img src="/logo.svg" alt="Garajım" className="w-8 h-8" />
+            <img src="/logo.svg" alt="" className="w-8 h-8" />
             <div>
               <div className="text-base font-bold leading-none">Garajım</div>
               <div className="text-[10px] text-slate-400 leading-none mt-0.5">Paylaşılan Rapor</div>

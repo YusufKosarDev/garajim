@@ -40,6 +40,7 @@ export default function Settings({ onShowTour }) {
   const [migrationData, setMigrationData] = useState(null)
   const [isMigrationOpen, setIsMigrationOpen] = useState(false)
   const [hasOldData, setHasOldData] = useState(false)
+  const [isClearLocalOpen, setIsClearLocalOpen] = useState(false)
   const fileInputRef = useRef(null)
 
   // LocalStorage'da eski veri var mı kontrol et (sayfa açılınca bir kez)
@@ -102,11 +103,6 @@ export default function Settings({ onShowTour }) {
   }
 
   const handleClearLocalStorage = () => {
-    const confirmed = window.confirm(
-      'LocalStorage\'daki eski yerel verileri silmek istediğine emin misin? Supabase verilerin etkilenmez.'
-    )
-    if (!confirmed) return
-
     clearLocalStorageData()
     setHasOldData(false)
     toast.success('Eski yerel veriler temizlendi')
@@ -157,7 +153,7 @@ export default function Settings({ onShowTour }) {
                 Buluta Yükle
               </button>
               <button
-                onClick={handleClearLocalStorage}
+                onClick={() => setIsClearLocalOpen(true)}
                 className="flex items-center gap-2 bg-slate-700/50 hover:bg-slate-700 text-slate-300 px-5 py-2.5 rounded-lg font-medium transition border border-slate-600"
               >
                 Yerel Verileri Temizle
@@ -409,6 +405,16 @@ export default function Settings({ onShowTour }) {
           title="Tüm veriler silinsin mi?"
           message={`${vehicles.length} araç, ${maintenanceRecords.length} bakım ve ${fuelRecords.length} yakıt kaydı kalıcı olarak silinecek. Bu işlem geri alınamaz.`}
           confirmText="Evet, hepsini sil"
+        />
+
+        <ConfirmDialog
+          isOpen={isClearLocalOpen}
+          onClose={() => setIsClearLocalOpen(false)}
+          onConfirm={handleClearLocalStorage}
+          title="Eski yerel veriler silinsin mi?"
+          message="Tarayıcıda kalan eski LocalStorage verileri silinecek. Supabase'deki verilerin etkilenmez."
+          confirmText="Evet, temizle"
+          variant="warning"
         />
 
         <ConfirmDialog

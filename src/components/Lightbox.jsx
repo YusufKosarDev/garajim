@@ -15,6 +15,13 @@ export default function Lightbox({ isOpen, onClose, photos = [], initialIndex = 
     }
   }, [isOpen, initialIndex])
 
+  // Açılışta odağı kapsayıcıya al — ok tuşları/Escape'in çalışması ve ekran
+  // okuyucunun diyaloğu duyurması için gerekli.
+  useEffect(() => {
+    if (!isOpen) return
+    containerRef.current?.focus()
+  }, [isOpen])
+
   // Body scroll lock (Modal sistemimizle uyumlu)
   useEffect(() => {
     if (!isOpen) return
@@ -117,10 +124,14 @@ export default function Lightbox({ isOpen, onClose, photos = [], initialIndex = 
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 bg-black/95 backdrop-blur-md z-[100] flex flex-col"
+          className="fixed inset-0 bg-black/95 backdrop-blur-md z-[100] flex flex-col outline-none"
           onClick={handleBackdropClick}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Fotoğraf görüntüleyici — ${currentIndex + 1} / ${photos.length}`}
+          tabIndex={-1}
         >
           {/* Üst bar */}
           <div className="absolute top-0 left-0 right-0 z-10 p-4 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent">

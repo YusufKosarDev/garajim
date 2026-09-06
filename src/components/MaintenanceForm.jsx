@@ -7,6 +7,7 @@ import { checkMaintenanceKm } from '../utils/kmHelpers'
 import { validatePastDate, getTodayString } from '../utils/dateValidation'
 import Modal from './Modal'
 import SingleImageUploader from './SingleImageUploader'
+import ConfirmDialog from './ConfirmDialog'
 
 const commonMaintenanceTypes = [
   'Yağ Değişimi',
@@ -37,6 +38,7 @@ export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord
   const [date, setDate] = useState('')
   const [km, setKm] = useState('')
   const [cost, setCost] = useState('')
+  const [pendingKmConfirm, setPendingKmConfirm] = useState(null)
   const [notes, setNotes] = useState('')
   const [photo, setPhoto] = useState(null)
   const [errors, setErrors] = useState({})
@@ -103,6 +105,30 @@ export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord
     return Object.keys(newErrors).length === 0
   }
 
+  // Form verisini kaydedilebilir hale getirir
+  const buildData = () => ({
+    vehicleId,
+    type: isCustom ? customType.trim() : type,
+    date,
+    km: Number(km),
+    cost: Number(cost) || 0,
+    notes: notes.trim(),
+    photo: photo || null,
+  })
+
+  // Asıl kaydetme — hem doğrudan hem KM onayından sonra çağrılır
+  const commit = (data) => {
+    if (isEdit) {
+      updateMaintenance(editRecord.id, data)
+      toast.success('Bakım kaydı güncellendi 🔧')
+    } else {
+      addMaintenance(data)
+      toast.success('Bakım kaydı eklendi 🔧')
+    }
+    setPendingKmConfirm(null)
+    onClose()
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!validate()) {
@@ -119,31 +145,14 @@ export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord
       editRecord?.id
     )
 
+    // Bu bir hata değil, bilinçli bir onay: kullanıcı geçmişe dönük kayıt
+    // giriyor olabilir. Önceden window.confirm ile soruluyordu.
     if (kmCheck.needsConfirm) {
-      const confirmed = window.confirm(kmCheck.message + '\n\nDevam etmek istiyor musun?')
-      if (!confirmed) return
+      setPendingKmConfirm({ data: buildData(), message: kmCheck.message })
+      return
     }
 
-    const finalType = isCustom ? customType.trim() : type
-
-    const data = {
-      vehicleId,
-      type: finalType,
-      date,
-      km: Number(km),
-      cost: Number(cost) || 0,
-      notes: notes.trim(),
-      photo: photo || null,
-    }
-
-    if (isEdit) {
-      updateMaintenance(editRecord.id, data)
-      toast.success('Bakım kaydı güncellendi 🔧')
-    } else {
-      addMaintenance(data)
-      toast.success('Bakım kaydı eklendi 🔧')
-    }
-    onClose()
+    commit(buildData())
   }
 
   return (
@@ -305,6 +314,18 @@ export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord
           </button>
         </div>
       </form>
+
+      {/* KM geriye dönük uyarısı — Modal stack'i iç içe diyaloğu destekliyor */}
+      <ConfirmDialog
+        isOpen={!!pendingKmConfirm}
+        onClose={() => setPendingKmConfirm(null)}
+        onConfirm={() => commit(pendingKmConfirm.data)}
+        title="Geçmişe dönük kayıt mı?"
+        message={pendingKmConfirm?.message}
+        confirmText="Evet, kaydet"
+        cancelText="Vazgeç"
+        variant="warning"
+      />
     </Modal>
   )
 }
