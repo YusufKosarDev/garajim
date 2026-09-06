@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react'
+import { createContext, useContext, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useQueries, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
 import { useAuth } from './AuthContext'
@@ -35,72 +36,101 @@ export const useVehicles = () => {
   return ctx
 }
 
+// Sorgu anahtarları — realtime ve mutasyonlar cache'e bunlarla yazıyor
+export const vehicleQueryKeys = {
+  all: (userId) => ['garaj', userId],
+  list: (userId, name) => ['garaj', userId, name],
+}
+
+// Modül seviyesinde sabit boş referanslar (bkz. aşağıdaki `?? BOS_DIZI` kullanımı)
+const BOS_DIZI = []
+const BOS_NESNE = {}
+
+// Liste tabloları: hepsi aynı şekilde çekiliyor, tek yerde tarif edildi
+const LIST_QUERIES = [
+  { name: 'vehicles', table: 'vehicles', orderBy: 'created_at', ascending: true, map: vehicleFromDb },
+  { name: 'maintenanceRecords', table: 'maintenance_records', orderBy: 'date', ascending: false, map: maintenanceFromDb },
+  { name: 'fuelRecords', table: 'fuel_records', orderBy: 'date', ascending: false, map: fuelFromDb },
+  { name: 'tireSets', table: 'tire_sets', orderBy: 'created_at', ascending: false, map: tireSetFromDb },
+  { name: 'tireChanges', table: 'tire_changes', orderBy: 'date', ascending: false, map: tireChangeFromDb },
+]
+
 export const VehicleProvider = ({ children }) => {
   const { user, isAuthenticated } = useAuth()
+  const queryClient = useQueryClient()
+  const userId = user?.id
+  const enabled = Boolean(isAuthenticated && userId)
 
-  const [vehicles, setVehicles] = useState([])
-  const [maintenanceRecords, setMaintenanceRecords] = useState([])
-  const [fuelRecords, setFuelRecords] = useState([])
-  const [tireSets, setTireSets] = useState([])
-  const [tireChanges, setTireChanges] = useState([])
-  const [customIntervals, setCustomIntervals] = useState({})
-  const [isLoaded, setIsLoaded] = useState(false)
+  // ============ OKUMA: TanStack Query ============
+  // Elle yazılmış yükleme/cache mantığının yerini aldı. Retry, pencere odaklanınca
+  // yeniden doğrulama ve tekrarlı isteklerin birleştirilmesi buradan geliyor.
+  const results = useQueries({
+    queries: [
+      ...LIST_QUERIES.map(({ name, table, orderBy, ascending, map }) => ({
+        queryKey: vehicleQueryKeys.list(userId, name),
+        enabled,
+        queryFn: async () => {
+          const { data, error } = await supabase
+            .from(table)
+            .select('*')
+            .order(orderBy, { ascending })
+          if (error) throw error
+          return (data || []).map(map)
+        },
+      })),
+      {
+        queryKey: vehicleQueryKeys.list(userId, 'customIntervals'),
+        enabled,
+        queryFn: async () => {
+          const { data, error } = await supabase.from('custom_intervals').select('*')
+          if (error) throw error
+          return customIntervalsFromDbRows(data)
+        },
+      },
+    ],
+  })
 
-  // ============ INITIAL LOAD (Auth değişince) ============
+  const [vehiclesQ, maintenanceQ, fuelQ, tireSetsQ, tireChangesQ, intervalsQ] = results
+
+  // Sabit boş referanslar: `?? []` her render'da yeni dizi üretir ve aşağıdaki
+  // provider useMemo'sunu (madde 14) her render'da geçersiz kılardı.
+  const vehicles = vehiclesQ.data ?? BOS_DIZI
+  const maintenanceRecords = maintenanceQ.data ?? BOS_DIZI
+  const fuelRecords = fuelQ.data ?? BOS_DIZI
+  const tireSets = tireSetsQ.data ?? BOS_DIZI
+  const tireChanges = tireChangesQ.data ?? BOS_DIZI
+  const customIntervals = intervalsQ.data ?? BOS_NESNE
+
+  // Oturum yoksa sorgular hiç çalışmaz (enabled: false) ve sonsuza kadar "pending"
+  // kalırlar — bu durumu yüklenmiş saymalıyız, yoksa uygulama iskelet ekranda takılır.
+  const isLoaded = !enabled || results.every(r => r.isSuccess || r.isError)
+
+  // Yükleme hatasını kullanıcıya bir kez göster
+  const loadError = results.find(r => r.isError)?.error
+  const shownErrorRef = useRef(null)
   useEffect(() => {
-    if (!isAuthenticated || !user) {
-      setVehicles([])
-      setMaintenanceRecords([])
-      setFuelRecords([])
-      setTireSets([])
-      setTireChanges([])
-      setCustomIntervals({})
-      setIsLoaded(true)
-      return
-    }
+    if (!loadError || shownErrorRef.current === loadError) return
+    shownErrorRef.current = loadError
+    console.error('Veri yükleme hatası:', loadError)
+    toast.error('Veriler yüklenemedi: ' + formatSupabaseError(loadError))
+  }, [loadError])
 
-    const loadAllData = async () => {
-      setIsLoaded(false)
-      try {
-        const [
-          vehiclesRes,
-          maintenanceRes,
-          fuelRes,
-          tireSetsRes,
-          tireChangesRes,
-          customIntervalsRes,
-        ] = await Promise.all([
-          supabase.from('vehicles').select('*').order('created_at', { ascending: true }),
-          supabase.from('maintenance_records').select('*').order('date', { ascending: false }),
-          supabase.from('fuel_records').select('*').order('date', { ascending: false }),
-          supabase.from('tire_sets').select('*').order('created_at', { ascending: false }),
-          supabase.from('tire_changes').select('*').order('date', { ascending: false }),
-          supabase.from('custom_intervals').select('*'),
-        ])
+  // ============ YAZMA: cache'e yazan setter shim'leri ============
+  // İmzaları useState setter'larıyla birebir aynı, böylece aşağıdaki tüm CRUD
+  // mantığı (fotoğraf yükleme/silme, echo engelleme, toast'lar) değişmeden kaldı.
+  const writeCache = useCallback((name, updater) => {
+    queryClient.setQueryData(vehicleQueryKeys.list(userId, name), (prev) => {
+      const base = prev ?? (name === 'customIntervals' ? {} : [])
+      return typeof updater === 'function' ? updater(base) : updater
+    })
+  }, [queryClient, userId])
 
-        if (vehiclesRes.error) throw vehiclesRes.error
-        if (maintenanceRes.error) throw maintenanceRes.error
-        if (fuelRes.error) throw fuelRes.error
-        if (tireSetsRes.error) throw tireSetsRes.error
-        if (tireChangesRes.error) throw tireChangesRes.error
-        if (customIntervalsRes.error) throw customIntervalsRes.error
-
-        setVehicles((vehiclesRes.data || []).map(vehicleFromDb))
-        setMaintenanceRecords((maintenanceRes.data || []).map(maintenanceFromDb))
-        setFuelRecords((fuelRes.data || []).map(fuelFromDb))
-        setTireSets((tireSetsRes.data || []).map(tireSetFromDb))
-        setTireChanges((tireChangesRes.data || []).map(tireChangeFromDb))
-        setCustomIntervals(customIntervalsFromDbRows(customIntervalsRes.data))
-      } catch (error) {
-        console.error('Veri yükleme hatası:', error)
-        toast.error('Veriler yüklenemedi: ' + formatSupabaseError(error))
-      } finally {
-        setIsLoaded(true)
-      }
-    }
-
-    loadAllData()
-  }, [isAuthenticated, user])
+  const setVehicles = useCallback((u) => writeCache('vehicles', u), [writeCache])
+  const setMaintenanceRecords = useCallback((u) => writeCache('maintenanceRecords', u), [writeCache])
+  const setFuelRecords = useCallback((u) => writeCache('fuelRecords', u), [writeCache])
+  const setTireSets = useCallback((u) => writeCache('tireSets', u), [writeCache])
+  const setTireChanges = useCallback((u) => writeCache('tireChanges', u), [writeCache])
+  const setCustomIntervals = useCallback((u) => writeCache('customIntervals', u), [writeCache])
 
   // ============ REAL-TIME SUBSCRIPTIONS ============
   // Garajdaki herhangi bir değişiklik (kendi başka cihazın veya garajı
@@ -190,7 +220,7 @@ export const VehicleProvider = ({ children }) => {
       cancelled = true
       if (channel) supabase.removeChannel(channel)
     }
-  }, [isAuthenticated, user])
+  }, [isAuthenticated, user, setVehicles, setMaintenanceRecords, setFuelRecords, setTireSets, setTireChanges])
 
   // ============ ARAÇ CRUD ============
   const addVehicle = useCallback(async (vehicle) => {
@@ -238,7 +268,7 @@ export const VehicleProvider = ({ children }) => {
       toast.error('Araç eklenemedi: ' + formatSupabaseError(error))
       return null
     }
-  }, [user])
+  }, [user, setVehicles])
 
   const updateVehicle = useCallback(async (id, updates) => {
     if (!user) return
@@ -300,7 +330,7 @@ export const VehicleProvider = ({ children }) => {
       console.error('updateVehicle:', error)
       toast.error('Araç güncellenemedi: ' + formatSupabaseError(error))
     }
-  }, [user, vehicles])
+  }, [user, vehicles, setVehicles])
 
   const deleteVehicle = useCallback(async (id) => {
     if (!user) return
@@ -356,7 +386,7 @@ export const VehicleProvider = ({ children }) => {
       console.error('deleteVehicle:', error)
       toast.error('Araç silinemedi: ' + formatSupabaseError(error))
     }
-  }, [user, vehicles, maintenanceRecords])
+  }, [user, vehicles, maintenanceRecords, setVehicles, setMaintenanceRecords, setFuelRecords, setTireSets, setTireChanges, setCustomIntervals])
 
   // ============ BAKIM CRUD ============
   const addMaintenance = useCallback(async (record) => {
@@ -397,7 +427,7 @@ export const VehicleProvider = ({ children }) => {
       toast.error('Bakım eklenemedi: ' + formatSupabaseError(error))
       return null
     }
-  }, [user])
+  }, [user, setMaintenanceRecords])
 
   const updateMaintenance = useCallback(async (id, updates) => {
     if (!user) return
@@ -449,7 +479,7 @@ export const VehicleProvider = ({ children }) => {
       console.error('updateMaintenance:', error)
       toast.error('Bakım güncellenemedi: ' + formatSupabaseError(error))
     }
-  }, [user, maintenanceRecords])
+  }, [user, maintenanceRecords, setMaintenanceRecords])
 
   const deleteMaintenance = useCallback(async (id) => {
     if (!user) return
@@ -476,7 +506,7 @@ export const VehicleProvider = ({ children }) => {
       console.error('deleteMaintenance:', error)
       toast.error('Bakım silinemedi: ' + formatSupabaseError(error))
     }
-  }, [user, maintenanceRecords])
+  }, [user, maintenanceRecords, setMaintenanceRecords])
 
   // ============ YAKIT CRUD ============
   const addFuel = useCallback(async (record) => {
@@ -504,7 +534,7 @@ export const VehicleProvider = ({ children }) => {
       toast.error('Yakıt eklenemedi: ' + formatSupabaseError(error))
       return null
     }
-  }, [user])
+  }, [user, setFuelRecords])
 
   const updateFuel = useCallback(async (id, updates) => {
     if (!user) return
@@ -529,7 +559,7 @@ export const VehicleProvider = ({ children }) => {
       console.error('updateFuel:', error)
       toast.error('Yakıt güncellenemedi: ' + formatSupabaseError(error))
     }
-  }, [user])
+  }, [user, setFuelRecords])
 
   const deleteFuel = useCallback(async (id) => {
     if (!user) return
@@ -548,7 +578,7 @@ export const VehicleProvider = ({ children }) => {
       console.error('deleteFuel:', error)
       toast.error('Yakıt silinemedi: ' + formatSupabaseError(error))
     }
-  }, [user])
+  }, [user, setFuelRecords])
 
   // ============ LASTİK SETİ CRUD ============
   const addTireSet = useCallback(async (tireSet) => {
@@ -576,7 +606,7 @@ export const VehicleProvider = ({ children }) => {
       toast.error('Lastik seti eklenemedi: ' + formatSupabaseError(error))
       return null
     }
-  }, [user])
+  }, [user, setTireSets])
 
   const updateTireSet = useCallback(async (id, updates) => {
     if (!user) return
@@ -601,7 +631,7 @@ export const VehicleProvider = ({ children }) => {
       console.error('updateTireSet:', error)
       toast.error('Lastik seti güncellenemedi: ' + formatSupabaseError(error))
     }
-  }, [user])
+  }, [user, setTireSets])
 
   const deleteTireSet = useCallback(async (id) => {
     if (!user) return
@@ -620,7 +650,7 @@ export const VehicleProvider = ({ children }) => {
       console.error('deleteTireSet:', error)
       toast.error('Lastik seti silinemedi: ' + formatSupabaseError(error))
     }
-  }, [user])
+  }, [user, setTireSets])
 
   // ============ LASTİK DEĞİŞİMİ CRUD ============
   const addTireChange = useCallback(async (change) => {
@@ -648,7 +678,7 @@ export const VehicleProvider = ({ children }) => {
       toast.error('Lastik değişimi eklenemedi: ' + formatSupabaseError(error))
       return null
     }
-  }, [user])
+  }, [user, setTireChanges])
 
   const updateTireChange = useCallback(async (id, updates) => {
     if (!user) return
@@ -673,7 +703,7 @@ export const VehicleProvider = ({ children }) => {
       console.error('updateTireChange:', error)
       toast.error('Lastik değişimi güncellenemedi: ' + formatSupabaseError(error))
     }
-  }, [user])
+  }, [user, setTireChanges])
 
   const deleteTireChange = useCallback(async (id) => {
     if (!user) return
@@ -692,7 +722,7 @@ export const VehicleProvider = ({ children }) => {
       console.error('deleteTireChange:', error)
       toast.error('Lastik değişimi silinemedi: ' + formatSupabaseError(error))
     }
-  }, [user])
+  }, [user, setTireChanges])
 
   // ============ CUSTOM INTERVALS ============
   const updateCustomIntervals = useCallback(async (intervals) => {
@@ -734,7 +764,7 @@ export const VehicleProvider = ({ children }) => {
       console.error('updateCustomIntervals:', error)
       toast.error('Periyotlar güncellenemedi: ' + formatSupabaseError(error))
     }
-  }, [user])
+  }, [user, setCustomIntervals])
 
   const clearAllData = useCallback(async () => {
     if (!user) return
@@ -777,7 +807,7 @@ export const VehicleProvider = ({ children }) => {
       console.error('clearAllData:', error)
       toast.error('Veriler silinemedi: ' + formatSupabaseError(error))
     }
-  }, [user, vehicles, maintenanceRecords])
+  }, [user, vehicles, maintenanceRecords, setVehicles, setMaintenanceRecords, setFuelRecords, setTireSets, setTireChanges, setCustomIntervals])
 
   // Çıplak nesne literali her render'da yeni referans üretiyordu ve context'i
   // tüketen HER bileşen yeniden render oluyordu — lastik verisi değişince

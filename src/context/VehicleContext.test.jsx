@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, act, waitFor } from '@testing-library/react'
+import { QueryClient, QueryClientProvider, notifyManager } from '@tanstack/react-query'
 import { createSupabaseMock } from '../test/supabaseMock'
 
 // ---------------------------------------------------------------------------
@@ -57,12 +58,30 @@ const bakimSatiri = (over = {}) => ({
   date: '2026-01-01', km: 95000, cost: '1000', notes: null, photo_url: null, ...over,
 })
 
+let queryClient
+
+// Testte retry KAPALI olmalı: hata senaryolarında varsayılan 2 retry
+// testleri saniyelerce bekletir ve hata state'ine geçişi geciktirir.
+function Sarmalayici({ children }) {
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+}
+
 async function kur() {
-  render(<VehicleProvider><Probe /></VehicleProvider>)
+  render(<Sarmalayici><VehicleProvider><Probe /></VehicleProvider></Sarmalayici>)
   await screen.findByText(/hazir/)
 }
 
 beforeEach(() => {
+  // TanStack Query bildirimleri varsayılan olarak macrotask'a erteler; senkron act()
+  // bunu yakalamaz ve cache'e yazılan veri testte state'e yansımamış gibi görünür.
+  // Uygulamada sorun değil (bir tick sonra geliyor), testte deterministik olsun diye
+  // zamanlayıcıyı senkronluyoruz — kütüphanenin bu iş için sunduğu resmi kanca.
+  notifyManager.setScheduler((cb) => cb())
+
+  // Testte retry kapalı: varsayılan 2 retry, hata senaryolarını saniyelerce bekletir.
+  queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
   h.sb = createSupabaseMock()
   h.auth = { user: { id: 'user-1' }, isAuthenticated: true }
   Object.values(h.toast).forEach(f => f.mockClear?.())
@@ -94,7 +113,7 @@ describe('ilk yükleme', () => {
 
   it('oturum yoksa state boşalır ve sorgu yapılmaz', async () => {
     h.auth = { user: null, isAuthenticated: false }
-    render(<VehicleProvider><Probe /></VehicleProvider>)
+    render(<Sarmalayici><VehicleProvider><Probe /></VehicleProvider></Sarmalayici>)
     await screen.findByText(/hazir/)
 
     expect(ctx.vehicles).toEqual([])
