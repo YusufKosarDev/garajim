@@ -1,42 +1,46 @@
 import { useMemo } from 'react'
-import { MapPin, Trophy, TrendingDown, TrendingUp, Sparkles } from 'lucide-react'
+import { MapPin, Trophy, TrendingDown, TrendingUp, Sparkles, Info, LineChart } from 'lucide-react'
 import { getStationAnalysis } from '../../utils/statisticsHelpers'
+import { analyzeFuelPrices } from '../../utils/fuelPriceAnalysis'
+
+const AYLAR = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara']
+
+/** "2026-01" -> "Oca 2026" */
+const ayEtiketi = (ay) => {
+  const [yil, no] = ay.split('-')
+  return `${AYLAR[Number(no) - 1] ?? ay} ${yil}`
+}
 
 export default function StationAnalysisTable({ fuelRecords = [] }) {
   const analysis = useMemo(() => getStationAnalysis(fuelRecords), [fuelRecords])
 
-  // Ortalama fiyatı göre en ucuz ve en pahalı
+  // Zaman farkındalıklı fiyat analizi (madde 27).
+  //
+  // ÖNEMLİ: "en ucuz istasyon" artık ömür boyu ortalama fiyata göre seçilmiyor.
+  // O yöntem enflasyonu istasyon farkı sanıyordu: 2024'te alışveriş yapılan bir
+  // istasyon, 2026'da alışveriş yapılana göre otomatik olarak "ucuz" çıkıyordu.
+  // analyzeFuelPrices her alımı AYNI DÖNEMDEKİ alımlarla kıyaslıyor.
+  const fiyat = useMemo(() => analyzeFuelPrices(fuelRecords), [fuelRecords])
+
   const { cheapest, mostExpensive } = useMemo(() => {
-    const withPrice = analysis.filter(a => a.avgPrice > 0 && a.count >= 2)
-    if (withPrice.length < 2) return { cheapest: null, mostExpensive: null }
-    const sorted = [...withPrice].sort((a, b) => a.avgPrice - b.avgPrice)
+    const s = fiyat.istasyonlar
+    if (s.length < 2) return { cheapest: null, mostExpensive: null }
+    return { cheapest: s[0], mostExpensive: s[s.length - 1] }
+  }, [fiyat])
+
+  // Kendi verinden fiyat seyri: ilk aydan son aya değişim
+  const seyir = useMemo(() => {
+    const a = fiyat.aylikFiyatlar
+    if (a.length < 2) return null
+    const ilk = a[0]
+    const sonAy = a[a.length - 1]
+    if (ilk.ortFiyat <= 0) return null
     return {
-      cheapest: sorted[0],
-      mostExpensive: sorted[sorted.length - 1],
+      ilk,
+      son: sonAy,
+      yuzde: ((sonAy.ortFiyat - ilk.ortFiyat) / ilk.ortFiyat) * 100,
     }
-  }, [analysis])
-
-  // 🆕 Akıllı içgörü: tasarruf hesaplaması
-  const smartInsight = useMemo(() => {
-    if (!cheapest || !mostExpensive || cheapest === mostExpensive) return null
-
-    const priceDiff = mostExpensive.avgPrice - cheapest.avgPrice
-    const percentDiff = (priceDiff / mostExpensive.avgPrice) * 100
-
-    // Eğer hep en ucuza gitseydi ne kadar tasarruf ederdi?
-    // Toplam litreyi al, en pahalıdaki ortalamayı yerine en ucuzdakini koy
-    const totalLiters = analysis.reduce((sum, a) => sum + a.liters, 0)
-    const totalSpent = analysis.reduce((sum, a) => sum + a.total, 0)
-    const totalIfCheapest = totalLiters * cheapest.avgPrice
-    const potentialSavings = Math.max(0, totalSpent - totalIfCheapest)
-
-    return {
-      priceDiff: priceDiff.toFixed(2),
-      percentDiff: percentDiff.toFixed(1),
-      potentialSavings: Math.round(potentialSavings),
-      totalLiters: Math.round(totalLiters),
-    }
-  }, [cheapest, mostExpensive, analysis])
+  }, [fiyat])
 
   if (analysis.length === 0) {
     return (
@@ -50,61 +54,91 @@ export default function StationAnalysisTable({ fuelRecords = [] }) {
 
   return (
     <div>
-      {/* 🆕 AKILLI İÇGÖRÜ KUTUSU */}
-      {smartInsight && (
+      {/* Tasarruf: yalnızca GERÇEKTEN gözlemlenebilir fark.
+          "O dönemde başka bir istasyonda daha ucuzu vardı" durumu sayılıyor;
+          varsayımsal fiyat üretilmiyor. */}
+      {fiyat.tasarruf && fiyat.tasarruf.toplam > 0 && (
         <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/30 rounded-lg p-3 mb-4">
           <div className="flex items-start gap-2">
-            <Sparkles className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+            <Sparkles className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" aria-hidden="true" />
             <div className="text-xs">
-              <div className="text-blue-300 font-semibold mb-1">
-                💡 Akıllı İçgörü
-              </div>
+              <div className="text-blue-300 font-semibold mb-1">Kaçırılan tasarruf</div>
               <p className="text-slate-300 leading-relaxed">
-                <strong className="text-green-400">{cheapest.station}</strong>'te ortalama
-                {' '}<strong>%{smartInsight.percentDiff}</strong>{' '}
-                ({smartInsight.priceDiff} ₺/L) daha ucuz!
-                {smartInsight.potentialSavings > 0 && (
-                  <>
-                    {' '}Hep oradan alsaydın yaklaşık{' '}
-                    <strong className="text-green-400">
-                      {smartInsight.potentialSavings.toLocaleString('tr-TR')} ₺
-                    </strong>{' '}
-                    tasarruf edebilirdin 💰
-                  </>
+                Her alımda o günlerde açık ara en ucuz olan istasyonu seçseydin yaklaşık{' '}
+                <strong className="text-green-400">
+                  {Math.round(fiyat.tasarruf.toplam).toLocaleString('tr-TR')} ₺
+                </strong>
+                {fiyat.tasarruf.karsilastirilanTutar > 0 && (
+                  <> (%{((fiyat.tasarruf.toplam / fiyat.tasarruf.karsilastirilanTutar) * 100).toFixed(1)})</>
                 )}
+                {' '}daha az öderdin.
+              </p>
+              {/* Yöntem açıkça yazılıyor: kullanıcı sayının nereden geldiğini bilmeli */}
+              <p className="text-[11px] text-slate-500 mt-1">
+                {fiyat.tasarruf.karsilastirilanAlim} alım, aynı haftadaki diğer istasyon
+                fiyatlarıyla karşılaştırıldı. Yol farkı ve marka tercihi hesaba katılmadı.
               </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* En ucuz / en pahalı banner */}
-      {cheapest && mostExpensive && cheapest !== mostExpensive && (
+      {/* Yeterli veri yoksa uydurma içgörü yerine sebebini söyle */}
+      {fiyat.yetersizVeri && (
+        <div className="flex items-start gap-2 text-xs text-slate-400 bg-slate-800/40 border border-slate-700 rounded-lg p-3 mb-4">
+          <Info className="w-4 h-4 shrink-0 mt-px text-slate-500" aria-hidden="true" />
+          <p>{fiyat.yetersizVeri}</p>
+        </div>
+      )}
+
+      {/* Piyasaya göre sapma. Fiyatın kendisi değil FARKI gösteriliyor:
+          ₺/L mutlak değeri zamanla değişir, fark istasyonun kendi özelliğidir. */}
+      {cheapest && mostExpensive && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
           <div className="flex items-center gap-2 p-2.5 bg-green-500/10 border border-green-500/20 rounded-lg">
-            <TrendingDown className="w-4 h-4 text-green-400 shrink-0" />
-            <div className="text-xs">
-              <div className="text-green-400 font-semibold">En ucuz ortalama</div>
+            <TrendingDown className="w-4 h-4 text-green-400 shrink-0" aria-hidden="true" />
+            <div className="text-xs min-w-0">
+              <div className="text-green-400 font-semibold">Dönemin piyasasına göre en ucuz</div>
               <div className="text-slate-300 truncate">
-                {cheapest.station} — <strong>{cheapest.avgPrice.toFixed(2)} ₺/L</strong>
+                {cheapest.station} — <strong>{Math.abs(cheapest.ortSapma).toFixed(2)} ₺/L altında</strong>
+                <span className="text-slate-500"> ({cheapest.count} alım)</span>
               </div>
             </div>
           </div>
           <div className="flex items-center gap-2 p-2.5 bg-red-500/10 border border-red-500/20 rounded-lg">
-            <TrendingUp className="w-4 h-4 text-red-400 shrink-0" />
-            <div className="text-xs">
-              <div className="text-red-400 font-semibold">En pahalı ortalama</div>
+            <TrendingUp className="w-4 h-4 text-red-400 shrink-0" aria-hidden="true" />
+            <div className="text-xs min-w-0">
+              <div className="text-red-400 font-semibold">Dönemin piyasasına göre en pahalı</div>
               <div className="text-slate-300 truncate">
-                {mostExpensive.station} — <strong>{mostExpensive.avgPrice.toFixed(2)} ₺/L</strong>
+                {mostExpensive.station} — <strong>{mostExpensive.ortSapma.toFixed(2)} ₺/L üstünde</strong>
+                <span className="text-slate-500"> ({mostExpensive.count} alım)</span>
               </div>
             </div>
           </div>
         </div>
       )}
 
+      {/* Fiyat seyri — dış API yok, tamamen kullanıcının kendi alımlarından */}
+      {seyir && (
+        <div className="flex items-center gap-2 p-2.5 mb-4 bg-slate-800/40 border border-slate-700 rounded-lg text-xs">
+          <LineChart className="w-4 h-4 text-slate-400 shrink-0" aria-hidden="true" />
+          <div className="min-w-0">
+            <span className="text-slate-400">Senin ödediğin fiyat: </span>
+            <strong className="text-white">{ayEtiketi(seyir.ilk.ay)}</strong>
+            {' '}{seyir.ilk.ortFiyat.toFixed(2)} ₺/L
+            {' → '}
+            <strong className="text-white">{ayEtiketi(seyir.son.ay)}</strong>
+            {' '}{seyir.son.ortFiyat.toFixed(2)} ₺/L
+            <span className={seyir.yuzde >= 0 ? ' text-red-400' : ' text-green-400'}>
+              {' '}({seyir.yuzde >= 0 ? '+' : ''}%{seyir.yuzde.toFixed(1)})
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Tablo */}
       <div className="space-y-2">
-        {analysis.map((station, i) => {
+        {analysis.map((station) => {
           const widthPercent = maxTotal > 0 ? (station.total / maxTotal) * 100 : 0
           const isCheapest = cheapest?.station === station.station
           const isMostExpensive = mostExpensive?.station === station.station
