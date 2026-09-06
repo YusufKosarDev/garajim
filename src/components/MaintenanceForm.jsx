@@ -10,6 +10,7 @@ import { maintenanceSchema } from '../lib/formSchemas'
 import Modal from './Modal'
 import FormField from './FormField'
 import SingleImageUploader from './SingleImageUploader'
+import ReceiptScanner from './ReceiptScanner'
 import ConfirmDialog from './ConfirmDialog'
 
 const commonMaintenanceTypes = [
@@ -39,7 +40,7 @@ export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord
   const [pendingKmConfirm, setPendingKmConfirm] = useState(null)
 
   const {
-    register, handleSubmit, reset, watch, control,
+    register, handleSubmit, reset, watch, control, setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(maintenanceSchema),
@@ -121,6 +122,15 @@ export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord
 
   const onInvalid = () => toast.error('Lütfen hataları düzelt')
 
+  // Fiş OCR'ının önerdiği ve kullanıcının onayladığı alanları forma yazar.
+  // Kaydetmez — form açık kalıyor, kullanıcı her zamanki gibi "Bakım Ekle"ye
+  // basana kadar hiçbir şey kaydedilmiyor. KM tutarlılık kontrolü de yerinde.
+  const onFisUygula = (alanlar) => {
+    if (alanlar.tutar !== undefined) setValue('cost', String(alanlar.tutar), { shouldValidate: true })
+    if (alanlar.tarih !== undefined) setValue('date', alanlar.tarih, { shouldValidate: true })
+    if (alanlar.km !== undefined) setValue('km', String(alanlar.km), { shouldValidate: true })
+  }
+
   return (
     <Modal
       isOpen={isOpen}
@@ -188,13 +198,17 @@ export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord
             name="photo"
             control={control}
             render={({ field }) => (
-              <SingleImageUploader
-                photo={field.value}
-                onChange={field.onChange}
-                label="Fatura"
-                hint="Fatura, fiş veya parça fotoğrafı"
-                maxSizeMB={1}
-              />
+              <>
+                <SingleImageUploader
+                  photo={field.value}
+                  onChange={field.onChange}
+                  label="Fatura"
+                  hint="Fatura, fiş veya parça fotoğrafı"
+                  maxSizeMB={1}
+                />
+                {/* Fotoğraf varsa fişten tutar/tarih/km okumayı öner */}
+                <ReceiptScanner photo={field.value} onUygula={onFisUygula} />
+              </>
             )}
           />
         </div>
