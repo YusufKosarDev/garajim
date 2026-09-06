@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import FuelForm from './FuelForm'
 
 // VehicleContext taklit ediliyor — bu test formun kendi mantığını sınıyor,
@@ -33,6 +33,13 @@ const alan = {
   kaydet: () => screen.getByRole('button', { name: /kaydet|güncelle/i }),
 }
 
+// react-hook-form'un handleSubmit'i asenkron: doğrulama ve gönderim bir
+// mikrotask içinde tamamlanıyor. Bu yüzden submit sonrası iddialar beklenmeli.
+const gonder = async () => {
+  fireEvent.click(alan.kaydet())
+  await waitFor(() => {})
+}
+
 beforeEach(() => {
   addFuel.mockClear()
   updateFuel.mockClear()
@@ -49,11 +56,11 @@ describe('FuelForm', () => {
     expect(alan.km()).toHaveValue(100000)
   })
 
-  it('zorunlu alanlar boşken kaydetmez ve hataları gösterir', () => {
+  it('zorunlu alanlar boşken kaydetmez ve hataları gösterir', async () => {
     ac()
     fireEvent.click(alan.kaydet())
 
-    expect(screen.getByText('Litre zorunlu')).toBeInTheDocument()
+    expect(await screen.findByText('Litre zorunlu')).toBeInTheDocument()
     expect(screen.getByText('Toplam tutar zorunlu')).toBeInTheDocument()
     expect(addFuel).not.toHaveBeenCalled()
   })
@@ -65,13 +72,13 @@ describe('FuelForm', () => {
     expect(alan.tutar()).toHaveValue(1800)
   })
 
-  it('geçerli veriyle addFuel i doğru payload ile çağırır', () => {
+  it('geçerli veriyle addFuel i doğru payload ile çağırır', async () => {
     ac()
     doldur(alan.litre(), '40')
     doldur(alan.fiyat(), '45')
-    fireEvent.click(alan.kaydet())
+    await gonder()
 
-    expect(addFuel).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(addFuel).toHaveBeenCalledTimes(1))
     expect(addFuel.mock.calls[0][0]).toMatchObject({
       vehicleId: 'v1',
       km: 100000,
@@ -81,7 +88,7 @@ describe('FuelForm', () => {
     })
   })
 
-  it('son yakıt kaydından düşük km girilirse hata verir (tüketim hesabını bozar)', () => {
+  it('son yakıt kaydından düşük km girilirse hata verir (tüketim hesabını bozar)', async () => {
     mockCtx.fuelRecords = [{ id: 'f1', vehicleId: 'v1', km: 105000, liters: 40, totalCost: 1800 }]
     ac()
 
@@ -90,17 +97,17 @@ describe('FuelForm', () => {
     doldur(alan.fiyat(), '45')
     fireEvent.click(alan.kaydet())
 
-    expect(screen.getByText(/105\.000/)).toBeInTheDocument()
+    expect(await screen.findByText(/105\.000/)).toBeInTheDocument()
     expect(addFuel).not.toHaveBeenCalled()
   })
 
-  it('aynı km değerini de reddeder', () => {
+  it('aynı km değerini de reddeder', async () => {
     mockCtx.fuelRecords = [{ id: 'f1', vehicleId: 'v1', km: 100000, liters: 40, totalCost: 1800 }]
     ac()
 
     doldur(alan.litre(), '40')
     doldur(alan.fiyat(), '45')
-    fireEvent.click(alan.kaydet())
+    await gonder()
 
     expect(addFuel).not.toHaveBeenCalled()
   })
@@ -112,31 +119,30 @@ describe('FuelForm', () => {
     expect(alan.tarih()).toHaveAttribute('max', beklenen)
   })
 
-  it('gelecek tarihle submit hiç başlamaz — tarayıcı kısıtı devrede', () => {
-    // max attribute'u ihlal eden bir değerde HTML5 doğrulaması submit'i engelliyor,
-    // dolayısıyla handleSubmit çalışmıyor ve kayıt oluşmuyor.
+  it('gelecek tarihle submit hiç başlamaz — tarayıcı kısıtı devrede', async () => {
+    // max attribute'u ihlal eden bir değerde HTML5 doğrulaması submit'i engelliyor.
     // validatePastDate'in kendi mantığı dateValidation testlerinde ayrıca sınanıyor.
     ac()
     doldur(alan.tarih(), '2099-12-31')
     doldur(alan.litre(), '40')
     doldur(alan.fiyat(), '45')
-    fireEvent.click(alan.kaydet())
+    await gonder()
 
     expect(addFuel).not.toHaveBeenCalled()
   })
 
-  it('başka aracın yakıt kayıtları km kontrolünü etkilemez', () => {
+  it('başka aracın yakıt kayıtları km kontrolünü etkilemez', async () => {
     mockCtx.fuelRecords = [{ id: 'f1', vehicleId: 'BASKA', km: 900000, liters: 40, totalCost: 1800 }]
     ac()
 
     doldur(alan.litre(), '40')
     doldur(alan.fiyat(), '45')
-    fireEvent.click(alan.kaydet())
+    await gonder()
 
-    expect(addFuel).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(addFuel).toHaveBeenCalledTimes(1))
   })
 
-  it('düzenleme modunda mevcut kaydı forma doldurur ve updateFuel çağırır', () => {
+  it('düzenleme modunda mevcut kaydı forma doldurur ve updateFuel çağırır', async () => {
     const kayit = {
       id: 'f9', vehicleId: 'v1', date: '2026-06-01', km: 99000,
       liters: 35, pricePerLiter: 50, totalCost: 1750, fullTank: true, station: 'Shell', notes: '',
@@ -146,14 +152,14 @@ describe('FuelForm', () => {
     expect(alan.km()).toHaveValue(99000)
     expect(alan.litre()).toHaveValue(35)
 
-    fireEvent.click(alan.kaydet())
+    await gonder()
 
-    expect(updateFuel).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(updateFuel).toHaveBeenCalledTimes(1))
     expect(updateFuel.mock.calls[0][0]).toBe('f9')
     expect(addFuel).not.toHaveBeenCalled()
   })
 
-  it('düzenlemede kaydın kendi km si çakışma sayılmaz', () => {
+  it('düzenlemede kaydın kendi km si çakışma sayılmaz', async () => {
     const kayit = {
       id: 'f9', vehicleId: 'v1', date: '2026-06-01', km: 105000,
       liters: 35, pricePerLiter: 50, totalCost: 1750, fullTank: true, station: '', notes: '',
@@ -161,7 +167,21 @@ describe('FuelForm', () => {
     mockCtx.fuelRecords = [{ ...kayit }]
     ac({ editRecord: kayit })
 
-    fireEvent.click(alan.kaydet())
-    expect(updateFuel).toHaveBeenCalledTimes(1)
+    await gonder()
+    await waitFor(() => expect(updateFuel).toHaveBeenCalledTimes(1))
+  })
+
+  it('araç km si değişince açık formdaki girdiler KORUNUR', () => {
+    const { rerender } = ac()
+
+    doldur(alan.km(), '123456')
+    doldur(alan.litre(), '42')
+
+    // Realtime senkron veya başka bir kayıt aracın km'sini güncellerse
+    mockCtx = { ...mockCtx, vehicles: [{ ...ARAC, currentKm: 111111 }] }
+    rerender(<FuelForm isOpen onClose={vi.fn()} vehicleId="v1" />)
+
+    expect(alan.km()).toHaveValue(123456)
+    expect(alan.litre()).toHaveValue(42)
   })
 })

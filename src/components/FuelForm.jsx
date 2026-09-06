@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import toast from 'react-hot-toast'
 import { useVehicles } from '../context/VehicleContext'
-import { checkFuelKm } from '../utils/kmHelpers'
-import { validatePastDate, getTodayString } from '../utils/dateValidation'
-import { useAutoFocus } from '../hooks/useAutoFocus'
+import { getTodayString } from '../utils/dateValidation'
+import { makeFuelSchema } from '../lib/formSchemas'
 import Modal from './Modal'
+import FormField from './FormField'
 
-const emptyForm = {
+const bosForm = () => ({
   date: getTodayString(),
   km: '',
   liters: '',
@@ -15,95 +17,75 @@ const emptyForm = {
   fullTank: true,
   station: '',
   notes: '',
-}
+})
 
 export default function FuelForm({ isOpen, onClose, vehicleId, editRecord = null }) {
   const { addFuel, updateFuel, vehicles, fuelRecords, updateVehicle } = useVehicles()
-  const [form, setForm] = useState(emptyForm)
-  const [errors, setErrors] = useState({})
 
   const today = getTodayString()
-  const kmInputRef = useAutoFocus(isOpen)
-  const vehicleFuelRecords = fuelRecords.filter(r => r.vehicleId === vehicleId)
 
+  const vehicleFuelRecords = useMemo(
+    () => fuelRecords.filter(r => r.vehicleId === vehicleId),
+    [fuelRecords, vehicleId]
+  )
+
+  const schema = useMemo(
+    () => makeFuelSchema({ vehicleFuelRecords, editId: editRecord?.id ?? null }),
+    [vehicleFuelRecords, editRecord]
+  )
+
+  const {
+    register, handleSubmit, reset, setValue, getValues,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(schema),
+    defaultValues: bosForm(),
+    mode: 'onSubmit',
+  })
+
+  // Formu SADECE modal açılırken doldur.
+  // Önceden bağımlılıklar arasında araç verisi de vardı ve araç km'si başka bir
+  // yerden güncellenince (realtime senkron, başka bir kayıt) kullanıcı formu
+  // doldururken alanlar sıfırlanıyordu. Açılış geçişini ref ile izliyoruz.
+  const acikMiydiRef = useRef(false)
   useEffect(() => {
-    if (isOpen) {
-      if (editRecord) {
-        setForm({
-          date: editRecord.date,
-          km: editRecord.km?.toString() || '',
-          liters: editRecord.liters?.toString() || '',
-          pricePerLiter: editRecord.pricePerLiter?.toString() || '',
-          totalCost: editRecord.totalCost?.toString() || '',
-          fullTank: editRecord.fullTank ?? true,
-          station: editRecord.station || '',
-          notes: editRecord.notes || '',
-        })
-      } else {
-        const vehicle = vehicles.find(v => v.id === vehicleId)
-        setForm({ ...emptyForm, km: vehicle?.currentKm || '' })
-      }
-      setErrors({})
-    }
-  }, [isOpen, vehicleId, editRecord])
+    const yeniAcildi = isOpen && !acikMiydiRef.current
+    acikMiydiRef.current = isOpen
+    if (!yeniAcildi) return
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target
-    const newForm = { ...form, [name]: type === 'checkbox' ? checked : value }
-
-    if (name === 'liters' || name === 'pricePerLiter') {
-      const liters = name === 'liters' ? parseFloat(value) : parseFloat(newForm.liters)
-      const price = name === 'pricePerLiter' ? parseFloat(value) : parseFloat(newForm.pricePerLiter)
-      if (!isNaN(liters) && !isNaN(price)) {
-        newForm.totalCost = (liters * price).toFixed(2)
-      }
+    if (editRecord) {
+      reset({
+        date: editRecord.date,
+        km: editRecord.km?.toString() || '',
+        liters: editRecord.liters?.toString() || '',
+        pricePerLiter: editRecord.pricePerLiter?.toString() || '',
+        totalCost: editRecord.totalCost?.toString() || '',
+        fullTank: editRecord.fullTank ?? true,
+        station: editRecord.station || '',
+        notes: editRecord.notes || '',
+      })
+    } else {
+      const vehicle = vehicles.find(v => v.id === vehicleId)
+      reset({ ...bosForm(), km: vehicle?.currentKm ? String(vehicle.currentKm) : '' })
     }
-    if (name === 'totalCost') {
-      const total = parseFloat(value)
-      const liters = parseFloat(newForm.liters)
-      if (!isNaN(total) && !isNaN(liters) && liters > 0) {
-        newForm.pricePerLiter = (total / liters).toFixed(2)
-      }
-    }
+  }, [isOpen, editRecord, vehicleId, vehicles, reset])
 
-    if (errors[name]) {
-      setErrors({ ...errors, [name]: null })
-    }
+  // Litre × fiyat ↔ toplam tutar otomatik hesabı
+  const hesapla = (degisen) => {
+    const { liters, pricePerLiter, totalCost } = getValues()
 
-    setForm(newForm)
+    if (degisen === 'liters' || degisen === 'pricePerLiter') {
+      const l = parseFloat(liters)
+      const f = parseFloat(pricePerLiter)
+      if (!isNaN(l) && !isNaN(f)) setValue('totalCost', (l * f).toFixed(2))
+    } else if (degisen === 'totalCost') {
+      const t = parseFloat(totalCost)
+      const l = parseFloat(liters)
+      if (!isNaN(t) && !isNaN(l) && l > 0) setValue('pricePerLiter', (t / l).toFixed(2))
+    }
   }
 
-  const validate = () => {
-    const err = {}
-
-    if (!form.date) {
-      err.date = 'Tarih zorunlu'
-    } else {
-      const dateCheck = validatePastDate(form.date, 'Yakıt alım tarihi')
-      if (!dateCheck.isValid) err.date = dateCheck.message
-    }
-
-    if (!form.km) {
-      err.km = 'Kilometre zorunlu'
-    } else {
-      const kmCheck = checkFuelKm(form.km, vehicleFuelRecords, editRecord?.id)
-      if (!kmCheck.isValid) err.km = kmCheck.message
-    }
-
-    if (!form.liters) err.liters = 'Litre zorunlu'
-    if (!form.totalCost) err.totalCost = 'Toplam tutar zorunlu'
-
-    setErrors(err)
-    return Object.keys(err).length === 0
-  }
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    if (!validate()) {
-      toast.error('Lütfen hataları düzelt')
-      return
-    }
-
+  const onValid = (form) => {
     const recordData = {
       date: form.date,
       km: Number(form.km),
@@ -128,83 +110,78 @@ export default function FuelForm({ isOpen, onClose, vehicleId, editRecord = null
     onClose()
   }
 
+  const onInvalid = () => toast.error('Lütfen hataları düzelt')
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={editRecord ? 'Yakıt Kaydını Düzenle' : 'Yakıt Alımı Ekle'}>
-      <form onSubmit={handleSubmit} className="p-5 space-y-4">
+      <form onSubmit={handleSubmit(onValid, onInvalid)} className="p-5 space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm text-slate-300 mb-1">Tarih</label>
-            <input
-              type="date"
-              name="date"
-              value={form.date}
-              onChange={handleChange}
-              max={today}
-              className={`w-full bg-slate-800 border rounded-lg px-3 py-2 focus:outline-none ${
-                errors.date ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
-              }`}
-            />
-            {errors.date && <p className="text-red-400 text-xs mt-1">{errors.date}</p>}
-          </div>
-
-          <div>
-            <label className="block text-sm text-slate-300 mb-1">Kilometre</label>
-            <input
-              ref={kmInputRef}
-              type="number"
-              name="km"
-              min="0"
-              value={form.km}
-              onChange={handleChange}
-              placeholder="125000"
-              className={`w-full bg-slate-800 border rounded-lg px-3 py-2 focus:outline-none ${
-                errors.km ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
-              }`}
-            />
-            {errors.km && <p className="text-red-400 text-xs mt-1">{errors.km}</p>}
-          </div>
+          <FormField
+            label="Tarih"
+            labelStyle="plain"
+            type="date"
+            max={today}
+            error={errors.date?.message}
+            {...register('date')}
+          />
+          <FormField
+            label="Kilometre"
+            labelStyle="plain"
+            type="number"
+            min="0"
+            placeholder="125000"
+            autoFocus
+            error={errors.km?.message}
+            {...register('km')}
+          />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <Field label="Litre" name="liters" type="number" step="0.01" min="0" value={form.liters} onChange={handleChange} error={errors.liters} placeholder="45.50" />
-          <Field label="Litre Başı Fiyat (₺)" name="pricePerLiter" type="number" step="0.01" min="0" value={form.pricePerLiter} onChange={handleChange} placeholder="42.50" />
+          <FormField
+            label="Litre"
+            labelStyle="plain"
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="45.50"
+            error={errors.liters?.message}
+            {...register('liters', { onChange: () => hesapla('liters') })}
+          />
+          <FormField
+            label="Litre Başı Fiyat (₺)"
+            labelStyle="plain"
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="42.50"
+            {...register('pricePerLiter', { onChange: () => hesapla('pricePerLiter') })}
+          />
         </div>
 
-        <Field
+        <FormField
           label="Toplam Tutar (₺)"
-          name="totalCost"
+          labelStyle="plain"
           type="number"
           step="0.01"
           min="0"
-          value={form.totalCost}
-          onChange={handleChange}
-          error={errors.totalCost}
           placeholder="Otomatik hesaplanır"
+          error={errors.totalCost?.message}
+          {...register('totalCost', { onChange: () => hesapla('totalCost') })}
         />
 
         <label className="flex items-center gap-2 cursor-pointer select-none">
-          <input
-            type="checkbox"
-            name="fullTank"
-            checked={form.fullTank}
-            onChange={handleChange}
-            className="w-4 h-4 accent-blue-500"
-          />
+          <input type="checkbox" className="w-4 h-4 accent-blue-500" {...register('fullTank')} />
           <span className="text-sm text-slate-300">Depo tam dolduruldu (tüketim hesabı için önemli)</span>
         </label>
 
-        <Field label="İstasyon (opsiyonel)" name="station" value={form.station} onChange={handleChange} placeholder="Shell, Opet, BP..." />
+        <FormField
+          label="İstasyon (opsiyonel)"
+          labelStyle="plain"
+          placeholder="Shell, Opet, BP..."
+          {...register('station')}
+        />
 
-        <div>
-          <label className="block text-sm text-slate-300 mb-1">Notlar (opsiyonel)</label>
-          <textarea
-            name="notes"
-            value={form.notes}
-            onChange={handleChange}
-            rows="2"
-            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 resize-none"
-          />
-        </div>
+        <FormField label="Notlar (opsiyonel)" labelStyle="plain" as="textarea" rows="2" {...register('notes')} />
 
         <div className="flex gap-3 pt-4">
           <button type="button" onClick={onClose} className="flex-1 bg-slate-800 hover:bg-slate-700 py-2.5 rounded-lg transition">
@@ -216,20 +193,5 @@ export default function FuelForm({ isOpen, onClose, vehicleId, editRecord = null
         </div>
       </form>
     </Modal>
-  )
-}
-
-function Field({ label, error, ...props }) {
-  return (
-    <div>
-      <label className="block text-sm text-slate-300 mb-1">{label}</label>
-      <input
-        {...props}
-        className={`w-full bg-slate-800 border rounded-lg px-3 py-2 focus:outline-none ${
-          error ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
-        }`}
-      />
-      {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
-    </div>
   )
 }

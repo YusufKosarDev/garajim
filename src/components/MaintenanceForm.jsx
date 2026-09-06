@@ -1,11 +1,14 @@
-import { useState, useEffect } from 'react'
-import { Plus, AlertTriangle, Receipt } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Plus, Receipt } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useVehicles } from '../context/VehicleContext'
-import { useAutoFocus } from '../hooks/useAutoFocus'
 import { checkMaintenanceKm } from '../utils/kmHelpers'
-import { validatePastDate, getTodayString } from '../utils/dateValidation'
+import { getTodayString } from '../utils/dateValidation'
+import { maintenanceSchema } from '../lib/formSchemas'
 import Modal from './Modal'
+import FormField from './FormField'
 import SingleImageUploader from './SingleImageUploader'
 import ConfirmDialog from './ConfirmDialog'
 
@@ -28,92 +31,68 @@ const commonMaintenanceTypes = [
 
 export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord = null, prefilledType = null }) {
   const { addMaintenance, updateMaintenance, vehicles, maintenanceRecords, fuelRecords } = useVehicles()
-  const firstInputRef = useAutoFocus(isOpen)
 
   const vehicle = vehicles.find(v => v.id === vehicleId)
   const currentKm = vehicle?.currentKm || 0
-
-  const [type, setType] = useState('')
-  const [customType, setCustomType] = useState('')
-  const [date, setDate] = useState('')
-  const [km, setKm] = useState('')
-  const [cost, setCost] = useState('')
-  const [pendingKmConfirm, setPendingKmConfirm] = useState(null)
-  const [notes, setNotes] = useState('')
-  const [photo, setPhoto] = useState(null)
-  const [errors, setErrors] = useState({})
-
   const isEdit = !!editRecord
-  const isCustom = type === 'Diğer' || (type && !commonMaintenanceTypes.includes(type))
 
+  const [pendingKmConfirm, setPendingKmConfirm] = useState(null)
+
+  const {
+    register, handleSubmit, reset, watch, control,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(maintenanceSchema),
+    defaultValues: {
+      type: '', customType: '', date: getTodayString(), km: '',
+      cost: '', notes: '', photo: null,
+    },
+    mode: 'onSubmit',
+  })
+
+  const type = watch('type')
+  const km = watch('km')
+  const isCustom = type === 'Diğer'
+
+  // Formu SADECE modal açılırken doldur.
+  // Önceden bağımlılıklar arasında currentKm vardı; araç km'si başka bir yerden
+  // güncellenince kullanıcı formu doldururken tüm alanlar sıfırlanıyordu.
+  const acikMiydiRef = useRef(false)
   useEffect(() => {
-    if (!isOpen) return
+    const yeniAcildi = isOpen && !acikMiydiRef.current
+    acikMiydiRef.current = isOpen
+    if (!yeniAcildi) return
 
     if (editRecord) {
-      const knownType = commonMaintenanceTypes.includes(editRecord.type) ? editRecord.type : 'Diğer'
-      setType(knownType)
-      setCustomType(knownType === 'Diğer' ? editRecord.type : '')
-      setDate(editRecord.date || '')
-      setKm(editRecord.km ? String(editRecord.km) : '')
-      setCost(editRecord.cost ? String(editRecord.cost) : '')
-      setNotes(editRecord.notes || '')
-      setPhoto(editRecord.photo || null)
+      const bilinenTur = commonMaintenanceTypes.includes(editRecord.type) ? editRecord.type : 'Diğer'
+      reset({
+        type: bilinenTur,
+        customType: bilinenTur === 'Diğer' ? editRecord.type : '',
+        date: editRecord.date || '',
+        km: editRecord.km ? String(editRecord.km) : '',
+        cost: editRecord.cost ? String(editRecord.cost) : '',
+        notes: editRecord.notes || '',
+        photo: editRecord.photo || null,
+      })
     } else {
-      setType(prefilledType || '')
-      setCustomType('')
-      setDate(getTodayString())
-      setKm(String(currentKm || ''))
-      setCost('')
-      setNotes('')
-      setPhoto(null)
+      reset({
+        type: prefilledType || '',
+        customType: '',
+        date: getTodayString(),
+        km: String(currentKm || ''),
+        cost: '', notes: '', photo: null,
+      })
     }
-    setErrors({})
-  }, [isOpen, editRecord, prefilledType, currentKm])
+  }, [isOpen, editRecord, prefilledType, currentKm, reset])
 
-  const validate = () => {
-    const newErrors = {}
-
-    const finalType = isCustom ? customType.trim() : type
-    if (!finalType) {
-      newErrors.type = 'Bakım türü seç veya yaz'
-    }
-
-    if (!date) {
-      newErrors.date = 'Tarih zorunlu'
-    } else {
-      const dateCheck = validatePastDate(date, 'Tarih')
-      if (!dateCheck.isValid) {
-        newErrors.date = dateCheck.message
-      }
-    }
-
-    // KM kontrolü (basit)
-    if (!km) {
-      newErrors.km = 'KM zorunlu'
-    } else {
-      const kmValue = Number(km)
-      if (isNaN(kmValue) || kmValue < 0) {
-        newErrors.km = 'Geçerli bir KM gir'
-      }
-    }
-
-    if (cost && Number(cost) < 0) {
-      newErrors.cost = 'Negatif olamaz'
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  // Form verisini kaydedilebilir hale getirir
-  const buildData = () => ({
+  const buildData = (form) => ({
     vehicleId,
-    type: isCustom ? customType.trim() : type,
-    date,
-    km: Number(km),
-    cost: Number(cost) || 0,
-    notes: notes.trim(),
-    photo: photo || null,
+    type: form.type === 'Diğer' ? form.customType.trim() : form.type,
+    date: form.date,
+    km: Number(form.km),
+    cost: Number(form.cost) || 0,
+    notes: form.notes.trim(),
+    photo: form.photo || null,
   })
 
   // Asıl kaydetme — hem doğrudan hem KM onayından sonra çağrılır
@@ -129,31 +108,18 @@ export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord
     onClose()
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    if (!validate()) {
-      toast.error('Lütfen hataları düzelt')
-      return
-    }
-
-    // KM tutarlılık kontrolü (gelişmiş — geçmişe dönük uyarı)
-    const kmCheck = checkMaintenanceKm(
-      km,
-      vehicle,
-      maintenanceRecords,
-      fuelRecords,
-      editRecord?.id
-    )
-
-    // Bu bir hata değil, bilinçli bir onay: kullanıcı geçmişe dönük kayıt
-    // giriyor olabilir. Önceden window.confirm ile soruluyordu.
+  const onValid = (form) => {
+    // KM tutarlılık kontrolü — bu bir hata değil, bilinçli bir onay:
+    // kullanıcı geçmişe dönük kayıt giriyor olabilir.
+    const kmCheck = checkMaintenanceKm(form.km, vehicle, maintenanceRecords, fuelRecords, editRecord?.id)
     if (kmCheck.needsConfirm) {
-      setPendingKmConfirm({ data: buildData(), message: kmCheck.message })
+      setPendingKmConfirm({ data: buildData(form), message: kmCheck.message })
       return
     }
-
-    commit(buildData())
+    commit(buildData(form))
   }
+
+  const onInvalid = () => toast.error('Lütfen hataları düzelt')
 
   return (
     <Modal
@@ -162,136 +128,84 @@ export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord
       title={isEdit ? 'Bakım Kaydını Düzenle' : 'Yeni Bakım Kaydı'}
       maxWidth="max-w-lg"
     >
-      <form onSubmit={handleSubmit} className="p-5 space-y-4">
-        {/* Bakım türü */}
-        <div>
-          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
-            Bakım Türü *
-          </label>
-          <select
-            ref={firstInputRef}
-            value={isCustom ? 'Diğer' : type}
-            onChange={(e) => {
-              setType(e.target.value)
-              if (e.target.value !== 'Diğer') setCustomType('')
-            }}
-            className={`w-full bg-slate-800 border rounded-lg px-3 py-2 text-sm focus:outline-none transition ${
-              errors.type ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
-            }`}
-          >
-            <option value="">Seç...</option>
-            {commonMaintenanceTypes.map(t => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
-
-          {/* Custom type input */}
-          {isCustom && (
-            <input
-              type="text"
-              value={customType}
-              onChange={(e) => setCustomType(e.target.value)}
-              placeholder="Bakım türünü yaz..."
-              className={`w-full bg-slate-800 border rounded-lg px-3 py-2 text-sm focus:outline-none transition mt-2 ${
-                errors.type ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
-              }`}
-            />
+      <form onSubmit={handleSubmit(onValid, onInvalid)} className="p-5 space-y-4">
+        <FormField label="Bakım Türü" required error={errors.type?.message}>
+          {(alanProps) => (
+            <select autoFocus {...alanProps} {...register('type')}>
+              <option value="">Seç...</option>
+              {commonMaintenanceTypes.map(t => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
           )}
+        </FormField>
 
-          {errors.type && (
-            <p className="text-xs text-red-400 mt-1 flex items-center gap-1">
-              <AlertTriangle className="w-3 h-3" />
-              {errors.type}
-            </p>
-          )}
-        </div>
-
-        {/* Tarih ve KM */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
-              Tarih *
-            </label>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              max={getTodayString()}
-              className={`w-full bg-slate-800 border rounded-lg px-3 py-2 text-sm focus:outline-none transition ${
-                errors.date ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
-              }`}
-            />
-            {errors.date && <p className="text-xs text-red-400 mt-1">{errors.date}</p>}
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
-              KM *
-            </label>
-            <input
-              type="number"
-              value={km}
-              onChange={(e) => setKm(e.target.value)}
-              placeholder="0"
-              min="0"
-              className={`w-full bg-slate-800 border rounded-lg px-3 py-2 text-sm focus:outline-none transition ${
-                errors.km ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
-              }`}
-            />
-            {errors.km && <p className="text-xs text-red-400 mt-1">{errors.km}</p>}
-            {currentKm > 0 && !km && (
-              <p className="text-[10px] text-slate-500 mt-1">
-                Aracın güncel KM'si: {Number(currentKm).toLocaleString('tr-TR')}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Maliyet */}
-        <div>
-          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
-            Maliyet (₺)
-          </label>
-          <input
-            type="number"
-            value={cost}
-            onChange={(e) => setCost(e.target.value)}
-            placeholder="0"
-            min="0"
-            className={`w-full bg-slate-800 border rounded-lg px-3 py-2 text-sm focus:outline-none transition ${
-              errors.cost ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
-            }`}
+        {isCustom && (
+          <FormField
+            placeholder="Bakım türünü yaz..."
+            error={errors.type?.message}
+            {...register('customType')}
           />
-          {errors.cost && <p className="text-xs text-red-400 mt-1">{errors.cost}</p>}
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <FormField
+            label="Tarih"
+            required
+            type="date"
+            max={getTodayString()}
+            error={errors.date?.message}
+            {...register('date')}
+          />
+          <FormField
+            label="KM"
+            required
+            type="number"
+            min="0"
+            placeholder="0"
+            error={errors.km?.message}
+            hint={currentKm > 0 && !km ? `Aracın güncel KM'si: ${Number(currentKm).toLocaleString('tr-TR')}` : undefined}
+            {...register('km')}
+          />
         </div>
+
+        <FormField
+          label="Maliyet (₺)"
+          type="number"
+          min="0"
+          placeholder="0"
+          error={errors.cost?.message}
+          {...register('cost')}
+        />
 
         {/* Fatura fotoğrafı */}
         <div>
-          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 flex items-center gap-1">
+          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 flex items-center gap-1">
             <Receipt className="w-3 h-3" />
             Fatura / Fiş
-          </label>
-          <SingleImageUploader
-            photo={photo}
-            onChange={setPhoto}
-            label="Fatura"
-            hint="Fatura, fiş veya parça fotoğrafı"
-            maxSizeMB={1}
+          </span>
+          <Controller
+            name="photo"
+            control={control}
+            render={({ field }) => (
+              <SingleImageUploader
+                photo={field.value}
+                onChange={field.onChange}
+                label="Fatura"
+                hint="Fatura, fiş veya parça fotoğrafı"
+                maxSizeMB={1}
+              />
+            )}
           />
         </div>
 
-        {/* Notlar */}
-        <div>
-          <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">
-            Notlar (opsiyonel)
-          </label>
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Servis adı, marka, ek bilgiler..."
-            rows={2}
-            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition resize-none"
-          />
-        </div>
+        <FormField
+          label="Notlar (opsiyonel)"
+          as="textarea"
+          rows={2}
+          placeholder="Servis adı, marka, ek bilgiler..."
+          {...register('notes')}
+        />
 
         <div className="flex gap-2 pt-2">
           <button
