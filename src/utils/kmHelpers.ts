@@ -1,6 +1,13 @@
+import type { Vehicle, MaintenanceRecord, FuelRecord, ConfirmResult, ValidationResult } from '../types'
+
 // Bir aracın kaydedilmiş en yüksek km değerini bul (araç, bakımlar ve yakıtlardan)
-export const getHighestKm = (vehicle, maintenanceRecords, fuelRecords, excludeRecordId = null) => {
-  const values = []
+export const getHighestKm = (
+  vehicle: Pick<Vehicle, 'currentKm'> | null | undefined,
+  maintenanceRecords: MaintenanceRecord[],
+  fuelRecords: FuelRecord[],
+  excludeRecordId: string | null = null
+): number => {
+  const values: number[] = []
 
   if (vehicle?.currentKm) values.push(Number(vehicle.currentKm))
 
@@ -16,14 +23,20 @@ export const getHighestKm = (vehicle, maintenanceRecords, fuelRecords, excludeRe
 }
 
 // Son yakıt kaydının km'sini bul (aynı veya önceki olamaz)
-export const getLastFuelKm = (fuelRecords, excludeRecordId = null) => {
+export const getLastFuelKm = (fuelRecords: FuelRecord[], excludeRecordId: string | null = null): number => {
   const filtered = fuelRecords.filter(r => r.id !== excludeRecordId)
   if (filtered.length === 0) return 0
   return Math.max(...filtered.map(r => Number(r.km || 0)))
 }
 
 // Bakım kaydı için km uyarısı gerekli mi?
-export const checkMaintenanceKm = (newKm, vehicle, maintenanceRecords, fuelRecords, excludeRecordId = null) => {
+export const checkMaintenanceKm = (
+  newKm: string | number,
+  vehicle: Pick<Vehicle, 'currentKm'> | null | undefined,
+  maintenanceRecords: MaintenanceRecord[],
+  fuelRecords: FuelRecord[],
+  excludeRecordId: string | null = null
+): ConfirmResult => {
   const highest = getHighestKm(vehicle, maintenanceRecords, fuelRecords, excludeRecordId)
   const km = Number(newKm)
 
@@ -38,7 +51,11 @@ export const checkMaintenanceKm = (newKm, vehicle, maintenanceRecords, fuelRecor
 }
 
 // Yakıt kaydı için km kontrolü
-export const checkFuelKm = (newKm, fuelRecords, excludeRecordId = null) => {
+export const checkFuelKm = (
+  newKm: string | number,
+  fuelRecords: FuelRecord[],
+  excludeRecordId: string | null = null
+): ValidationResult => {
   const lastKm = getLastFuelKm(fuelRecords, excludeRecordId)
   const km = Number(newKm)
 

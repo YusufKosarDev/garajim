@@ -1,11 +1,19 @@
+import type { Vehicle, MaintenanceRecord, FuelRecord } from '../types'
+
+interface AylikOzet { maintenance: number; fuel: number; total: number }
+
 // Bir tarihin ay-yıl anahtarı döndürür: "2026-04" gibi
-const getMonthKey = (dateString) => {
+const getMonthKey = (dateString: string): string => {
   const d = new Date(dateString)
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
 }
 
 // Son N ayın ortalaması — tahmin için
-export const getAverageMonthlySpending = (records, fuelRecords, monthsBack = 3) => {
+export const getAverageMonthlySpending = (
+  records: MaintenanceRecord[],
+  fuelRecords: FuelRecord[],
+  monthsBack = 3
+) => {
   const now = new Date()
   const cutoff = new Date(now.getFullYear(), now.getMonth() - monthsBack, 1)
 
@@ -25,7 +33,7 @@ export const getAverageMonthlySpending = (records, fuelRecords, monthsBack = 3) 
 }
 
 // Bu ayki harcama
-export const getCurrentMonthSpending = (records, fuelRecords) => {
+export const getCurrentMonthSpending = (records: MaintenanceRecord[], fuelRecords: FuelRecord[]): AylikOzet => {
   const now = new Date()
   const thisMonth = getMonthKey(now.toISOString())
 
@@ -45,11 +53,11 @@ export const getCurrentMonthSpending = (records, fuelRecords) => {
 }
 
 // Bu yıl vs geçen yıl
-export const getYearComparison = (records, fuelRecords) => {
+export const getYearComparison = (records: MaintenanceRecord[], fuelRecords: FuelRecord[]) => {
   const currentYear = new Date().getFullYear()
   const previousYear = currentYear - 1
 
-  const sumForYear = (year) => {
+  const sumForYear = (year: number) => {
     const maintenance = records
       .filter(r => new Date(r.date).getFullYear() === year)
       .reduce((sum, r) => sum + (r.cost || 0), 0)
@@ -71,11 +79,15 @@ export const getYearComparison = (records, fuelRecords) => {
 }
 
 // Ay bazında aylık harcama (heatmap için)
-export const getMonthlyBreakdown = (records, fuelRecords, yearsBack = 2) => {
+export const getMonthlyBreakdown = (
+  records: MaintenanceRecord[],
+  fuelRecords: FuelRecord[],
+  yearsBack = 2
+): Record<string, AylikOzet> => {
   const now = new Date()
   const cutoff = new Date(now.getFullYear() - yearsBack, 0, 1)
 
-  const byMonth = {}
+  const byMonth: Record<string, AylikOzet> = {}
 
   records.filter(r => new Date(r.date) >= cutoff).forEach(r => {
     const key = getMonthKey(r.date)
@@ -95,7 +107,11 @@ export const getMonthlyBreakdown = (records, fuelRecords, yearsBack = 2) => {
 }
 
 // Araç başına maliyet analizi
-export const getVehicleCostAnalysis = (vehicles, maintenanceRecords, fuelRecords) => {
+export const getVehicleCostAnalysis = (
+  vehicles: Vehicle[],
+  maintenanceRecords: MaintenanceRecord[],
+  fuelRecords: FuelRecord[]
+) => {
   return vehicles.map(v => {
     const vMaintenance = maintenanceRecords.filter(r => r.vehicleId === v.id)
     const vFuel = fuelRecords.filter(r => r.vehicleId === v.id)
@@ -133,8 +149,8 @@ export const getVehicleCostAnalysis = (vehicles, maintenanceRecords, fuelRecords
 }
 
 // Bakım türü bazında breakdown (pie chart için)
-export const getMaintenanceTypeBreakdown = (records) => {
-  const byType = {}
+export const getMaintenanceTypeBreakdown = (records: MaintenanceRecord[]) => {
+  const byType: Record<string, { count: number; total: number }> = {}
   records.forEach(r => {
     const type = r.type || 'Diğer'
     if (!byType[type]) byType[type] = { count: 0, total: 0 }
@@ -148,8 +164,8 @@ export const getMaintenanceTypeBreakdown = (records) => {
 }
 
 // İstasyon analizi
-export const getStationAnalysis = (fuelRecords) => {
-  const byStation = {}
+export const getStationAnalysis = (fuelRecords: FuelRecord[]) => {
+  const byStation: Record<string, { count: number; total: number; liters: number }> = {}
   fuelRecords.forEach(r => {
     const station = r.station?.trim() || 'Belirtilmemiş'
     if (!byStation[station]) {
@@ -170,13 +186,13 @@ export const getStationAnalysis = (fuelRecords) => {
 }
 
 // Harcama trendi (artıyor mu / azalıyor mu?)
-export const getSpendingTrend = (records, fuelRecords) => {
+export const getSpendingTrend = (records: MaintenanceRecord[], fuelRecords: FuelRecord[]) => {
   const now = new Date()
   const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1)
   const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
   const monthBefore = new Date(now.getFullYear(), now.getMonth() - 2, 1)
 
-  const sumForPeriod = (start, end) => {
+  const sumForPeriod = (start: Date, end: Date) => {
     const m = records
       .filter(r => {
         const d = new Date(r.date)

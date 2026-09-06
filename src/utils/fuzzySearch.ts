@@ -2,7 +2,9 @@
  * Basit fuzzy search — query'nin harfleri text içinde sırayla bulunuyorsa eşleşir
  * Örnek: "yağ" → "Yağ Değişimi" (eşleşir), "değşm" → "Değişim" (eşleşir)
  */
-export const fuzzyMatch = (text, query) => {
+export interface FuzzyResult { score: number; match: boolean }
+
+export const fuzzyMatch = (text: unknown, query?: string | null): FuzzyResult => {
   if (!query) return { score: 1, match: true }
   if (!text) return { score: 0, match: false }
 
@@ -53,7 +55,7 @@ export const fuzzyMatch = (text, query) => {
 /**
  * Türkçe karakterleri ve özel karakterleri normalize et
  */
-const normalizeText = (text) => {
+const normalizeText = (text: unknown): string => {
   return String(text)
     .toLowerCase()
     .replace(/ı/g, 'i')
@@ -69,7 +71,7 @@ const normalizeText = (text) => {
 /**
  * Bir nesnenin birden fazla alanında arama yap, en yüksek skoru döndür
  */
-export const multiFieldSearch = (obj, query, fields) => {
+export const multiFieldSearch = (obj: Record<string, unknown>, query: string | null | undefined, fields: string[]): FuzzyResult => {
   if (!query) return { score: 0, match: true }
 
   let maxScore = 0

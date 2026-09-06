@@ -1,3 +1,5 @@
+import type { Tire, TireSet, TireChange, Sezon, TireStatus } from '../types'
+
 // Pozisyon etiketleri
 export const TIRE_POSITIONS = [
   { code: 'FL', label: 'Ön Sol', short: 'Ö-S' },
@@ -16,7 +18,9 @@ export const SEASONS = {
 
 // DOT kodundan lastik yaşını hesapla
 // DOT format: "HHWW" — 2 hafta + 2 yıl (örn "3523" = 35. hafta 2023)
-export const calculateTireAge = (dotCode) => {
+export interface TireAge { year: number; week: number; manufactureDate: Date; ageYears: number }
+
+export const calculateTireAge = (dotCode?: string | null): TireAge | null => {
   if (!dotCode || dotCode.length !== 4) return null
   const week = parseInt(dotCode.substring(0, 2), 10)
   const yearShort = parseInt(dotCode.substring(2, 4), 10)
@@ -28,7 +32,7 @@ export const calculateTireAge = (dotCode) => {
   const manufactureDate = new Date(year, 0, 1 + (week - 1) * 7)
 
   const now = new Date()
-  const ageMs = now - manufactureDate
+  const ageMs = now.getTime() - manufactureDate.getTime()
   const ageYears = ageMs / (1000 * 60 * 60 * 24 * 365.25)
 
   return {
@@ -40,8 +44,11 @@ export const calculateTireAge = (dotCode) => {
 }
 
 // Lastik durumunu değerlendir
-export const evaluateTire = (tire) => {
-  const warnings = []
+export interface TireWarning { level: 'critical' | 'danger' | 'warning'; message: string }
+export interface TireEvaluation { status: TireStatus; warnings: TireWarning[]; age: TireAge | null }
+
+export const evaluateTire = (tire: Partial<Tire>): TireEvaluation => {
+  const warnings: TireWarning[] = []
 
   // Diş derinliği
   const depth = Number(tire.treadDepth) || 0
@@ -77,7 +84,7 @@ export const evaluateTire = (tire) => {
 }
 
 // Set genelinde en kötü lastik durumu
-export const evaluateTireSet = (tireSet) => {
+export const evaluateTireSet = (tireSet?: Pick<TireSet, 'tires'> | null) => {
   if (!tireSet || !tireSet.tires) return { status: 'ok', issueCount: 0 }
 
   const evaluations = tireSet.tires.map(evaluateTire)
@@ -100,7 +107,9 @@ export const evaluateTireSet = (tireSet) => {
 }
 
 // Mevsim değişim uyarısı — Türkiye'deki tarihler
-export const getSeasonChangeSuggestion = (currentSeason) => {
+export interface SeasonSuggestion { type: 'recommend' | 'warning'; target: Sezon; message: string; urgent: boolean }
+
+export const getSeasonChangeSuggestion = (currentSeason: Sezon | string): SeasonSuggestion | null => {
   const now = new Date()
   const month = now.getMonth() // 0-11
   const day = now.getDate()
@@ -157,12 +166,12 @@ export const getSeasonChangeSuggestion = (currentSeason) => {
 }
 
 // Aktif seti bul — en son set değişimine göre
-export const getActiveTireSet = (tireSets, tireChanges) => {
+export const getActiveTireSet = (tireSets?: TireSet[] | null, tireChanges: TireChange[] = []): TireSet | null => {
   if (!tireSets || tireSets.length === 0) return null
 
   // En son yapılan değişim
   const latestChange = [...tireChanges]
-    .sort((a, b) => new Date(b.date) - new Date(a.date))[0]
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
 
   if (latestChange) {
     // Son değişimden sonra hangi sete geçilmiş
@@ -174,7 +183,7 @@ export const getActiveTireSet = (tireSets, tireChanges) => {
 }
 
 // Set diş derinliği ortalaması
-export const getAverageTreadDepth = (tireSet) => {
+export const getAverageTreadDepth = (tireSet?: Pick<TireSet, 'tires'> | null): number | null => {
   if (!tireSet || !tireSet.tires) return null
   const depths = tireSet.tires
     .map(t => Number(t.treadDepth) || 0)

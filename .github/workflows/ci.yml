@@ -29,6 +29,9 @@ jobs:
         run: npm run lint
         continue-on-error: true
 
+      - name: Tip kontrolü
+        run: npm run typecheck
+
       - name: Unit testler
         run: npm test
 

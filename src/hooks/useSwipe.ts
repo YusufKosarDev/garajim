@@ -4,7 +4,13 @@ const SWIPE_THRESHOLD = 80 // Tetikleme eşiği (px)
 const MAX_SWIPE = 160 // Maksimum kaydırma (px)
 const VERTICAL_THRESHOLD = 15 // Bu kadar dikey hareket varsa swipe iptal (scroll niyetlidir)
 
-export function useSwipe({ onSwipeLeft, onSwipeRight, enabled = true } = {}) {
+export interface SwipeSecenekleri {
+  onSwipeLeft?: () => void
+  onSwipeRight?: () => void
+  enabled?: boolean
+}
+
+export function useSwipe({ onSwipeLeft, onSwipeRight, enabled = true }: SwipeSecenekleri = {}) {
   const [translateX, setTranslateX] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
@@ -12,9 +18,9 @@ export function useSwipe({ onSwipeLeft, onSwipeRight, enabled = true } = {}) {
   const startX = useRef(0)
   const startY = useRef(0)
   const currentX = useRef(0)
-  const isHorizontal = useRef(null) // null = belirsiz, true = yatay swipe, false = dikey scroll
+  const isHorizontal = useRef<boolean | null>(null) // null = belirsiz, true = yatay swipe, false = dikey scroll
 
-  const handleTouchStart = useCallback((e) => {
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (!enabled) return
     const touch = e.touches[0]
     startX.current = touch.clientX
@@ -24,7 +30,7 @@ export function useSwipe({ onSwipeLeft, onSwipeRight, enabled = true } = {}) {
     setIsDragging(true)
   }, [enabled, isOpen])
 
-  const handleTouchMove = useCallback((e) => {
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (!enabled || !isDragging) return
 
     const touch = e.touches[0]

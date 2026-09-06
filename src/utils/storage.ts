@@ -5,21 +5,21 @@ export const loadData = () => {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return null
     return JSON.parse(raw)
-  } catch (err) {
+  } catch (err: unknown) {
     console.error('LocalStorage yükleme hatası:', err)
     return null
   }
 }
 
-export const saveData = (data) => {
+export const saveData = (data: unknown) => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
     return true
-  } catch (err) {
+  } catch (err: unknown) {
     console.error('LocalStorage kaydetme hatası:', err)
 
     // Kapasite doldu hatası
-    if (err.name === 'QuotaExceededError' || err.code === 22) {
+    if ((err as Error)?.name === 'QuotaExceededError' || (err as { code?: number })?.code === 22) {
       return { error: 'quota' }
     }
     return { error: 'unknown' }
@@ -30,7 +30,7 @@ export const clearStorage = () => {
   try {
     localStorage.removeItem(STORAGE_KEY)
     return true
-  } catch (err) {
+  } catch (err: unknown) {
     console.error('LocalStorage temizleme hatası:', err)
     return false
   }
@@ -55,7 +55,7 @@ export const getStorageInfo = () => {
       usagePercent: Math.round(usagePercent * 100) / 100,
       estimatedTotalMB,
     }
-  } catch (err) {
+  } catch (err: unknown) {
     return null
   }
 }

@@ -1,5 +1,7 @@
+import type { Vehicle, MaintenanceRecord, CustomIntervals, RecommendationStatus } from '../types'
+
 // Türkiye araç standartlarına göre önerilen bakım periyotları (km)
-export const DEFAULT_INTERVALS = {
+export const DEFAULT_INTERVALS: Record<string, number> = {
   'Yağ Değişimi': 10000,
   'Yağ Filtresi': 10000,
   'Hava Filtresi': 20000,
@@ -16,7 +18,7 @@ export const DEFAULT_INTERVALS = {
 }
 
 // Öneri durumu
-export const getRecommendationStatus = (kmRemaining, interval) => {
+export const getRecommendationStatus = (kmRemaining: number, interval: number): RecommendationStatus => {
   if (kmRemaining < 0) return 'overdue'          // Gecikti
   if (kmRemaining <= interval * 0.1) return 'urgent'   // %10 kaldı → acil (sarı-kırmızı)
   if (kmRemaining <= interval * 0.2) return 'soon'     // %20 kaldı → yaklaşıyor (sarı)
@@ -28,12 +30,14 @@ export const getRecommendationStatus = (kmRemaining, interval) => {
 // vehicleId bir UUID olduğu ve kendisi de tire içerdiği için anahtar
 // split('-') ile ayrıştırılamaz — parse için daima parseIntervalKey kullan.
 
-export const buildIntervalKey = (vehicleId, maintenanceType) =>
+export const buildIntervalKey = (vehicleId: string, maintenanceType: string): string =>
   `${vehicleId}-${maintenanceType}`
 
 const UUID_PREFIX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-/i
 
-export const parseIntervalKey = (key) => {
+export interface ParsedIntervalKey { vehicleId: string; maintenanceType: string }
+
+export const parseIntervalKey = (key?: string | null): ParsedIntervalKey | null => {
   if (typeof key !== 'string' || !key) return null
 
   // 1) Bilinen bakım türlerinden biriyle bitiyor mu? (en güvenilir yol —
@@ -55,14 +59,37 @@ export const parseIntervalKey = (key) => {
 }
 
 // Eski yedeklerde değer düz sayı olarak durabildiği için ikisini de kabul ediyoruz.
-export const resolveInterval = (customIntervals, vehicleId, maintenanceType) => {
+export const resolveInterval = (
+  customIntervals: CustomIntervals | undefined,
+  vehicleId: string,
+  maintenanceType: string
+): number => {
   const custom = customIntervals?.[buildIntervalKey(vehicleId, maintenanceType)]
   const km = typeof custom === 'number' ? custom : custom?.kilometers
   return km || DEFAULT_INTERVALS[maintenanceType]
 }
 
 // Bir araç için, bir bakım türünün durumunu hesapla
-export const getMaintenanceRecommendation = (vehicle, maintenanceType, maintenanceRecords, customIntervals = {}) => {
+export interface Recommendation {
+  vehicleId: string
+  vehicle: Vehicle
+  type: string
+  interval: number
+  lastKm: number | null
+  currentKm: number
+  nextDueKm: number
+  kmRemaining: number
+  status: RecommendationStatus
+  hasHistory: boolean
+  message?: string
+}
+
+export const getMaintenanceRecommendation = (
+  vehicle: Vehicle,
+  maintenanceType: string,
+  maintenanceRecords: MaintenanceRecord[],
+  customIntervals: CustomIntervals = {}
+): Recommendation | null => {
   const interval = resolveInterval(customIntervals, vehicle.id, maintenanceType)
   if (!interval) return null  // Periyodu olmayan bakım türleri (Genel Bakım, Diğer)
 
@@ -99,8 +126,12 @@ export const getMaintenanceRecommendation = (vehicle, maintenanceType, maintenan
 }
 
 // Tüm araçlar için tüm bakım türlerinin önerilerini hesapla
-export const getAllRecommendations = (vehicles, maintenanceRecords, customIntervals = {}) => {
-  const recommendations = []
+export const getAllRecommendations = (
+  vehicles: Vehicle[],
+  maintenanceRecords: MaintenanceRecord[],
+  customIntervals: CustomIntervals = {}
+): Recommendation[] => {
+  const recommendations: Recommendation[] = []
 
   vehicles.forEach(vehicle => {
     Object.keys(DEFAULT_INTERVALS).forEach(type => {
@@ -116,12 +147,20 @@ export const getAllRecommendations = (vehicles, maintenanceRecords, customInterv
 }
 
 // Sadece dikkat gerektirenler (overdue, urgent, soon)
-export const getCriticalRecommendations = (vehicles, maintenanceRecords, customIntervals = {}) => {
+export const getCriticalRecommendations = (
+  vehicles: Vehicle[],
+  maintenanceRecords: MaintenanceRecord[],
+  customIntervals: CustomIntervals = {}
+): Recommendation[] => {
   return getAllRecommendations(vehicles, maintenanceRecords, customIntervals)
     .filter(r => r.status !== 'ok')
     .sort((a, b) => {
-      // Önce en acil olanlar (overdue > urgent > soon)
-      const priority = { overdue: 0, urgent: 1, soon: 2 }
+      // Önce en acil olanlar (overdue > urgent > soon).
+      // 'ok' yukarıda filtrelendiği için pratikte gelmiyor, yine de haritada
+      // yer alsın — aksi halde tanımsız indeks NaN karşılaştırması üretir.
+      const priority: Record<RecommendationStatus, number> = {
+        overdue: 0, urgent: 1, soon: 2, ok: 3,
+      }
       if (priority[a.status] !== priority[b.status]) {
         return priority[a.status] - priority[b.status]
       }
@@ -131,9 +170,13 @@ export const getCriticalRecommendations = (vehicles, maintenanceRecords, customI
 }
 
 // Tek bir araç için kritik öneriler
-export const getVehicleRecommendations = (vehicle, maintenanceRecords, customIntervals = {}) => {
+export const getVehicleRecommendations = (
+  vehicle: Vehicle,
+  maintenanceRecords: MaintenanceRecord[],
+  customIntervals: CustomIntervals = {}
+): Recommendation[] => {
   return Object.keys(DEFAULT_INTERVALS)
     .map(type => getMaintenanceRecommendation(vehicle, type, maintenanceRecords, customIntervals))
-    .filter(r => r && r.hasHistory)
+    .filter((r): r is Recommendation => r !== null && r.hasHistory)
     .sort((a, b) => a.kmRemaining - b.kmRemaining)
 }

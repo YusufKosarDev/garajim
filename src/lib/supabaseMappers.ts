@@ -1,3 +1,12 @@
+import type {
+  Vehicle, VehicleRow,
+  MaintenanceRecord, MaintenanceRow,
+  FuelRecord, FuelRow,
+  TireSet, TireSetRow,
+  TireChange, TireChangeRow,
+  CustomInterval, CustomIntervalRow, CustomIntervals,
+} from '../types'
+
 /**
  * Supabase (snake_case) ↔ Frontend (camelCase) dönüşümleri
  * 
@@ -6,11 +15,22 @@
  * Bu dosya iki tarafı birbirine çevirir.
  */
 
+/**
+ * Postgres numeric sütunları PostgREST üzerinden STRING olarak geliyor
+ * (ör. cost: '1234.56'). Mapper'lar bunu dağınık parseFloat çağrılarıyla
+ * çeviriyordu; tek yerde topluyoruz. null/undefined/boş/NaN -> 0.
+ */
+const sayiya = (deger: string | number | null | undefined): number => {
+  if (deger === null || deger === undefined || deger === '') return 0
+  const n = typeof deger === 'number' ? deger : parseFloat(deger)
+  return Number.isNaN(n) ? 0 : n
+}
+
 // ============================================
 // VEHICLES
 // ============================================
 
-export const vehicleFromDb = (row) => {
+export const vehicleFromDb = (row: VehicleRow | null): Vehicle | null => {
   if (!row) return null
   return {
     id: row.id,
@@ -31,7 +51,7 @@ export const vehicleFromDb = (row) => {
   }
 }
 
-export const vehicleToDb = (vehicle, userId) => {
+export const vehicleToDb = (vehicle: Partial<Vehicle>, userId: string) => {
   // Sadece DB sütunlarına karşılık gelen alanları gönder
   const dbRow = {
     user_id: userId,
@@ -55,7 +75,7 @@ export const vehicleToDb = (vehicle, userId) => {
 // MAINTENANCE RECORDS
 // ============================================
 
-export const maintenanceFromDb = (row) => {
+export const maintenanceFromDb = (row: MaintenanceRow | null): MaintenanceRecord | null => {
   if (!row) return null
   return {
     id: row.id,
@@ -63,7 +83,7 @@ export const maintenanceFromDb = (row) => {
     type: row.type,
     date: row.date,
     km: row.km,
-    cost: row.cost ? parseFloat(row.cost) : 0,
+    cost: sayiya(row.cost),
     notes: row.notes,
     photo: row.photo_url, // Eski sistemle uyum için 'photo' adı
     createdAt: row.created_at,
@@ -71,7 +91,7 @@ export const maintenanceFromDb = (row) => {
   }
 }
 
-export const maintenanceToDb = (record, userId) => {
+export const maintenanceToDb = (record: Partial<MaintenanceRecord>, userId: string) => {
   return {
     vehicle_id: record.vehicleId,
     user_id: userId,
@@ -88,17 +108,17 @@ export const maintenanceToDb = (record, userId) => {
 // FUEL RECORDS
 // ============================================
 
-export const fuelFromDb = (row) => {
+export const fuelFromDb = (row: FuelRow | null): FuelRecord | null => {
   if (!row) return null
   return {
     id: row.id,
     vehicleId: row.vehicle_id,
     date: row.date,
     km: row.km,
-    liters: row.liters ? parseFloat(row.liters) : 0,
-    pricePerLiter: row.price_per_liter ? parseFloat(row.price_per_liter) : 0,
-    totalCost: row.total_cost ? parseFloat(row.total_cost) : 0,
-    fullTank: row.full_tank,
+    liters: sayiya(row.liters),
+    pricePerLiter: sayiya(row.price_per_liter),
+    totalCost: sayiya(row.total_cost),
+    fullTank: row.full_tank ?? false,
     station: row.station,
     notes: row.notes,
     createdAt: row.created_at,
@@ -106,7 +126,7 @@ export const fuelFromDb = (row) => {
   }
 }
 
-export const fuelToDb = (record, userId) => {
+export const fuelToDb = (record: Partial<FuelRecord>, userId: string) => {
   return {
     vehicle_id: record.vehicleId,
     user_id: userId,
@@ -125,7 +145,7 @@ export const fuelToDb = (record, userId) => {
 // TIRE SETS
 // ============================================
 
-export const tireSetFromDb = (row) => {
+export const tireSetFromDb = (row: TireSetRow | null): TireSet | null => {
   if (!row) return null
   return {
     id: row.id,
@@ -135,14 +155,14 @@ export const tireSetFromDb = (row) => {
     size: row.size,
     tires: row.tires || [],
     purchaseDate: row.purchase_date,
-    purchasePrice: row.purchase_price ? parseFloat(row.purchase_price) : 0,
+    purchasePrice: sayiya(row.purchase_price),
     notes: row.notes,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
 }
 
-export const tireSetToDb = (tireSet, userId) => {
+export const tireSetToDb = (tireSet: Partial<TireSet>, userId: string) => {
   return {
     vehicle_id: tireSet.vehicleId,
     user_id: userId,
@@ -160,7 +180,7 @@ export const tireSetToDb = (tireSet, userId) => {
 // TIRE CHANGES
 // ============================================
 
-export const tireChangeFromDb = (row) => {
+export const tireChangeFromDb = (row: TireChangeRow | null): TireChange | null => {
   if (!row) return null
   return {
     id: row.id,
@@ -169,14 +189,14 @@ export const tireChangeFromDb = (row) => {
     fromSeason: row.from_season,
     toSeason: row.to_season,
     km: row.km,
-    cost: row.cost ? parseFloat(row.cost) : 0,
+    cost: sayiya(row.cost),
     notes: row.notes,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
 }
 
-export const tireChangeToDb = (change, userId) => {
+export const tireChangeToDb = (change: Partial<TireChange>, userId: string) => {
   return {
     vehicle_id: change.vehicleId,
     user_id: userId,
@@ -203,7 +223,12 @@ export const tireChangeToDb = (change, userId) => {
  * Bu fonksiyonlar iki tarafı birbirine çevirir.
  */
 
-export const customIntervalToDb = (vehicleId, maintenanceType, interval, userId) => {
+export const customIntervalToDb = (
+  vehicleId: string,
+  maintenanceType: string,
+  interval: CustomInterval,
+  userId: string
+): CustomIntervalRow => {
   return {
     vehicle_id: vehicleId,
     user_id: userId,
@@ -213,11 +238,11 @@ export const customIntervalToDb = (vehicleId, maintenanceType, interval, userId)
   }
 }
 
-export const customIntervalsFromDbRows = (rows) => {
+export const customIntervalsFromDbRows = (rows?: CustomIntervalRow[] | null): CustomIntervals => {
   // DB satırlarını obje formatına çevir
   // [{ vehicle_id, maintenance_type, kilometers, months }] →
   // { 'vehicleId-Yağ Değişimi': { kilometers, months } }
-  const result = {}
+  const result: CustomIntervals = {}
   if (!rows || !Array.isArray(rows)) return result
   
   rows.forEach(row => {
@@ -234,10 +259,10 @@ export const customIntervalsFromDbRows = (rows) => {
 // HATA MESAJLARI (Türkçe)
 // ============================================
 
-export const formatSupabaseError = (error) => {
+export const formatSupabaseError = (error?: { message?: string } | string | null): string => {
   if (!error) return 'Bilinmeyen hata'
   
-  const msg = error.message || String(error)
+  const msg = typeof error === 'string' ? error : (error.message || String(error))
   
   // Yaygın hataları Türkçeleştir
   if (msg.includes('duplicate key')) return 'Bu kayıt zaten var'

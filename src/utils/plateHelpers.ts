@@ -3,7 +3,7 @@
 const PLATE_REGEX = /^\d{2}\s[A-Z]{1,3}\s\d{2,4}$/
 
 // Kullanıcının yazdığı plakayı standart formata çevir
-export const formatPlate = (input) => {
+export const formatPlate = (input?: string | null): string => {
   if (!input) return ''
 
   // Türkçe karakterleri İngilizce'ye çevir, boşlukları ve özel karakterleri sil
@@ -51,14 +51,14 @@ export const formatPlate = (input) => {
 }
 
 // Plaka formatı geçerli mi?
-export const isValidPlate = (plate) => {
+export const isValidPlate = (plate?: string | null): boolean => {
   if (!plate) return false
   return PLATE_REGEX.test(plate.trim())
 }
 
 // İki plakayı karşılaştır (case-insensitive, boşluk-insensitive)
-export const platesMatch = (plate1, plate2) => {
+export const platesMatch = (plate1?: string | null, plate2?: string | null): boolean => {
   if (!plate1 || !plate2) return false
-  const normalize = (p) => p.replace(/\s+/g, '').toUpperCase()
+  const normalize = (p: string) => p.replace(/\s+/g, '').toUpperCase()
   return normalize(plate1) === normalize(plate2)
 }

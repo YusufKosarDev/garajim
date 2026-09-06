@@ -1,4 +1,5 @@
 import { toDateKey } from './dateHelpers'
+import type { ValidationResult } from '../types'
 
 // Bugünün tarihini YYYY-MM-DD formatında döndür (HTML date input için)
 // Yerel saate göre — toISOString() TR'de tarihi bir gün geriye kaydırırdı.
@@ -6,7 +7,7 @@ export const getTodayString = () => toDateKey(new Date())
 
 // Geçmişte olması gereken tarihler için (bakım, yakıt)
 // "Bugüne kadar" kabul edilir, gelecek tarih hata
-export const validatePastDate = (dateString, fieldName = 'Tarih') => {
+export const validatePastDate = (dateString?: string | null, fieldName = 'Tarih'): ValidationResult => {
   if (!dateString) return { isValid: true }
 
   const date = new Date(dateString)
@@ -35,7 +36,7 @@ export const validatePastDate = (dateString, fieldName = 'Tarih') => {
 
 // Gelecekte olabilecek tarihler için (muayene, MTV, sigorta, kasko)
 // Geçmişe biraz izin verilir (süresi geçmiş tarihler için) ama çok uzak gelecek hata
-export const validateExpiryDate = (dateString, fieldName = 'Tarih', maxYearsAhead = 5) => {
+export const validateExpiryDate = (dateString?: string | null, fieldName = 'Tarih', maxYearsAhead = 5): ValidationResult => {
   if (!dateString) return { isValid: true }
 
   const date = new Date(dateString)
@@ -64,7 +65,7 @@ export const validateExpiryDate = (dateString, fieldName = 'Tarih', maxYearsAhea
 }
 
 // Araç yılı doğrulama
-export const validateVehicleYear = (year) => {
+export const validateVehicleYear = (year?: string | number | null): ValidationResult => {
   if (!year) return { isValid: false, message: 'Yıl zorunlu' }
 
   const y = Number(year)

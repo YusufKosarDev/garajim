@@ -20,7 +20,7 @@ export const isHapticEnabled = () => {
 }
 
 // Kullanıcı tercihini değiştir
-export const setHapticEnabled = (enabled) => {
+export const setHapticEnabled = (enabled: boolean) => {
   try {
     localStorage.setItem(STORAGE_KEY, String(enabled))
   } catch (err) {

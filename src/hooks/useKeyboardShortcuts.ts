@@ -9,12 +9,23 @@ const isTypingInInput = () => {
     tag === 'INPUT' ||
     tag === 'TEXTAREA' ||
     tag === 'SELECT' ||
-    el.isContentEditable
+    // isContentEditable HTMLElement'te tanımlı, Element'te değil
+    (el instanceof HTMLElement && el.isContentEditable)
   )
 }
 
 const isModalOpen = () => {
   return document.body.style.overflow === 'hidden'
+}
+
+export interface KisayolSecenekleri {
+  onShowHelp?: () => void
+  onShowCommandPalette?: () => void
+  onNewVehicle?: () => void
+  onNewMaintenance?: () => void
+  onNewFuel?: () => void
+  onFocusSearch?: () => void
+  enabled?: boolean
 }
 
 export const useKeyboardShortcuts = ({
@@ -24,12 +35,12 @@ export const useKeyboardShortcuts = ({
   onNewMaintenance,
   onNewFuel,
   onFocusSearch,
-}) => {
+}: KisayolSecenekleri) => {
   const navigate = useNavigate()
-  const sequenceRef = useRef({ key: null, timestamp: 0 })
+  const sequenceRef = useRef<{ key: string | null; timestamp: number }>({ key: null, timestamp: 0 })
 
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase()
 
       // CMD+K / CTRL+K — Command Palette (input içinde bile çalışmalı, özel)

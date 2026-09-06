@@ -1,6 +1,15 @@
 import { toDateKey } from './dateHelpers'
 
-export const exportData = (vehicles, maintenanceRecords, fuelRecords, customIntervals, tireSets = [], tireChanges = []) => {
+import type { Vehicle, MaintenanceRecord, FuelRecord, TireSet, TireChange, CustomIntervals } from '../types'
+
+export const exportData = (
+  vehicles: Vehicle[],
+  maintenanceRecords: MaintenanceRecord[],
+  fuelRecords: FuelRecord[],
+  customIntervals: CustomIntervals,
+  tireSets: TireSet[] = [],
+  tireChanges: TireChange[] = []
+) => {
   const data = {
     version: 3,
     exportDate: new Date().toISOString(),
@@ -27,13 +36,14 @@ export const exportData = (vehicles, maintenanceRecords, fuelRecords, customInte
   URL.revokeObjectURL(url)
 }
 
-export const parseImportFile = (file) => {
+export const parseImportFile = (file: File): Promise<Record<string, unknown>> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
 
     reader.onload = (e) => {
       try {
-        const content = e.target.result
+        // FileReader sonucu string | ArrayBuffer | null olabilir
+        const content = typeof e.target?.result === 'string' ? e.target.result : ''
         const data = JSON.parse(content)
 
         if (!data.vehicles || !Array.isArray(data.vehicles)) {

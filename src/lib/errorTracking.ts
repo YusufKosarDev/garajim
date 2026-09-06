@@ -8,7 +8,8 @@
  * Kurulum: .env dosyasına VITE_SENTRY_DSN=... ekle.
  */
 
-let sentry = null
+type SentryModulu = typeof import('@sentry/react')
+let sentry: SentryModulu | null = null
 let baslatildi = false
 
 const dsn = import.meta.env.VITE_SENTRY_DSN
@@ -45,7 +46,7 @@ export async function initErrorTracking() {
  * Yakalanmış bir hatayı raporla.
  * Sentry kapalıysa konsola düşer — mevcut davranış korunur.
  */
-export function captureError(error, context = {}) {
+export function captureError(error: unknown, context: Record<string, unknown> = {}) {
   if (sentry) {
     sentry.captureException(error, { extra: context })
   } else {

@@ -15,8 +15,24 @@ const AZAMI_SATIR = 50000 // sonsuz döngüye karşı emniyet freni
  * @param {boolean} ascending - Artan mı
  * @returns {Promise<object[]>} Tüm satırlar
  */
-export async function fetchAllRows(client, table, orderBy, ascending) {
-  const rows = []
+interface PostgrestYanit { data: Record<string, unknown>[] | null; error: { message?: string } | null }
+interface SorgulanabilirClient {
+  from: (table: string) => {
+    select: (cols: string) => {
+      order: (col: string, opts: { ascending: boolean }) => {
+        range: (from: number, to: number) => PromiseLike<PostgrestYanit>
+      }
+    }
+  }
+}
+
+export async function fetchAllRows(
+  client: SorgulanabilirClient,
+  table: string,
+  orderBy: string,
+  ascending: boolean
+): Promise<Record<string, unknown>[]> {
+  const rows: Record<string, unknown>[] = []
 
   for (let from = 0; ; from += SAYFA_BOYU) {
     const { data, error } = await client

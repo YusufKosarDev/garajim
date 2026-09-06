@@ -5,7 +5,7 @@
 // Bir Date'i YEREL saate göre 'YYYY-MM-DD' anahtarına çevirir.
 // Not: toISOString() önce UTC'ye çevirdiği için TR'de (UTC+3) yerel gece yarısı
 // bir önceki güne düşer — takvim anahtarlarında asla toISOString() kullanma.
-export const toDateKey = (date) => {
+export const toDateKey = (date: Date | string | null | undefined): string => {
   // new Date(null) epoch'a düşer (geçerli tarih sayılır), new Date(undefined)
   // Invalid Date verir — boş girdiyi baştan eleyip ikisini de aynı davranışa çekiyoruz.
   if (date === null || date === undefined || date === '') return ''
@@ -18,7 +18,7 @@ export const toDateKey = (date) => {
 }
 
 // "22 Nisan 2026" - Tam tarih, uzun ay adı (ana format)
-export const formatDate = (dateString) => {
+export const formatDate = (dateString?: string | null): string => {
   if (!dateString) return '-'
   const date = new Date(dateString)
   if (isNaN(date.getTime())) return '-'
@@ -30,7 +30,7 @@ export const formatDate = (dateString) => {
 }
 
 // "22 Nis 2026" - Kısa tarih (tablo ve dar alanlar için)
-export const formatDateShort = (dateString) => {
+export const formatDateShort = (dateString?: string | null): string => {
   if (!dateString) return '-'
   const date = new Date(dateString)
   if (isNaN(date.getTime())) return '-'
@@ -42,7 +42,7 @@ export const formatDateShort = (dateString) => {
 }
 
 // "22 Nisan 2026, 14:30" - Tarih + saat
-export const formatDateTime = (dateString) => {
+export const formatDateTime = (dateString?: string | null): string => {
   if (!dateString) return '-'
   const date = new Date(dateString)
   if (isNaN(date.getTime())) return '-'
@@ -59,7 +59,7 @@ export const formatDateTime = (dateString) => {
 }
 
 // "2 gün önce", "yarın", "bugün", "3 gün sonra"
-export const formatRelative = (dateString) => {
+export const formatRelative = (dateString?: string | null): string => {
   if (!dateString) return '-'
   const date = new Date(dateString)
   if (isNaN(date.getTime())) return '-'
@@ -69,7 +69,7 @@ export const formatRelative = (dateString) => {
   const target = new Date(date)
   target.setHours(0, 0, 0, 0)
 
-  const diffMs = target - today
+  const diffMs = target.getTime() - today.getTime()
   const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24))
 
   if (diffDays === 0) return 'bugün'
@@ -89,7 +89,7 @@ export const formatRelative = (dateString) => {
 // ============================================
 
 // İki tarih arası gün farkı (pozitif = gelecek, negatif = geçmiş)
-export const daysUntil = (dateString) => {
+export const daysUntil = (dateString?: string | null): number | null => {
   if (!dateString) return null
   const date = new Date(dateString)
   if (isNaN(date.getTime())) return null
@@ -98,12 +98,14 @@ export const daysUntil = (dateString) => {
   today.setHours(0, 0, 0, 0)
   date.setHours(0, 0, 0, 0)
 
-  const diffMs = date - today
+  const diffMs = date.getTime() - today.getTime()
   return Math.round(diffMs / (1000 * 60 * 60 * 24))
 }
 
 // Tarih durumunu belirle (expired/warning/safe/none)
-export const getDateStatus = (dateString) => {
+import type { DateStatus } from '../types'
+
+export const getDateStatus = (dateString?: string | null): DateStatus => {
   if (!dateString) return 'none'
   const days = daysUntil(dateString)
   if (days === null) return 'none'

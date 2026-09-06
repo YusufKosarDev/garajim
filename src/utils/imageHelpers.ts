@@ -7,7 +7,7 @@ const COMPRESSION_QUALITY = 0.85
 export const MAX_VEHICLE_PHOTOS = 5
 
 // Tek bir resmi compress edip base64'e çevir
-export const compressImage = (file) => {
+export const compressImage = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     if (!file || !file.type.startsWith('image/')) {
       reject(new Error('Geçerli bir görsel dosyası değil'))
@@ -37,6 +37,10 @@ export const compressImage = (file) => {
         canvas.height = height
 
         const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          reject(new Error('Canvas bağlamı alınamadı'))
+          return
+        }
         ctx.drawImage(img, 0, 0, width, height)
 
         // JPEG olarak compress et (kalite %85)
@@ -54,7 +58,7 @@ export const compressImage = (file) => {
         }
       }
       img.onerror = () => reject(new Error('Görsel yüklenemedi'))
-      img.src = e.target.result
+      img.src = typeof e.target?.result === 'string' ? e.target.result : ''
     }
     reader.onerror = () => reject(new Error('Dosya okunamadı'))
     reader.readAsDataURL(file)
@@ -62,21 +66,23 @@ export const compressImage = (file) => {
 }
 
 // Birden çok dosyayı işle
-export const compressMultipleImages = async (files) => {
-  const results = []
+export interface CompressSonuc { success: boolean; data?: string; error?: string; fileName?: string }
+
+export const compressMultipleImages = async (files: File[]): Promise<CompressSonuc[]> => {
+  const results: CompressSonuc[] = []
   for (const file of files) {
     try {
       const compressed = await compressImage(file)
       results.push({ success: true, data: compressed })
     } catch (err) {
-      results.push({ success: false, error: err.message, fileName: file.name })
+      results.push({ success: false, error: (err as Error)?.message, fileName: file.name })
     }
   }
   return results
 }
 
 // Base64 string'in boyutunu hesapla (KB)
-export const getImageSize = (base64String) => {
+export const getImageSize = (base64String?: string | null): number => {
   if (!base64String) return 0
   // base64 boyutu = 4 * ceil(n / 3), gerçek boyut = (string.length * 3) / 4 / 1024
   const sizeInBytes = (base64String.length * 3) / 4
@@ -84,12 +90,12 @@ export const getImageSize = (base64String) => {
 }
 
 // Bir array'in toplam boyutu
-export const getTotalImageSize = (photos = []) => {
+export const getTotalImageSize = (photos: string[] = []): number => {
   return photos.reduce((sum, p) => sum + getImageSize(p), 0)
 }
 
 // Geçerli bir base64 image mi?
-export const isValidImageDataUrl = (str) => {
+export const isValidImageDataUrl = (str?: unknown): boolean => {
   if (!str || typeof str !== 'string') return false
   return str.startsWith('data:image/') && str.includes(';base64,')
 }
