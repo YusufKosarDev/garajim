@@ -1,5 +1,6 @@
 import { Component } from 'react'
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react'
+import { captureError } from '../lib/errorTracking'
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -17,9 +18,11 @@ class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    // Hatayı console'a logla (production'da Sentry gibi servislere gönderilebilir)
     console.error('🔥 ErrorBoundary yakaladı:', error)
     console.error('📍 Component stack:', errorInfo.componentStack)
+
+    // Hata izleme açıksa (VITE_SENTRY_DSN) servise raporla
+    captureError(error, { componentStack: errorInfo.componentStack })
 
     this.setState({ errorInfo })
   }

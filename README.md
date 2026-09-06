@@ -434,6 +434,23 @@ npm run test:e2e
 
 > 💡 E2E testleri çalıştırmadan önce `npm run dev` ile dev server'ı başlat — Cypress `localhost:5173`'e bağlanır. Unit testler dev server gerektirmez.
 
+### Hata İzleme (opsiyonel)
+
+Sentry entegrasyonu hazır ama **varsayılan olarak kapalı**. `.env` dosyasına
+`VITE_SENTRY_DSN` eklemezsen Sentry hiç yüklenmez — dinamik import olduğu için
+Rollup onu tamamen eleme yapar, ne ağ isteği ne bundle maliyeti kalır.
+
+| | Sentry chunk | Toplam chunk |
+|---|---|---|
+| DSN tanımlı | 151 kB gzip (lazy) | 67 |
+| DSN yok | yok | 65 |
+
+Açıldığında `ErrorBoundary`, veri yükleme hataları ve global yakalanmamış
+hatalar (`unhandledrejection`, `window.error`) raporlanır.
+
+> Kaynak haritaları `hidden` üretiliyor; okunabilir stack trace için Sentry'ye
+> ayrıca yüklenmeleri gerekir.
+
 ### CI
 
 `.github/workflows/ci.yml` her push ve PR'da çalışır:

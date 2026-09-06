@@ -8,8 +8,13 @@ import { NotificationProvider } from './context/NotificationContext'
 import ErrorBoundary from './components/ErrorBoundary'
 import ConfigMissing from './components/ConfigMissing'
 import { isSupabaseConfigured } from './lib/supabase'
+import { initErrorTracking, registerGlobalHandlers } from './lib/errorTracking'
 import App from './App.jsx'
 import './index.css'
+
+// VITE_SENTRY_DSN yoksa ikisi de sessizce no-op
+initErrorTracking()
+registerGlobalHandlers()
 
 const queryClient = new QueryClient({
   defaultOptions: {

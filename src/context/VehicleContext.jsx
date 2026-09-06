@@ -28,6 +28,7 @@ import {
 } from '../lib/storageHelpers'
 import { parseIntervalKey } from '../utils/maintenanceRecommendations'
 import { fetchAllRows } from '../lib/fetchAllRows'
+import { captureError } from '../lib/errorTracking'
 
 const VehicleContext = createContext(null)
 
@@ -108,7 +109,7 @@ export const VehicleProvider = ({ children }) => {
   useEffect(() => {
     if (!loadError || shownErrorRef.current === loadError) return
     shownErrorRef.current = loadError
-    console.error('Veri yükleme hatası:', loadError)
+    captureError(loadError, { yer: 'VehicleContext ilk yükleme' })
     toast.error('Veriler yüklenemedi: ' + formatSupabaseError(loadError))
   }, [loadError])
 
