@@ -1,9 +1,44 @@
+import type { Vehicle, MaintenanceRecord, TireSet, TireChange, CustomIntervals } from '../types'
+
+export type BildirimTuru = 'inspection' | 'mtv' | 'insurance' | 'kasko' | 'maintenance' | 'tire-season'
+export type BildirimOnceligi = 'critical' | 'high' | 'medium' | 'low'
+
+export interface Bildirim {
+  id: string
+  type: BildirimTuru
+  vehicleId: string
+  maintenanceType?: string
+  title: string
+  message: string
+  date: string
+  targetDate?: string
+  days?: number
+  priority: BildirimOnceligi
+  actionUrl: string
+  read: boolean
+  dismissed: boolean
+  stale?: boolean
+}
+
+export interface TurAyari { enabled: boolean; daysBefore?: number[] }
+export interface BildirimAyarlari {
+  enabled: boolean
+  inspection: TurAyari
+  mtv: TurAyari
+  insurance: TurAyari
+  kasko: TurAyari
+  maintenance: { enabled: boolean }
+  tireSeason: { enabled: boolean }
+  browserNotifications: boolean
+  [key: string]: unknown
+}
+
 import { daysUntil } from './dateHelpers'
 import { getCriticalRecommendations } from './maintenanceRecommendations'
 import { getActiveTireSet, getSeasonChangeSuggestion } from './tireHelpers'
 
 // Default ayarlar
-export const DEFAULT_NOTIFICATION_SETTINGS = {
+export const DEFAULT_NOTIFICATION_SETTINGS: BildirimAyarlari = {
   enabled: true,
   inspection: { enabled: true, daysBefore: [30, 7, 1] },
   mtv: { enabled: true, daysBefore: [30, 7, 1] },
@@ -15,7 +50,7 @@ export const DEFAULT_NOTIFICATION_SETTINGS = {
 }
 
 // Tür için config
-const TYPE_CONFIG = {
+const TYPE_CONFIG: Record<string, { label: string; icon: string; urgentColor: string }> = {
   inspection: { label: 'Muayene', icon: '📋', urgentColor: 'red' },
   mtv: { label: 'MTV', icon: '💳', urgentColor: 'red' },
   insurance: { label: 'Trafik Sigortası', icon: '🛡️', urgentColor: 'red' },
@@ -25,7 +60,7 @@ const TYPE_CONFIG = {
 }
 
 // Önceliği belirle
-const determinePriority = (days) => {
+const determinePriority = (days: number): BildirimOnceligi => {
   if (days < 0) return 'critical' // Geçmiş
   if (days <= 1) return 'critical'
   if (days <= 7) return 'high'
@@ -34,27 +69,27 @@ const determinePriority = (days) => {
 }
 
 // Bildirim ID'si oluşturma — deduplication için stabil
-const buildNotificationId = (type, vehicleId, targetDate) => {
+const buildNotificationId = (type: string, vehicleId: string, targetDate: string): string => {
   return `${type}-${vehicleId}-${targetDate}`
 }
 
 // Tarih bazlı bildirim oluştur (muayene, MTV, sigorta, kasko)
-const generateDateNotifications = (vehicles, settings) => {
-  const notifications = []
+const generateDateNotifications = (vehicles: Vehicle[], settings: BildirimAyarlari): Bildirim[] => {
+  const notifications: Bildirim[] = []
 
-  const dateFields = [
+  const dateFields: { type: BildirimTuru; field: keyof Vehicle; label: string }[] = [
     { type: 'inspection', field: 'inspectionDate', label: 'Muayene' },
     { type: 'mtv', field: 'mtvDate', label: 'MTV' },
     { type: 'insurance', field: 'insuranceDate', label: 'Trafik Sigortası' },
     { type: 'kasko', field: 'kaskoDate', label: 'Kasko' },
   ]
 
-  vehicles.forEach(vehicle => {
+  vehicles.forEach((vehicle: Vehicle) => {
     dateFields.forEach(({ type, field, label }) => {
-      const setting = settings[type]
+      const setting = settings[type] as TurAyari | undefined
       if (!setting || !setting.enabled) return
 
-      const targetDate = vehicle[field]
+      const targetDate = vehicle[field] as string | null | undefined
       if (!targetDate) return
 
       const days = daysUntil(targetDate)
@@ -63,7 +98,7 @@ const generateDateNotifications = (vehicles, settings) => {
       // Eşiklere uyuyor mu?
       const thresholds = setting.daysBefore || [30, 7, 1]
       const isExpired = days < 0
-      const isAtThreshold = thresholds.some(t => days <= t && days >= 0)
+      const isAtThreshold = thresholds.some((t: number) => days <= t && days >= 0)
 
       if (!isExpired && !isAtThreshold) return
 
@@ -106,11 +141,16 @@ const generateDateNotifications = (vehicles, settings) => {
 }
 
 // Bakım önerileri için bildirim
-const generateMaintenanceNotifications = (vehicles, maintenanceRecords, customIntervals, settings) => {
+const generateMaintenanceNotifications = (
+  vehicles: Vehicle[],
+  maintenanceRecords: MaintenanceRecord[],
+  customIntervals: CustomIntervals,
+  settings: BildirimAyarlari
+): Bildirim[] => {
   if (!settings.maintenance?.enabled) return []
 
   const recommendations = getCriticalRecommendations(vehicles, maintenanceRecords, customIntervals)
-  const notifications = []
+  const notifications: Bildirim[] = []
 
   recommendations.forEach(rec => {
     if (rec.status !== 'overdue' && rec.status !== 'urgent') return
@@ -140,10 +180,15 @@ const generateMaintenanceNotifications = (vehicles, maintenanceRecords, customIn
 }
 
 // Lastik sezon değişimi
-const generateTireSeasonNotifications = (vehicles, tireSets, tireChanges, settings) => {
+const generateTireSeasonNotifications = (
+  vehicles: Vehicle[],
+  tireSets: TireSet[],
+  tireChanges: TireChange[],
+  settings: BildirimAyarlari
+): Bildirim[] => {
   if (!settings.tireSeason?.enabled) return []
 
-  const notifications = []
+  const notifications: Bildirim[] = []
 
   vehicles.forEach(vehicle => {
     const vehicleSets = tireSets.filter(t => t.vehicleId === vehicle.id)
@@ -190,7 +235,14 @@ export const generateAllNotifications = ({
   tireSets,
   tireChanges,
   settings,
-}) => {
+}: {
+  vehicles: Vehicle[]
+  maintenanceRecords: MaintenanceRecord[]
+  customIntervals: CustomIntervals
+  tireSets: TireSet[]
+  tireChanges: TireChange[]
+  settings: BildirimAyarlari | null | undefined
+}): Bildirim[] => {
   if (!settings || !settings.enabled) return []
 
   const all = [
@@ -208,9 +260,9 @@ export const generateAllNotifications = ({
 
 // Eski bildirimi yenisiyle merge et
 // — read durumu korunsun, mesaj/öncelik güncellensin
-export const mergeNotifications = (existing, fresh) => {
+export const mergeNotifications = (existing: Bildirim[], fresh: Bildirim[]): Bildirim[] => {
   const existingMap = new Map(existing.map(n => [n.id, n]))
-  const merged = []
+  const merged: Bildirim[] = []
   const newIds = new Set()
 
   fresh.forEach(n => {
@@ -246,12 +298,12 @@ export const mergeNotifications = (existing, fresh) => {
   return merged
 }
 
-export const getTypeConfig = (type) => {
+export const getTypeConfig = (type: string) => {
   return TYPE_CONFIG[type] || { label: type, icon: '🔔', urgentColor: 'slate' }
 }
 
 // Browser native notification gönder (eğer izin varsa)
-export const sendBrowserNotification = (notification) => {
+export const sendBrowserNotification = (notification: Bildirim): boolean => {
   if (!('Notification' in window)) return false
   if (Notification.permission !== 'granted') return false
 

@@ -1,8 +1,22 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import type { Session, User } from '@supabase/supabase-js'
+import type { ReactNode } from 'react'
+
+export interface AuthContextDegeri {
+  user: User | null
+  session: Session | null
+  loading: boolean
+  signUp: (email: string, password: string) => Promise<{ data: unknown; error: unknown }>
+  signIn: (email: string, password: string) => Promise<{ data: unknown; error: unknown }>
+  signInWithGoogle: () => Promise<{ data: unknown; error: unknown }>
+  signOut: () => Promise<{ error: unknown }>
+  resetPassword: (email: string) => Promise<{ data: unknown; error: unknown }>
+  isAuthenticated: boolean
+}
 
 // Context oluştur
-const AuthContext = createContext(null)
+const AuthContext = createContext<AuthContextDegeri | null>(null)
 
 /**
  * AuthProvider - Tüm uygulamayı sarar, auth state'ini sağlar.
@@ -12,9 +26,9 @@ const AuthContext = createContext(null)
  *     <App />
  *   </AuthProvider>
  */
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
-  const [session, setSession] = useState(null)
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null)
+  const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
 
   // İlk yüklemede mevcut session'ı kontrol et
@@ -40,7 +54,7 @@ export function AuthProvider({ children }) {
   }, [])
 
   // Auth fonksiyonları
-  const signUp = async (email, password) => {
+  const signUp = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -48,7 +62,7 @@ export function AuthProvider({ children }) {
     return { data, error }
   }
 
-  const signIn = async (email, password) => {
+  const signIn = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -79,7 +93,7 @@ export function AuthProvider({ children }) {
     return { error }
   }
 
-  const resetPassword = async (email) => {
+  const resetPassword = async (email: string) => {
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     })

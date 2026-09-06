@@ -2,13 +2,17 @@ import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { formatDate } from './dateHelpers'
 import { getTotalFuelCost, getAverageConsumption } from './fuelHelpers'
+import type { Vehicle, MaintenanceRecord, FuelRecord } from '../types'
+
+/** jspdf-autotable jsPDF örneğine lastAutoTable ekliyor ama tipini bildirmiyor */
+type AutoTableliPDF = jsPDF & { lastAutoTable?: { finalY: number } }
 
 // Roboto fontlarını base64 olarak import et (Vite ?url özelliği)
 import RobotoRegular from '../fonts/Roboto-Regular.ttf?url'
 import RobotoBold from '../fonts/Roboto-Bold.ttf?url'
 
 // Font dosyasını fetch edip base64'e çevir
-const loadFont = async (fontUrl) => {
+const loadFont = async (fontUrl: string): Promise<string> => {
   const response = await fetch(fontUrl)
   const buffer = await response.arrayBuffer()
   const bytes = new Uint8Array(buffer)
@@ -20,7 +24,8 @@ const loadFont = async (fontUrl) => {
 }
 
 // Font yükleme cache'i (her PDF için tekrar tekrar yükleme yapmasın)
-let fontCache = null
+interface FontCache { regular: string; bold: string }
+let fontCache: FontCache | null = null
 
 const ensureFontsLoaded = async () => {
   if (fontCache) return fontCache
@@ -35,7 +40,7 @@ const ensureFontsLoaded = async () => {
 }
 
 // PDF'e Türkçe destekli fontları ekle
-const setupFonts = (doc, fonts) => {
+const setupFonts = (doc: jsPDF, fonts: FontCache) => {
   // Regular
   doc.addFileToVFS('Roboto-Regular.ttf', fonts.regular)
   doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal')
@@ -48,7 +53,11 @@ const setupFonts = (doc, fonts) => {
   doc.setFont('Roboto', 'normal')
 }
 
-export const generateVehicleReport = async (vehicle, maintenanceRecords, fuelRecords = []) => {
+export const generateVehicleReport = async (
+  vehicle: Vehicle,
+  maintenanceRecords: MaintenanceRecord[],
+  fuelRecords: FuelRecord[] = []
+) => {
   // Fontları yükle
   const fonts = await ensureFontsLoaded()
 
@@ -128,7 +137,7 @@ export const generateVehicleReport = async (vehicle, maintenanceRecords, fuelRec
     margin: { left: margin, right: margin },
   })
 
-  let currentY = doc.lastAutoTable.finalY + 10
+  let currentY = ((doc as AutoTableliPDF).lastAutoTable?.finalY ?? 0) + 10
 
   // ============= ÖZET =============
   const totalMaintenanceCost = maintenanceRecords.reduce((sum, r) => sum + (r.cost || 0), 0)
@@ -179,7 +188,7 @@ export const generateVehicleReport = async (vehicle, maintenanceRecords, fuelRec
     margin: { left: margin, right: margin },
   })
 
-  currentY = doc.lastAutoTable.finalY + 10
+  currentY = ((doc as AutoTableliPDF).lastAutoTable?.finalY ?? 0) + 10
 
   // ============= BAKIM KAYITLARI =============
   if (maintenanceRecords.length > 0) {
@@ -196,7 +205,7 @@ export const generateVehicleReport = async (vehicle, maintenanceRecords, fuelRec
     currentY += 6
 
     const sortedMaintenance = [...maintenanceRecords].sort(
-      (a, b) => new Date(b.date) - new Date(a.date)
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     )
 
     const maintenanceData = sortedMaintenance.map(r => [
@@ -236,7 +245,7 @@ export const generateVehicleReport = async (vehicle, maintenanceRecords, fuelRec
       margin: { left: margin, right: margin },
     })
 
-    currentY = doc.lastAutoTable.finalY + 10
+    currentY = ((doc as AutoTableliPDF).lastAutoTable?.finalY ?? 0) + 10
   }
 
   // ============= YAKIT KAYITLARI =============
@@ -254,7 +263,7 @@ export const generateVehicleReport = async (vehicle, maintenanceRecords, fuelRec
     currentY += 6
 
     const sortedFuel = [...fuelRecords].sort(
-      (a, b) => new Date(b.date) - new Date(a.date)
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     )
 
     const fuelData = sortedFuel.map(r => [
@@ -298,7 +307,8 @@ export const generateVehicleReport = async (vehicle, maintenanceRecords, fuelRec
   }
 
   // Footer (her sayfanın altına)
-  const pageCount = doc.internal.getNumberOfPages()
+  // jsPDF tip tanımı internal.getNumberOfPages()'i bildirmiyor
+  const pageCount = (doc.internal as unknown as { getNumberOfPages: () => number }).getNumberOfPages()
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i)
     doc.setFont('Roboto', 'normal')

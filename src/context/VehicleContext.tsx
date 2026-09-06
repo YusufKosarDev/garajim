@@ -29,10 +29,47 @@ import {
 import { parseIntervalKey } from '../utils/maintenanceRecommendations'
 import { fetchAllRows } from '../lib/fetchAllRows'
 import { captureError } from '../lib/errorTracking'
+import type { ReactNode } from 'react'
+import type {
+  Vehicle, MaintenanceRecord, FuelRecord, TireSet, TireChange,
+  CustomIntervals, CustomInterval, CustomIntervalRow,
+} from '../types'
 
-const VehicleContext = createContext(null)
+type Kayit = Vehicle | MaintenanceRecord | FuelRecord | TireSet | TireChange
 
-export const useVehicles = () => {
+export interface VehicleContextDegeri {
+  vehicles: Vehicle[]
+  maintenanceRecords: MaintenanceRecord[]
+  fuelRecords: FuelRecord[]
+  tireSets: TireSet[]
+  tireChanges: TireChange[]
+  customIntervals: CustomIntervals
+  isLoaded: boolean
+  addVehicle: (vehicle: Partial<Vehicle>) => Promise<Vehicle | null>
+  updateVehicle: (id: string, updates: Partial<Vehicle>) => Promise<void>
+  deleteVehicle: (id: string) => Promise<void>
+  addMaintenance: (record: Partial<MaintenanceRecord>) => Promise<MaintenanceRecord | null>
+  updateMaintenance: (id: string, updates: Partial<MaintenanceRecord>) => Promise<void>
+  deleteMaintenance: (id: string) => Promise<void>
+  addFuel: (record: Partial<FuelRecord>) => Promise<FuelRecord | null>
+  updateFuel: (id: string, updates: Partial<FuelRecord>) => Promise<void>
+  deleteFuel: (id: string) => Promise<void>
+  addTireSet: (tireSet: Partial<TireSet>) => Promise<TireSet | null>
+  updateTireSet: (id: string, updates: Partial<TireSet>) => Promise<void>
+  deleteTireSet: (id: string) => Promise<void>
+  addTireChange: (change: Partial<TireChange>) => Promise<TireChange | null>
+  updateTireChange: (id: string, updates: Partial<TireChange>) => Promise<void>
+  deleteTireChange: (id: string) => Promise<void>
+  updateCustomIntervals: (intervals: CustomIntervals) => Promise<void>
+  clearAllData: () => Promise<void>
+}
+
+/** useState setter'larıyla aynı imza: doğrudan değer ya da önceki değeri alan fonksiyon */
+type Guncelleyici<T> = T | ((prev: T) => T)
+
+const VehicleContext = createContext<VehicleContextDegeri | null>(null)
+
+export const useVehicles = (): VehicleContextDegeri => {
   const ctx = useContext(VehicleContext)
   if (!ctx) throw new Error('useVehicles must be used within VehicleProvider')
   return ctx
@@ -40,13 +77,13 @@ export const useVehicles = () => {
 
 // Sorgu anahtarları — realtime ve mutasyonlar cache'e bunlarla yazıyor
 export const vehicleQueryKeys = {
-  all: (userId) => ['garaj', userId],
-  list: (userId, name) => ['garaj', userId, name],
+  all: (userId?: string) => ['garaj', userId],
+  list: (userId: string | undefined, name: string) => ['garaj', userId, name],
 }
 
 // Modül seviyesinde sabit boş referanslar (bkz. aşağıdaki `?? BOS_DIZI` kullanımı)
-const BOS_DIZI = []
-const BOS_NESNE = {}
+const BOS_DIZI: never[] = []
+const BOS_NESNE: CustomIntervals = {}
 
 // Liste tabloları: hepsi aynı şekilde çekiliyor, tek yerde tarif edildi
 const LIST_QUERIES = [
@@ -57,7 +94,7 @@ const LIST_QUERIES = [
   { name: 'tireChanges', table: 'tire_changes', orderBy: 'date', ascending: false, map: tireChangeFromDb },
 ]
 
-export const VehicleProvider = ({ children }) => {
+export const VehicleProvider = ({ children }: { children: ReactNode }) => {
   const { user, isAuthenticated } = useAuth()
   const queryClient = useQueryClient()
   const userId = user?.id
@@ -73,7 +110,8 @@ export const VehicleProvider = ({ children }) => {
         enabled,
         queryFn: async () => {
           const rows = await fetchAllRows(supabase, table, orderBy, ascending)
-          return rows.map(map)
+          // Tablo -> mapper eşlemesi LIST_QUERIES'de kurulu; burada tekil tip bilinmiyor
+          return rows.map(satir => (map as (r: unknown) => Kayit | null)(satir))
         },
       })),
       {
@@ -92,12 +130,14 @@ export const VehicleProvider = ({ children }) => {
 
   // Sabit boş referanslar: `?? []` her render'da yeni dizi üretir ve aşağıdaki
   // provider useMemo'sunu (madde 14) her render'da geçersiz kılardı.
-  const vehicles = vehiclesQ.data ?? BOS_DIZI
-  const maintenanceRecords = maintenanceQ.data ?? BOS_DIZI
-  const fuelRecords = fuelQ.data ?? BOS_DIZI
-  const tireSets = tireSetsQ.data ?? BOS_DIZI
-  const tireChanges = tireChangesQ.data ?? BOS_DIZI
-  const customIntervals = intervalsQ.data ?? BOS_NESNE
+  // useQueries dizi üzerinden map edildiği için tekil sorgu tipleri kayboluyor;
+  // dönüşümü LIST_QUERIES'teki mapper garanti ediyor.
+  const vehicles = (vehiclesQ.data ?? BOS_DIZI) as Vehicle[]
+  const maintenanceRecords = (maintenanceQ.data ?? BOS_DIZI) as MaintenanceRecord[]
+  const fuelRecords = (fuelQ.data ?? BOS_DIZI) as FuelRecord[]
+  const tireSets = (tireSetsQ.data ?? BOS_DIZI) as TireSet[]
+  const tireChanges = (tireChangesQ.data ?? BOS_DIZI) as TireChange[]
+  const customIntervals = (intervalsQ.data ?? BOS_NESNE) as CustomIntervals
 
   // Oturum yoksa sorgular hiç çalışmaz (enabled: false) ve sonsuza kadar "pending"
   // kalırlar — bu durumu yüklenmiş saymalıyız, yoksa uygulama iskelet ekranda takılır.
@@ -105,7 +145,7 @@ export const VehicleProvider = ({ children }) => {
 
   // Yükleme hatasını kullanıcıya bir kez göster
   const loadError = results.find(r => r.isError)?.error
-  const shownErrorRef = useRef(null)
+  const shownErrorRef = useRef<unknown>(null)
   useEffect(() => {
     if (!loadError || shownErrorRef.current === loadError) return
     shownErrorRef.current = loadError
@@ -116,19 +156,19 @@ export const VehicleProvider = ({ children }) => {
   // ============ YAZMA: cache'e yazan setter shim'leri ============
   // İmzaları useState setter'larıyla birebir aynı, böylece aşağıdaki tüm CRUD
   // mantığı (fotoğraf yükleme/silme, echo engelleme, toast'lar) değişmeden kaldı.
-  const writeCache = useCallback((name, updater) => {
+  const writeCache = useCallback((name: string, updater: unknown) => {
     queryClient.setQueryData(vehicleQueryKeys.list(userId, name), (prev) => {
       const base = prev ?? (name === 'customIntervals' ? {} : [])
       return typeof updater === 'function' ? updater(base) : updater
     })
   }, [queryClient, userId])
 
-  const setVehicles = useCallback((u) => writeCache('vehicles', u), [writeCache])
-  const setMaintenanceRecords = useCallback((u) => writeCache('maintenanceRecords', u), [writeCache])
-  const setFuelRecords = useCallback((u) => writeCache('fuelRecords', u), [writeCache])
-  const setTireSets = useCallback((u) => writeCache('tireSets', u), [writeCache])
-  const setTireChanges = useCallback((u) => writeCache('tireChanges', u), [writeCache])
-  const setCustomIntervals = useCallback((u) => writeCache('customIntervals', u), [writeCache])
+  const setVehicles = useCallback((u: Guncelleyici<Vehicle[]>) => writeCache('vehicles', u), [writeCache])
+  const setMaintenanceRecords = useCallback((u: Guncelleyici<MaintenanceRecord[]>) => writeCache('maintenanceRecords', u), [writeCache])
+  const setFuelRecords = useCallback((u: Guncelleyici<FuelRecord[]>) => writeCache('fuelRecords', u), [writeCache])
+  const setTireSets = useCallback((u: Guncelleyici<TireSet[]>) => writeCache('tireSets', u), [writeCache])
+  const setTireChanges = useCallback((u: Guncelleyici<TireChange[]>) => writeCache('tireChanges', u), [writeCache])
+  const setCustomIntervals = useCallback((u: Guncelleyici<CustomIntervals>) => writeCache('customIntervals', u), [writeCache])
 
   // ============ REAL-TIME SUBSCRIPTIONS ============
   // Garajdaki herhangi bir değişiklik (kendi başka cihazın veya garajı
@@ -137,11 +177,15 @@ export const VehicleProvider = ({ children }) => {
     if (!isAuthenticated || !user) return
 
     // Generic helper: state'i INSERT/UPDATE/DELETE event'ine göre güncelle
-    const handleChange = (setState, fromDbMapper) => (payload) => {
+    const handleChange = <T extends { id: string }>(
+      setState: (u: Guncelleyici<T[]>) => void,
+      fromDbMapper: (row: never) => T | null
+    ) => (payload: { eventType: string; new?: unknown; old?: { id?: string } }) => {
       const { eventType, new: newRow, old: oldRow } = payload
 
       if (eventType === 'INSERT') {
-        const item = fromDbMapper(newRow)
+        const item = fromDbMapper(newRow as never)
+        if (!item) return
         setState(prev => {
           // Echo prevention: Eğer bu ID zaten state'deyse (kendi eklediğimiz),
           // tekrar ekleme. Sadece başka cihazdan gelen yenileri ekle.
@@ -149,14 +193,17 @@ export const VehicleProvider = ({ children }) => {
           return [...prev, item]
         })
       } else if (eventType === 'UPDATE') {
-        const item = fromDbMapper(newRow)
+        const item = fromDbMapper(newRow as never)
+        if (!item) return
         setState(prev => prev.map(x => (x.id === item.id ? item : x)))
       } else if (eventType === 'DELETE') {
-        setState(prev => prev.filter(x => x.id !== oldRow.id))
+        const silinenId = oldRow?.id
+        if (!silinenId) return
+        setState(prev => prev.filter(x => x.id !== silinenId))
       }
     }
 
-    let channel = null
+    let channel: ReturnType<typeof supabase.channel> | null = null
     let cancelled = false
 
     const subscribe = async () => {
@@ -183,8 +230,12 @@ export const VehicleProvider = ({ children }) => {
         console.warn('Real-time: garaj üyeliği alınamadı, user_id filtresine düşülüyor', error)
       }
 
-      const table = (name, setState, mapper) => ({
-        config: { event: '*', schema: 'public', table: name, filter },
+      const table = <T extends { id: string }>(
+        name: string,
+        setState: (u: Guncelleyici<T[]>) => void,
+        mapper: (row: never) => T | null
+      ) => ({
+        config: { event: '*' as const, schema: 'public', table: name, filter },
         handler: handleChange(setState, mapper),
       })
 
@@ -221,7 +272,7 @@ export const VehicleProvider = ({ children }) => {
   }, [isAuthenticated, user, setVehicles, setMaintenanceRecords, setFuelRecords, setTireSets, setTireChanges])
 
   // ============ ARAÇ CRUD ============
-  const addVehicle = useCallback(async (vehicle) => {
+  const addVehicle = useCallback(async (vehicle: Partial<Vehicle>) => {
     if (!user) {
       toast.error('Giriş yapmalısın')
       return null
@@ -254,6 +305,7 @@ export const VehicleProvider = ({ children }) => {
       if (error) throw error
 
       const newVehicle = vehicleFromDb(data)
+      if (!newVehicle) throw new Error('Araç kaydı okunamadı')
       setVehicles(prev => {
         // Real-time event önce gelmiş olabilir, ikinci kez ekleme
         if (prev.some(v => v.id === newVehicle.id)) return prev
@@ -263,12 +315,12 @@ export const VehicleProvider = ({ children }) => {
       return newVehicle
     } catch (error) {
       console.error('addVehicle:', error)
-      toast.error('Araç eklenemedi: ' + formatSupabaseError(error))
+      toast.error('Araç eklenemedi: ' + formatSupabaseError(error as Error))
       return null
     }
   }, [user, setVehicles])
 
-  const updateVehicle = useCallback(async (id, updates) => {
+  const updateVehicle = useCallback(async (id: string, updates: Partial<Vehicle>) => {
     if (!user) return
 
     try {
@@ -310,7 +362,7 @@ export const VehicleProvider = ({ children }) => {
         : updates
 
       const dbRow = vehicleToDb(updatesWithPhotos, user.id)
-      delete dbRow.user_id
+      delete (dbRow as { user_id?: string }).user_id
 
       const { data, error } = await supabase
         .from('vehicles')
@@ -322,15 +374,16 @@ export const VehicleProvider = ({ children }) => {
       if (error) throw error
 
       const updated = vehicleFromDb(data)
+      if (!updated) throw new Error('Araç kaydı okunamadı')
       setVehicles(prev => prev.map(v => (v.id === id ? updated : v)))
       toast.success('Araç güncellendi ✓')
     } catch (error) {
       console.error('updateVehicle:', error)
-      toast.error('Araç güncellenemedi: ' + formatSupabaseError(error))
+      toast.error('Araç güncellenemedi: ' + formatSupabaseError(error as Error))
     }
   }, [user, vehicles, setVehicles])
 
-  const deleteVehicle = useCallback(async (id) => {
+  const deleteVehicle = useCallback(async (id: string) => {
     if (!user) return
 
     try {
@@ -370,7 +423,7 @@ export const VehicleProvider = ({ children }) => {
       setTireChanges(prev => prev.filter(t => t.vehicleId !== id))
 
       setCustomIntervals(prev => {
-        const filtered = {}
+        const filtered: CustomIntervals = {}
         Object.keys(prev).forEach(key => {
           if (!key.startsWith(`${id}-`)) {
             filtered[key] = prev[key]
@@ -382,12 +435,12 @@ export const VehicleProvider = ({ children }) => {
       toast.success('Araç ve tüm kayıtları silindi')
     } catch (error) {
       console.error('deleteVehicle:', error)
-      toast.error('Araç silinemedi: ' + formatSupabaseError(error))
+      toast.error('Araç silinemedi: ' + formatSupabaseError(error as Error))
     }
   }, [user, vehicles, maintenanceRecords, setVehicles, setMaintenanceRecords, setFuelRecords, setTireSets, setTireChanges, setCustomIntervals])
 
   // ============ BAKIM CRUD ============
-  const addMaintenance = useCallback(async (record) => {
+  const addMaintenance = useCallback(async (record: Partial<MaintenanceRecord>) => {
     if (!user) return null
 
     try {
@@ -414,6 +467,7 @@ export const VehicleProvider = ({ children }) => {
       if (error) throw error
 
       const newRecord = maintenanceFromDb(data)
+      if (!newRecord) throw new Error('Bakım kaydı okunamadı')
       setMaintenanceRecords(prev => {
         if (prev.some(r => r.id === newRecord.id)) return prev
         return [...prev, newRecord]
@@ -422,12 +476,12 @@ export const VehicleProvider = ({ children }) => {
       return newRecord
     } catch (error) {
       console.error('addMaintenance:', error)
-      toast.error('Bakım eklenemedi: ' + formatSupabaseError(error))
+      toast.error('Bakım eklenemedi: ' + formatSupabaseError(error as Error))
       return null
     }
   }, [user, setMaintenanceRecords])
 
-  const updateMaintenance = useCallback(async (id, updates) => {
+  const updateMaintenance = useCallback(async (id: string, updates: Partial<MaintenanceRecord>) => {
     if (!user) return
 
     try {
@@ -459,7 +513,7 @@ export const VehicleProvider = ({ children }) => {
         : updates
 
       const dbRow = maintenanceToDb(updatesWithPhoto, user.id)
-      delete dbRow.user_id
+      delete (dbRow as { user_id?: string }).user_id
 
       const { data, error } = await supabase
         .from('maintenance_records')
@@ -471,15 +525,16 @@ export const VehicleProvider = ({ children }) => {
       if (error) throw error
 
       const updated = maintenanceFromDb(data)
+      if (!updated) throw new Error('Bakım kaydı okunamadı')
       setMaintenanceRecords(prev => prev.map(r => (r.id === id ? updated : r)))
       toast.success('Bakım kaydı güncellendi ✓')
     } catch (error) {
       console.error('updateMaintenance:', error)
-      toast.error('Bakım güncellenemedi: ' + formatSupabaseError(error))
+      toast.error('Bakım güncellenemedi: ' + formatSupabaseError(error as Error))
     }
   }, [user, maintenanceRecords, setMaintenanceRecords])
 
-  const deleteMaintenance = useCallback(async (id) => {
+  const deleteMaintenance = useCallback(async (id: string) => {
     if (!user) return
 
     try {
@@ -502,12 +557,12 @@ export const VehicleProvider = ({ children }) => {
       toast.success('Bakım kaydı silindi')
     } catch (error) {
       console.error('deleteMaintenance:', error)
-      toast.error('Bakım silinemedi: ' + formatSupabaseError(error))
+      toast.error('Bakım silinemedi: ' + formatSupabaseError(error as Error))
     }
   }, [user, maintenanceRecords, setMaintenanceRecords])
 
   // ============ YAKIT CRUD ============
-  const addFuel = useCallback(async (record) => {
+  const addFuel = useCallback(async (record: Partial<FuelRecord>) => {
     if (!user) return null
 
     try {
@@ -521,6 +576,7 @@ export const VehicleProvider = ({ children }) => {
       if (error) throw error
 
       const newRecord = fuelFromDb(data)
+      if (!newRecord) throw new Error('Yakıt kaydı okunamadı')
       setFuelRecords(prev => {
         if (prev.some(r => r.id === newRecord.id)) return prev
         return [...prev, newRecord]
@@ -529,17 +585,17 @@ export const VehicleProvider = ({ children }) => {
       return newRecord
     } catch (error) {
       console.error('addFuel:', error)
-      toast.error('Yakıt eklenemedi: ' + formatSupabaseError(error))
+      toast.error('Yakıt eklenemedi: ' + formatSupabaseError(error as Error))
       return null
     }
   }, [user, setFuelRecords])
 
-  const updateFuel = useCallback(async (id, updates) => {
+  const updateFuel = useCallback(async (id: string, updates: Partial<FuelRecord>) => {
     if (!user) return
 
     try {
       const dbRow = fuelToDb(updates, user.id)
-      delete dbRow.user_id
+      delete (dbRow as { user_id?: string }).user_id
 
       const { data, error } = await supabase
         .from('fuel_records')
@@ -551,15 +607,16 @@ export const VehicleProvider = ({ children }) => {
       if (error) throw error
 
       const updated = fuelFromDb(data)
+      if (!updated) throw new Error('Yakıt kaydı okunamadı')
       setFuelRecords(prev => prev.map(r => (r.id === id ? updated : r)))
       toast.success('Yakıt kaydı güncellendi ✓')
     } catch (error) {
       console.error('updateFuel:', error)
-      toast.error('Yakıt güncellenemedi: ' + formatSupabaseError(error))
+      toast.error('Yakıt güncellenemedi: ' + formatSupabaseError(error as Error))
     }
   }, [user, setFuelRecords])
 
-  const deleteFuel = useCallback(async (id) => {
+  const deleteFuel = useCallback(async (id: string) => {
     if (!user) return
 
     try {
@@ -574,12 +631,12 @@ export const VehicleProvider = ({ children }) => {
       toast.success('Yakıt kaydı silindi')
     } catch (error) {
       console.error('deleteFuel:', error)
-      toast.error('Yakıt silinemedi: ' + formatSupabaseError(error))
+      toast.error('Yakıt silinemedi: ' + formatSupabaseError(error as Error))
     }
   }, [user, setFuelRecords])
 
   // ============ LASTİK SETİ CRUD ============
-  const addTireSet = useCallback(async (tireSet) => {
+  const addTireSet = useCallback(async (tireSet: Partial<TireSet>) => {
     if (!user) return null
 
     try {
@@ -593,6 +650,7 @@ export const VehicleProvider = ({ children }) => {
       if (error) throw error
 
       const newSet = tireSetFromDb(data)
+      if (!newSet) throw new Error('Lastik seti okunamadı')
       setTireSets(prev => {
         if (prev.some(t => t.id === newSet.id)) return prev
         return [...prev, newSet]
@@ -601,17 +659,17 @@ export const VehicleProvider = ({ children }) => {
       return newSet
     } catch (error) {
       console.error('addTireSet:', error)
-      toast.error('Lastik seti eklenemedi: ' + formatSupabaseError(error))
+      toast.error('Lastik seti eklenemedi: ' + formatSupabaseError(error as Error))
       return null
     }
   }, [user, setTireSets])
 
-  const updateTireSet = useCallback(async (id, updates) => {
+  const updateTireSet = useCallback(async (id: string, updates: Partial<TireSet>) => {
     if (!user) return
 
     try {
       const dbRow = tireSetToDb(updates, user.id)
-      delete dbRow.user_id
+      delete (dbRow as { user_id?: string }).user_id
 
       const { data, error } = await supabase
         .from('tire_sets')
@@ -623,15 +681,16 @@ export const VehicleProvider = ({ children }) => {
       if (error) throw error
 
       const updated = tireSetFromDb(data)
+      if (!updated) throw new Error('Lastik seti okunamadı')
       setTireSets(prev => prev.map(t => (t.id === id ? updated : t)))
       toast.success('Lastik seti güncellendi ✓')
     } catch (error) {
       console.error('updateTireSet:', error)
-      toast.error('Lastik seti güncellenemedi: ' + formatSupabaseError(error))
+      toast.error('Lastik seti güncellenemedi: ' + formatSupabaseError(error as Error))
     }
   }, [user, setTireSets])
 
-  const deleteTireSet = useCallback(async (id) => {
+  const deleteTireSet = useCallback(async (id: string) => {
     if (!user) return
 
     try {
@@ -646,12 +705,12 @@ export const VehicleProvider = ({ children }) => {
       toast.success('Lastik seti silindi')
     } catch (error) {
       console.error('deleteTireSet:', error)
-      toast.error('Lastik seti silinemedi: ' + formatSupabaseError(error))
+      toast.error('Lastik seti silinemedi: ' + formatSupabaseError(error as Error))
     }
   }, [user, setTireSets])
 
   // ============ LASTİK DEĞİŞİMİ CRUD ============
-  const addTireChange = useCallback(async (change) => {
+  const addTireChange = useCallback(async (change: Partial<TireChange>) => {
     if (!user) return null
 
     try {
@@ -665,6 +724,7 @@ export const VehicleProvider = ({ children }) => {
       if (error) throw error
 
       const newChange = tireChangeFromDb(data)
+      if (!newChange) throw new Error('Lastik değişimi okunamadı')
       setTireChanges(prev => {
         if (prev.some(t => t.id === newChange.id)) return prev
         return [...prev, newChange]
@@ -673,17 +733,17 @@ export const VehicleProvider = ({ children }) => {
       return newChange
     } catch (error) {
       console.error('addTireChange:', error)
-      toast.error('Lastik değişimi eklenemedi: ' + formatSupabaseError(error))
+      toast.error('Lastik değişimi eklenemedi: ' + formatSupabaseError(error as Error))
       return null
     }
   }, [user, setTireChanges])
 
-  const updateTireChange = useCallback(async (id, updates) => {
+  const updateTireChange = useCallback(async (id: string, updates: Partial<TireChange>) => {
     if (!user) return
 
     try {
       const dbRow = tireChangeToDb(updates, user.id)
-      delete dbRow.user_id
+      delete (dbRow as { user_id?: string }).user_id
 
       const { data, error } = await supabase
         .from('tire_changes')
@@ -695,15 +755,16 @@ export const VehicleProvider = ({ children }) => {
       if (error) throw error
 
       const updated = tireChangeFromDb(data)
+      if (!updated) throw new Error('Lastik değişimi okunamadı')
       setTireChanges(prev => prev.map(t => (t.id === id ? updated : t)))
       toast.success('Lastik değişimi güncellendi ✓')
     } catch (error) {
       console.error('updateTireChange:', error)
-      toast.error('Lastik değişimi güncellenemedi: ' + formatSupabaseError(error))
+      toast.error('Lastik değişimi güncellenemedi: ' + formatSupabaseError(error as Error))
     }
   }, [user, setTireChanges])
 
-  const deleteTireChange = useCallback(async (id) => {
+  const deleteTireChange = useCallback(async (id: string) => {
     if (!user) return
 
     try {
@@ -718,12 +779,12 @@ export const VehicleProvider = ({ children }) => {
       toast.success('Lastik değişim kaydı silindi')
     } catch (error) {
       console.error('deleteTireChange:', error)
-      toast.error('Lastik değişimi silinemedi: ' + formatSupabaseError(error))
+      toast.error('Lastik değişimi silinemedi: ' + formatSupabaseError(error as Error))
     }
   }, [user, setTireChanges])
 
   // ============ CUSTOM INTERVALS ============
-  const updateCustomIntervals = useCallback(async (intervals) => {
+  const updateCustomIntervals = useCallback(async (intervals: CustomIntervals) => {
     if (!user) return
 
     try {
@@ -734,12 +795,15 @@ export const VehicleProvider = ({ children }) => {
 
       if (deleteError) throw deleteError
 
-      const rowsToInsert = []
+      const rowsToInsert: CustomIntervalRow[] = []
       Object.keys(intervals).forEach(key => {
         const parsed = parseIntervalKey(key)
         if (!parsed) return
         const { vehicleId, maintenanceType } = parsed
-        const interval = intervals[key]
+        // Eski yedeklerde değer düz sayı olabiliyor; tek biçime çeviriyoruz
+        const ham = intervals[key]
+        const interval: CustomInterval | null =
+          typeof ham === 'number' ? { kilometers: ham, months: null } : (ham ?? null)
 
         if (interval && (interval.kilometers || interval.months)) {
           rowsToInsert.push(
@@ -760,7 +824,7 @@ export const VehicleProvider = ({ children }) => {
       toast.success('Bakım periyotları güncellendi ✓')
     } catch (error) {
       console.error('updateCustomIntervals:', error)
-      toast.error('Periyotlar güncellenemedi: ' + formatSupabaseError(error))
+      toast.error('Periyotlar güncellenemedi: ' + formatSupabaseError(error as Error))
     }
   }, [user, setCustomIntervals])
 
@@ -803,7 +867,7 @@ export const VehicleProvider = ({ children }) => {
       toast.success('Tüm veriler silindi')
     } catch (error) {
       console.error('clearAllData:', error)
-      toast.error('Veriler silinemedi: ' + formatSupabaseError(error))
+      toast.error('Veriler silinemedi: ' + formatSupabaseError(error as Error))
     }
   }, [user, vehicles, maintenanceRecords, setVehicles, setMaintenanceRecords, setFuelRecords, setTireSets, setTireChanges, setCustomIntervals])
 

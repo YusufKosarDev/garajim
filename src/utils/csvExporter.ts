@@ -1,7 +1,8 @@
 import { formatDate, toDateKey } from './dateHelpers'
+import type { Vehicle, MaintenanceRecord, FuelRecord } from '../types'
 
 // CSV değeri escape (virgül, tırnak, satır sonu için)
-const escapeCSV = (value) => {
+const escapeCSV = (value: unknown): string => {
   if (value === null || value === undefined) return ''
   const str = String(value)
   // Virgül, tırnak veya yeni satır içeriyorsa çift tırnak içine al
@@ -12,7 +13,13 @@ const escapeCSV = (value) => {
 }
 
 // Nesne dizisinden CSV üret
-const arrayToCSV = (data, columns) => {
+/** Kolon tanımı: sabit alan adı ya da satırdan değer üreten fonksiyon */
+export interface CsvKolonu<T> {
+  label: string
+  accessor: keyof T | ((row: T) => unknown)
+}
+
+const arrayToCSV = <T extends object>(data: T[], columns: CsvKolonu<T>[]): string => {
   if (!data || data.length === 0) return ''
 
   // Header
@@ -21,7 +28,7 @@ const arrayToCSV = (data, columns) => {
   // Satırlar
   const rows = data.map(row =>
     columns.map(c => {
-      const value = typeof c.accessor === 'function' ? c.accessor(row) : row[c.accessor]
+      const value = typeof c.accessor === 'function' ? c.accessor(row) : row[c.accessor as keyof T]
       return escapeCSV(value)
     }).join(',')
   )
@@ -32,7 +39,7 @@ const arrayToCSV = (data, columns) => {
 }
 
 // CSV'yi dosya olarak indir
-const downloadCSV = (csv, filename) => {
+const downloadCSV = (csv: string, filename: string): void => {
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
@@ -45,8 +52,8 @@ const downloadCSV = (csv, filename) => {
 }
 
 // Araçları export et
-export const exportVehiclesCSV = (vehicles) => {
-  const columns = [
+export const exportVehiclesCSV = (vehicles: Vehicle[]): number => {
+  const columns: CsvKolonu<Vehicle>[] = [
     { label: 'ID', accessor: 'id' },
     { label: 'Plaka', accessor: 'plate' },
     { label: 'Marka', accessor: 'brand' },
@@ -69,7 +76,7 @@ export const exportVehiclesCSV = (vehicles) => {
 }
 
 // Bakım kayıtlarını export et
-export const exportMaintenanceCSV = (maintenanceRecords, vehicles) => {
+export const exportMaintenanceCSV = (maintenanceRecords: MaintenanceRecord[], vehicles: Vehicle[]): number => {
   const withVehicle = maintenanceRecords.map(r => {
     const v = vehicles.find(v => v.id === r.vehicleId)
     return {
@@ -79,7 +86,7 @@ export const exportMaintenanceCSV = (maintenanceRecords, vehicles) => {
     }
   })
 
-  const columns = [
+  const columns: CsvKolonu<MaintenanceRecord & { vehicleName: string; vehiclePlate: string }>[] = [
     { label: 'Tarih', accessor: (r) => formatDate(r.date) },
     { label: 'Araç', accessor: 'vehicleName' },
     { label: 'Plaka', accessor: 'vehiclePlate' },
@@ -97,7 +104,7 @@ export const exportMaintenanceCSV = (maintenanceRecords, vehicles) => {
 }
 
 // Yakıt kayıtlarını export et
-export const exportFuelCSV = (fuelRecords, vehicles) => {
+export const exportFuelCSV = (fuelRecords: FuelRecord[], vehicles: Vehicle[]): number => {
   const withVehicle = fuelRecords.map(r => {
     const v = vehicles.find(v => v.id === r.vehicleId)
     return {
@@ -107,7 +114,7 @@ export const exportFuelCSV = (fuelRecords, vehicles) => {
     }
   })
 
-  const columns = [
+  const columns: CsvKolonu<FuelRecord & { vehicleName: string; vehiclePlate: string }>[] = [
     { label: 'Tarih', accessor: (r) => formatDate(r.date) },
     { label: 'Araç', accessor: 'vehicleName' },
     { label: 'Plaka', accessor: 'vehiclePlate' },
@@ -128,7 +135,7 @@ export const exportFuelCSV = (fuelRecords, vehicles) => {
 }
 
 // Tümünü export et (3 ayrı dosya)
-export const exportAllCSV = (vehicles, maintenanceRecords, fuelRecords) => {
+export const exportAllCSV = (vehicles: Vehicle[], maintenanceRecords: MaintenanceRecord[], fuelRecords: FuelRecord[]) => {
   const v = exportVehiclesCSV(vehicles)
   // Ayrı ayrı download başlasın diye küçük delay
   setTimeout(() => exportMaintenanceCSV(maintenanceRecords, vehicles), 300)
@@ -141,7 +148,7 @@ export const exportAllCSV = (vehicles, maintenanceRecords, fuelRecords) => {
 }
 
 // Tarih filtresi uygula
-export const filterByDateRange = (records, range) => {
+export const filterByDateRange = <T extends { date: string }>(records: T[], range: string): T[] => {
   if (range === 'all') return records
 
   const now = new Date()

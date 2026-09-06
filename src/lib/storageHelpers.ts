@@ -14,7 +14,7 @@ export const BUCKETS = {
  * "data:image/jpeg;base64,/9j/4AAQ..." formatından
  * Blob (binary) formatına dönüşüm yapar.
  */
-const base64ToBlob = (base64String) => {
+const base64ToBlob = (base64String: string): Blob => {
   // base64 prefix'ini ayır: "data:image/jpeg;base64,..." 
   const matches = base64String.match(/^data:(.+);base64,(.+)$/)
   if (!matches) {
@@ -46,7 +46,7 @@ const base64ToBlob = (base64String) => {
  * 
  * Örnek: "vehicle_1717325432123_abc123.jpg"
  */
-const generateFileName = (extension = 'jpg', prefix = 'photo') => {
+const generateFileName = (extension = 'jpg', prefix = 'photo'): string => {
   const timestamp = Date.now()
   const random = Math.random().toString(36).substring(2, 8)
   return `${prefix}_${timestamp}_${random}.${extension}`
@@ -58,8 +58,8 @@ const generateFileName = (extension = 'jpg', prefix = 'photo') => {
  * "image/jpeg" → "jpg"
  * "image/png"  → "png"
  */
-const getExtensionFromMime = (mimeType) => {
-  const map = {
+const getExtensionFromMime = (mimeType: string): string => {
+  const map: Record<string, string> = {
     'image/jpeg': 'jpg',
     'image/jpg': 'jpg',
     'image/png': 'png',
@@ -78,11 +78,16 @@ const getExtensionFromMime = (mimeType) => {
  * @param {string} prefix - Dosya adı prefix'i ('vehicle' | 'maintenance')
  * @returns {Promise<string|null>} Public URL veya hata durumunda null
  */
-export const uploadPhotoFromBase64 = async (base64String, userId, bucket, prefix = 'photo') => {
+export const uploadPhotoFromBase64 = async (
+  base64String: string | null | undefined,
+  userId: string,
+  bucket: string,
+  prefix = 'photo'
+): Promise<string | null> => {
   try {
     // 1. Eğer zaten URL ise (data: ile başlamıyorsa) direkt döndür
     if (!base64String || !base64String.startsWith('data:')) {
-      return base64String
+      return base64String ?? null
     }
     
     // 2. Base64 → Blob
@@ -124,7 +129,12 @@ export const uploadPhotoFromBase64 = async (base64String, userId, bucket, prefix
  * @param {string} prefix - Dosya adı prefix'i
  * @returns {Promise<string|null>} Public URL veya null
  */
-export const uploadPhotoFromFile = async (file, userId, bucket, prefix = 'photo') => {
+export const uploadPhotoFromFile = async (
+  file: File | null | undefined,
+  userId: string,
+  bucket: string,
+  prefix = 'photo'
+): Promise<string | null> => {
   try {
     if (!file) return null
     
@@ -163,10 +173,15 @@ export const uploadPhotoFromFile = async (file, userId, bucket, prefix = 'photo'
  * @param {string} prefix - Dosya adı prefix'i
  * @returns {Promise<string[]>} URL listesi
  */
-export const uploadPhotosBatch = async (base64Array, userId, bucket, prefix = 'photo') => {
+export const uploadPhotosBatch = async (
+  base64Array: string[] | null | undefined,
+  userId: string,
+  bucket: string,
+  prefix = 'photo'
+): Promise<string[]> => {
   if (!base64Array || base64Array.length === 0) return []
   
-  const uploadPromises = base64Array.map(b64 => 
+  const uploadPromises = base64Array.map((b64: string) => 
     uploadPhotoFromBase64(b64, userId, bucket, prefix)
   )
   
@@ -182,7 +197,7 @@ export const uploadPhotosBatch = async (base64Array, userId, bucket, prefix = 'p
  * URL: https://xxx.supabase.co/storage/v1/object/public/vehicle-photos/user-id/file.jpg
  * Path: user-id/file.jpg
  */
-const extractPathFromUrl = (url, bucket) => {
+const extractPathFromUrl = (url: unknown, bucket: string): string | null => {
   if (!url || typeof url !== 'string') return null
   
   // Public URL formatı: .../storage/v1/object/public/{bucket}/{path}
@@ -201,7 +216,7 @@ const extractPathFromUrl = (url, bucket) => {
  * @param {string} bucket - Bucket adı
  * @returns {Promise<boolean>} Başarı durumu
  */
-export const deletePhotoByUrl = async (url, bucket) => {
+export const deletePhotoByUrl = async (url: string | null | undefined, bucket: string): Promise<boolean> => {
   try {
     if (!url) return true
     
@@ -234,14 +249,14 @@ export const deletePhotoByUrl = async (url, bucket) => {
  * @param {string} bucket - Bucket adı
  * @returns {Promise<number>} Silinen dosya sayısı
  */
-export const deletePhotosBatch = async (urls, bucket) => {
+export const deletePhotosBatch = async (urls: (string | null | undefined)[] | null | undefined, bucket: string): Promise<number> => {
   if (!urls || urls.length === 0) return 0
   
   // Sadece gerçek storage URL'lerini filtrele (base64'leri atla)
   const paths = urls
-    .filter(url => url && !url.startsWith('data:'))
-    .map(url => extractPathFromUrl(url, bucket))
-    .filter(path => path !== null)
+    .filter((url): url is string => Boolean(url) && !String(url).startsWith('data:'))
+    .map((url: string) => extractPathFromUrl(url, bucket))
+    .filter((path): path is string => path !== null)
   
   if (paths.length === 0) return 0
   
@@ -262,7 +277,7 @@ export const deletePhotosBatch = async (urls, bucket) => {
 /**
  * URL'in geçerli bir Storage URL'i olup olmadığını kontrol et
  */
-export const isStorageUrl = (url) => {
+export const isStorageUrl = (url?: unknown): boolean => {
   if (!url || typeof url !== 'string') return false
   return url.includes('/storage/v1/object/public/')
 }
@@ -270,7 +285,7 @@ export const isStorageUrl = (url) => {
 /**
  * URL'in base64 olup olmadığını kontrol et
  */
-export const isBase64 = (url) => {
+export const isBase64 = (url?: unknown): boolean => {
   if (!url || typeof url !== 'string') return false
   return url.startsWith('data:')
 }

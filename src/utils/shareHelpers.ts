@@ -1,7 +1,12 @@
 import LZString from 'lz-string'
+import type { Vehicle, MaintenanceRecord, FuelRecord } from '../types'
 
 // Paylaşılabilir veri oluştur (compress edilmiş, URL-safe)
-export const encodeShareData = (vehicle, maintenanceRecords, fuelRecords) => {
+export const encodeShareData = (
+  vehicle: Vehicle,
+  maintenanceRecords: MaintenanceRecord[],
+  fuelRecords: FuelRecord[]
+): string => {
   // Sadece gerekli alanları al, fotoğrafları çıkar (URL'i şişirmesin)
   const sharedVehicle = {
     plate: vehicle.plate,
@@ -52,7 +57,7 @@ export const encodeShareData = (vehicle, maintenanceRecords, fuelRecords) => {
 }
 
 // Paylaşılan veriyi decode et
-export const decodeShareData = (encoded) => {
+export const decodeShareData = (encoded: string): Record<string, unknown> | null => {
   try {
     const json = LZString.decompressFromEncodedURIComponent(encoded)
     if (!json) return null
@@ -73,14 +78,18 @@ export const decodeShareData = (encoded) => {
 }
 
 // Paylaşım URL'i oluştur
-export const createShareUrl = (vehicle, maintenanceRecords, fuelRecords) => {
+export const createShareUrl = (
+  vehicle: Vehicle,
+  maintenanceRecords: MaintenanceRecord[],
+  fuelRecords: FuelRecord[]
+): string => {
   const encoded = encodeShareData(vehicle, maintenanceRecords, fuelRecords)
   const baseUrl = window.location.origin
   return `${baseUrl}/share/${encoded}`
 }
 
 // URL boyutunu hesapla (kullanıcıya bilgi için)
-export const getShareUrlSize = (url) => {
+export const getShareUrlSize = (url: string) => {
   return {
     chars: url.length,
     kb: (url.length / 1024).toFixed(2),
@@ -93,7 +102,7 @@ export const isNativeShareSupported = () => {
 }
 
 // Native share API ile paylaş
-export const shareNatively = async ({ title, text, url }) => {
+export const shareNatively = async ({ title, text, url }: { title: string; text: string; url: string }) => {
   if (!isNativeShareSupported()) {
     return { success: false, reason: 'unsupported' }
   }
@@ -102,7 +111,7 @@ export const shareNatively = async ({ title, text, url }) => {
     await navigator.share({ title, text, url })
     return { success: true }
   } catch (err) {
-    if (err.name === 'AbortError') {
+    if ((err as Error)?.name === 'AbortError') {
       return { success: false, reason: 'cancelled' }
     }
     return { success: false, reason: 'error', error: err }
@@ -110,7 +119,7 @@ export const shareNatively = async ({ title, text, url }) => {
 }
 
 // Clipboard'a kopyala
-export const copyToClipboard = async (text) => {
+export const copyToClipboard = async (text: string): Promise<boolean> => {
   try {
     await navigator.clipboard.writeText(text)
     return true

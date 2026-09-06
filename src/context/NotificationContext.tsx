@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
+import type { ReactNode } from 'react'
+import type { Bildirim, BildirimAyarlari, TurAyari } from '../utils/notificationManager'
 import { useVehicles } from './VehicleContext'
 import {
   DEFAULT_NOTIFICATION_SETTINGS,
@@ -7,7 +9,7 @@ import {
   sendBrowserNotification,
 } from '../utils/notificationManager'
 
-const NotificationContext = createContext(null)
+const NotificationContext = createContext<Record<string, unknown> | null>(null)
 
 export const useNotifications = () => {
   const ctx = useContext(NotificationContext)
@@ -18,7 +20,7 @@ export const useNotifications = () => {
 const STORAGE_KEY = 'garajim_notifications'
 const SETTINGS_KEY = 'garajim_notification_settings'
 
-export const NotificationProvider = ({ children }) => {
+export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const {
     vehicles,
     maintenanceRecords,
@@ -28,7 +30,7 @@ export const NotificationProvider = ({ children }) => {
     isLoaded,
   } = useVehicles()
 
-  const [notifications, setNotifications] = useState([])
+  const [notifications, setNotifications] = useState<Bildirim[]>([])
   const [settings, setSettings] = useState(DEFAULT_NOTIFICATION_SETTINGS)
   const [isInitialized, setIsInitialized] = useState(false)
 
@@ -122,7 +124,7 @@ export const NotificationProvider = ({ children }) => {
   )
 
   // Action'lar
-  const markAsRead = useCallback((id) => {
+  const markAsRead = useCallback((id: string) => {
     setNotifications(prev => prev.map(n =>
       n.id === id ? { ...n, read: true } : n
     ))
@@ -134,7 +136,7 @@ export const NotificationProvider = ({ children }) => {
     ))
   }, [])
 
-  const dismissNotification = useCallback((id) => {
+  const dismissNotification = useCallback((id: string) => {
     setNotifications(prev => prev.map(n =>
       n.id === id ? { ...n, dismissed: true, read: true } : n
     ))
@@ -148,14 +150,14 @@ export const NotificationProvider = ({ children }) => {
     setNotifications([])
   }, [])
 
-  const updateSettings = useCallback((updates) => {
+  const updateSettings = useCallback((updates: Partial<BildirimAyarlari>) => {
     setSettings(prev => ({ ...prev, ...updates }))
   }, [])
 
-  const updateTypeSettings = useCallback((type, typeUpdates) => {
+  const updateTypeSettings = useCallback((type: string, typeUpdates: Partial<TurAyari>) => {
     setSettings(prev => ({
       ...prev,
-      [type]: { ...prev[type], ...typeUpdates },
+      [type]: { ...(prev[type] as object), ...typeUpdates },
     }))
   }, [])
 

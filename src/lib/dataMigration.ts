@@ -15,11 +15,42 @@ import {
   BUCKETS,
 } from './storageHelpers'
 import { parseIntervalKey } from '../utils/maintenanceRecommendations'
+import type { Vehicle, MaintenanceRecord, FuelRecord, TireSet, TireChange, CustomIntervals } from '../types'
+
+export interface MigrationSayaci { total: number; success: number; failed: number }
+export interface MigrationSonucu {
+  success: boolean
+  vehicles: MigrationSayaci
+  maintenance: MigrationSayaci
+  fuel: MigrationSayaci
+  tireSets: MigrationSayaci
+  tireChanges: MigrationSayaci
+  customIntervals: MigrationSayaci
+  errors: string[]
+}
+export type ProgressCallback = (step: string, current: number, total: number) => void
+
+/** Yedek dosyasının (backup.ts exportData çıktısı) şekli */
+/**
+ * Yedek dosyaları eski sürümlerden gelebiliyor: id'ler LocalStorage
+ * döneminde Date.now() sayısıydı, bazı alanlar hiç olmayabiliyor.
+ * Bu yüzden alanlar opsiyonel ve id'ler string|number.
+ */
+type EskiId = string | number
+
+export interface YedekVerisi {
+  vehicles?: (Partial<Vehicle> & { id?: EskiId; photo?: string | null })[]
+  maintenanceRecords?: (Partial<MaintenanceRecord> & { id?: EskiId; vehicleId?: EskiId })[]
+  fuelRecords?: (Partial<FuelRecord> & { id?: EskiId; vehicleId?: EskiId })[]
+  tireSets?: (Partial<TireSet> & { id?: EskiId; vehicleId?: EskiId })[]
+  tireChanges?: (Partial<TireChange> & { id?: EskiId; vehicleId?: EskiId })[]
+  customIntervals?: CustomIntervals
+}
 
 /**
  * Migration sonuç tipi
  */
-const createResult = () => ({
+const createResult = (): MigrationSonucu => ({
   success: false,
   vehicles: { total: 0, success: 0, failed: 0 },
   maintenance: { total: 0, success: 0, failed: 0 },
@@ -38,7 +69,11 @@ const createResult = () => ({
  * @param {function} onProgress - (step, current, total) => void
  * @returns {Promise<object>} Migration sonuç raporu
  */
-export const migrateDataToSupabase = async (data, userId, onProgress = () => {}) => {
+export const migrateDataToSupabase = async (
+  data: YedekVerisi | null | undefined,
+  userId: string,
+  onProgress: ProgressCallback = () => {}
+): Promise<MigrationSonucu> => {
   const result = createResult()
 
   if (!userId) {
@@ -54,7 +89,7 @@ export const migrateDataToSupabase = async (data, userId, onProgress = () => {})
   // Eski ID → Yeni UUID eşleştirmesi (vehicles için)
   // LocalStorage'da vehicleId 'Date.now()' formatında
   // Supabase'de UUID. Eski ID'leri yeni UUID'lere eşleştirmemiz lazım
-  const vehicleIdMap = new Map() // oldId → newUuid
+  const vehicleIdMap = new Map<string, string>() // oldId → newUuid
 
   // ============ VEHICLES ============
   const vehicles = data.vehicles || []
@@ -109,7 +144,7 @@ export const migrateDataToSupabase = async (data, userId, onProgress = () => {})
       } catch (error) {
         console.error('Migration vehicle error:', error)
         result.vehicles.failed++
-        result.errors.push(`Araç (${vehicle.plate || 'Bilinmiyor'}): ${formatSupabaseError(error)}`)
+        result.errors.push(`Araç (${vehicle.plate || 'Bilinmiyor'}): ${formatSupabaseError(error as Error)}`)
       }
     }
   }
@@ -157,7 +192,7 @@ export const migrateDataToSupabase = async (data, userId, onProgress = () => {})
       } catch (error) {
         console.error('Migration maintenance error:', error)
         result.maintenance.failed++
-        result.errors.push(`Bakım kaydı (${record.type || 'Bilinmiyor'}): ${formatSupabaseError(error)}`)
+        result.errors.push(`Bakım kaydı (${record.type || 'Bilinmiyor'}): ${formatSupabaseError(error as Error)}`)
       }
     }
   }
@@ -193,7 +228,7 @@ export const migrateDataToSupabase = async (data, userId, onProgress = () => {})
       } catch (error) {
         console.error('Migration fuel error:', error)
         result.fuel.failed++
-        result.errors.push(`Yakıt kaydı: ${formatSupabaseError(error)}`)
+        result.errors.push(`Yakıt kaydı: ${formatSupabaseError(error as Error)}`)
       }
     }
   }
@@ -229,7 +264,7 @@ export const migrateDataToSupabase = async (data, userId, onProgress = () => {})
       } catch (error) {
         console.error('Migration tire set error:', error)
         result.tireSets.failed++
-        result.errors.push(`Lastik seti (${tireSet.season || ''}): ${formatSupabaseError(error)}`)
+        result.errors.push(`Lastik seti (${tireSet.season || ''}): ${formatSupabaseError(error as Error)}`)
       }
     }
   }
@@ -265,7 +300,7 @@ export const migrateDataToSupabase = async (data, userId, onProgress = () => {})
       } catch (error) {
         console.error('Migration tire change error:', error)
         result.tireChanges.failed++
-        result.errors.push(`Lastik değişimi: ${formatSupabaseError(error)}`)
+        result.errors.push(`Lastik değişimi: ${formatSupabaseError(error as Error)}`)
       }
     }
   }
@@ -296,7 +331,12 @@ export const migrateDataToSupabase = async (data, userId, onProgress = () => {})
         continue
       }
 
-      const interval = intervals[key]
+      // Eski yedeklerde değer düz sayı olabiliyor; tek biçime çeviriyoruz
+      const ham = intervals[key]
+      const interval = typeof ham === 'number'
+        ? { kilometers: ham, months: null }
+        : (ham ?? null)
+
       if (interval && (interval.kilometers || interval.months)) {
         rowsToInsert.push(
           customIntervalToDb(newVehicleId, maintenanceType, interval, userId)
@@ -315,7 +355,7 @@ export const migrateDataToSupabase = async (data, userId, onProgress = () => {})
       } catch (error) {
         console.error('Migration intervals error:', error)
         result.customIntervals.failed = rowsToInsert.length
-        result.errors.push(`Bakım periyotları: ${formatSupabaseError(error)}`)
+        result.errors.push(`Bakım periyotları: ${formatSupabaseError(error as Error)}`)
       }
     }
   }
@@ -372,7 +412,7 @@ export const clearLocalStorageData = () => {
 /**
  * Veri sayılarını getir (UI'da göstermek için)
  */
-export const getDataCounts = (data) => {
+export const getDataCounts = (data: YedekVerisi | null | undefined) => {
   if (!data) return null
   return {
     vehicles: (data.vehicles || []).length,

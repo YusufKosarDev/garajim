@@ -3,6 +3,8 @@ import { validatePastDate, validateExpiryDate, validateVehicleYear } from '../ut
 import { formatPlate, isValidPlate, platesMatch } from '../utils/plateHelpers'
 import { checkFuelKm } from '../utils/kmHelpers'
 import { SEASONS } from '../utils/tireHelpers'
+import type { Vehicle, FuelRecord, TireSet, Sezon } from '../types'
+
 
 /**
  * Form şemaları.
@@ -13,13 +15,22 @@ import { SEASONS } from '../utils/tireHelpers'
  */
 
 // { isValid, message } sözleşmesini zod issue'suna çeviren yardımcı
-const uygula = (ctx, path, sonuc) => {
+/**
+ * zod v4 refinement bağlamı tipini dışa vermiyor. Yalnızca addIssue'yu
+ * kullandığımız için yapısal bir tip yeterli — zod'un ctx'i daha geniş bir
+ * issue birleşimi kabul ettiğinden buraya sorunsuz atanıyor.
+ */
+interface RefinementCtx {
+  addIssue: (issue: { code: 'custom'; path: (string | number)[]; message: string }) => void
+}
+
+const uygula = (ctx: RefinementCtx, path: string, sonuc: { isValid: boolean; message?: string }) => {
   if (!sonuc.isValid) {
-    ctx.addIssue({ code: 'custom', path: [path], message: sonuc.message })
+    ctx.addIssue({ code: 'custom', path: [path], message: sonuc.message ?? 'Geçersiz değer' })
   }
 }
 
-const zorunluMetin = (mesaj) => z.string().trim().min(1, mesaj)
+const zorunluMetin = (mesaj: string) => z.string().trim().min(1, mesaj)
 
 // Sayı alanları formda string olarak tutulur (input value her zaman string)
 const sayi = () => z.string().trim()
@@ -27,7 +38,7 @@ const sayi = () => z.string().trim()
 // ============================================================
 // YAKIT
 // ============================================================
-export const makeFuelSchema = ({ vehicleFuelRecords = [], editId = null } = {}) =>
+export const makeFuelSchema = ({ vehicleFuelRecords = [], editId = null }: { vehicleFuelRecords?: FuelRecord[]; editId?: string | null } = {}) =>
   z.object({
     date: zorunluMetin('Tarih zorunlu'),
     km: zorunluMetin('Kilometre zorunlu'),
@@ -77,7 +88,7 @@ export const maintenanceSchema = z.object({
 // ============================================================
 // ARAÇ
 // ============================================================
-export const makeVehicleSchema = ({ vehicles = [], editId = null } = {}) =>
+export const makeVehicleSchema = ({ vehicles = [], editId = null }: { vehicles?: Vehicle[]; editId?: string | null } = {}) =>
   z.object({
     plate: zorunluMetin('Plaka zorunlu'),
     brand: zorunluMetin('Marka zorunlu'),
@@ -122,7 +133,8 @@ export const makeVehicleSchema = ({ vehicles = [], editId = null } = {}) =>
       ['insuranceDate', 'Sigorta tarihi'],
       ['kaskoDate', 'Kasko tarihi'],
     ]) {
-      if (val[alan]) uygula(ctx, alan, validateExpiryDate(val[alan], etiket))
+      const deger = val[alan as keyof typeof val] as string
+      if (deger) uygula(ctx, alan, validateExpiryDate(deger, etiket))
     }
   })
 
@@ -152,7 +164,7 @@ export const tireChangeSchema = z.object({
 // ============================================================
 // LASTİK SETİ
 // ============================================================
-export const makeTireSetSchema = ({ tireSets = [], vehicleId = null, isEdit = false } = {}) =>
+export const makeTireSetSchema = ({ tireSets = [], vehicleId = null, isEdit = false }: { tireSets?: TireSet[]; vehicleId?: string | null; isEdit?: boolean } = {}) =>
   z.object({
     season: z.string(),
     brand: zorunluMetin('Marka zorunlu'),
@@ -173,7 +185,7 @@ export const makeTireSetSchema = ({ tireSets = [], vehicleId = null, isEdit = fa
       if (mevcut) {
         ctx.addIssue({
           code: 'custom', path: ['season'],
-          message: `Bu araç için zaten ${SEASONS[val.season].label} set tanımlı — düzenlemek için onu aç`,
+          message: `Bu araç için zaten ${SEASONS[val.season as Sezon].label} set tanımlı — düzenlemek için onu aç`,
         })
       }
     }
