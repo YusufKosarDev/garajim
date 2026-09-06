@@ -84,23 +84,28 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       settings,
     })
 
+    // NOT: Bildirim gönderimi state updater'ının İÇİNDE yapılıyordu. Updater'lar
+    // saf olmalı; StrictMode iki kez çalıştırdığı için aynı bildirim iki kez
+    // gösterilebiliyordu. Yan etki artık dışarıda.
+    const gosterilecekler: Bildirim[] = []
+
     setNotifications(prev => {
       const merged = mergeNotifications(prev, fresh)
 
-      // Yeni eklenen ve henüz okunmamış critical/high bildirimler için browser push
       if (settings.browserNotifications) {
-        const newCritical = merged.filter(n => {
-          if (n.read || n.dismissed) return false
-          if (n.priority !== 'critical' && n.priority !== 'high') return false
+        for (const n of merged) {
+          if (n.read || n.dismissed) continue
+          if (n.priority !== 'critical' && n.priority !== 'high') continue
           // Önceki listede yoksa yeni demektir
-          return !prev.some(p => p.id === n.id)
-        })
-
-        newCritical.forEach(n => sendBrowserNotification(n))
+          if (prev.some(p => p.id === n.id)) continue
+          gosterilecekler.push(n)
+        }
       }
 
       return merged
     })
+
+    gosterilecekler.forEach(n => { void sendBrowserNotification(n) })
   }, [
     isLoaded,
     isInitialized,

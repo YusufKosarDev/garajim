@@ -302,20 +302,37 @@ export const getTypeConfig = (type: string) => {
   return TYPE_CONFIG[type] || { label: type, icon: '🔔', urgentColor: 'slate' }
 }
 
-// Browser native notification gönder (eğer izin varsa)
-export const sendBrowserNotification = (notification: Bildirim): boolean => {
+/**
+ * Bildirimi sistem üzerinden göster.
+ *
+ * Service worker üzerinden gösteriyoruz: `new Notification()` yalnızca sayfa
+ * ÖN PLANDAYKEN çalışır, sekme arka plana alınınca sessizce kaybolur.
+ * registration.showNotification() ise sekme arka plandayken de çalışır ve
+ * bildirime tıklandığında SW uygulamayı açıp doğru sayfaya götürebilir.
+ *
+ * Not: uygulama tamamen kapalıyken bildirim göndermek için sunucudan gelen
+ * gerçek web push gerekir (VAPID anahtarı + gönderen servis).
+ */
+export const sendBrowserNotification = async (notification: Bildirim): Promise<boolean> => {
   if (!('Notification' in window)) return false
   if (Notification.permission !== 'granted') return false
 
+  const secenekler: NotificationOptions = {
+    body: notification.message,
+    icon: '/icons/icon-192.png',
+    badge: '/icons/icon-192.png',
+    tag: notification.id, // Aynı tag → güncellenir, duplicate yapmaz
+    data: { url: notification.actionUrl },
+  }
+
   try {
-    const config = getTypeConfig(notification.type)
-    new Notification(notification.title, {
-      body: notification.message,
-      icon: '/icons/icon-192.png',
-      badge: '/icons/icon-192.png',
-      tag: notification.id, // Aynı tag → güncellenir, duplicate yapmaz
-      data: { url: notification.actionUrl },
-    })
+    if ('serviceWorker' in navigator) {
+      const registration = await navigator.serviceWorker.ready
+      await registration.showNotification(notification.title, secenekler)
+      return true
+    }
+    // SW yoksa (dev modda kapalı) eski yönteme düş
+    new Notification(notification.title, secenekler)
     return true
   } catch (err) {
     console.error('Browser notification error:', err)

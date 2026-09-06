@@ -9,6 +9,11 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      // injectManifest: kendi SW'imizi kullanıyoruz. generateSW modunda push ve
+      // notificationclick handler'ı yazacak yer yoktu (bkz. src/sw.js).
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
       includeAssets: ['favicon.ico', 'logo.svg', 'robots.txt'],
       manifest: {
         name: 'Garajım — Araç Takip Asistanı',
@@ -57,33 +62,12 @@ export default defineConfig({
           },
         ],
       },
-      workbox: {
+      // injectManifest modunda runtimeCaching SW'nin kendisinde tanımlanır
+      // (bkz. src/sw.js) — burada yalnızca precache listesi belirlenir.
+      injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-cache',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 yıl
-              },
-            },
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'gstatic-fonts-cache',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365,
-              },
-            },
-          },
-        ],
       },
+
       devOptions: {
         enabled: false, // Dev modda PWA devre dışı (sıkıntı çıkarmaması için)
       },

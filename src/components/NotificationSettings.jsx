@@ -164,7 +164,7 @@ export default function NotificationSettings() {
             <div className="min-w-0">
               <div className="font-semibold text-sm">Tarayıcı Bildirimleri</div>
               <div className="text-xs text-slate-400 mt-0.5">
-                Önemli bildirimleri sistem üzerinden alır (uygulama açık olmasa bile)
+                Önemli bildirimleri sistem üzerinden alır (sekme arka plandayken de çalışır)
               </div>
             </div>
           </div>
