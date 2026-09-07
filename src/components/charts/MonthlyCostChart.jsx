@@ -1,6 +1,9 @@
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts'
+import { useTranslation } from 'react-i18next'
 
 export default function MonthlyCostChart({ maintenanceRecords = [], fuelRecords = [] }) {
+  const { t } = useTranslation()
+
   // Son 12 ay için ay-yıl anahtarları oluştur
   const now = new Date()
   const months = []
@@ -42,7 +45,7 @@ export default function MonthlyCostChart({ maintenanceRecords = [], fuelRecords 
   if (!hasData) {
     return (
       <div className="h-[300px] flex items-center justify-center text-slate-500 text-sm">
-        Henüz grafiklenecek veri yok
+        {t('components.charts.monthlyCostChart.henuz_grafiklenecek_veri_yok')}
       </div>
     )
   }

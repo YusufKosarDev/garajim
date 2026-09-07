@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Car, CheckCircle, XCircle, Loader2, Users, ArrowRight } from 'lucide-react'
@@ -6,6 +7,8 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 
 export default function AcceptInvite() {
+  const { t } = useTranslation()
+
   const { token } = useParams()
   const navigate = useNavigate()
   const { user, loading: authLoading } = useAuth()
@@ -19,7 +22,7 @@ export default function AcceptInvite() {
   useEffect(() => {
     if (!token) {
       setStatus('error')
-      setError('Geçersiz davet linki (token yok)')
+      setError(t('acceptInvite.gecersiz_davet_linki_token_yok'))
       return
     }
 
@@ -34,7 +37,7 @@ export default function AcceptInvite() {
 
     // Login var, davet'i kabul edebilir
     setStatus('ready')
-  }, [token, user, authLoading])
+  }, [token, user, authLoading, t])
 
   // "Garaja Katıl" butonuna tıklayınca
   const handleAccept = async () => {
@@ -47,9 +50,9 @@ export default function AcceptInvite() {
       // Mevcut session token'ı al
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
-        toast.error('Oturum bulunamadı')
+        toast.error(t('acceptInvite.oturum_bulunamadi'))
         setStatus('error')
-        setError('Oturum bulunamadı, lütfen tekrar giriş yap')
+        setError(t('acceptInvite.oturum_bulunamadi_lutfen_tekrar_giris_yap'))
         setAccepting(false)
         return
       }
@@ -82,7 +85,7 @@ export default function AcceptInvite() {
       setStatus('success')
 
       if (result.already_member) {
-        toast.success('Zaten bu garajın üyesisin 👋')
+        toast.success(t('acceptInvite.zaten_bu_garajin_uyesisin'))
       } else {
         toast.success(`"${result.garage_name}" garajına katıldın! 🎉`, { duration: 4000 })
       }
@@ -96,7 +99,7 @@ export default function AcceptInvite() {
     } catch (err) {
       console.error('Accept invite error:', err)
       setStatus('error')
-      setError('Beklenmedik bir hata oluştu')
+      setError(t('acceptInvite.beklenmedik_bir_hata_olustu'))
       setAccepting(false)
     }
   }
@@ -110,7 +113,7 @@ export default function AcceptInvite() {
             <Car className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Garajım</h1>
-          <p className="text-slate-400">Garaj Daveti</p>
+          <p className="text-slate-400">{t('acceptInvite.garaj_daveti')}</p>
         </div>
 
         {/* Card */}
@@ -118,7 +121,7 @@ export default function AcceptInvite() {
           {status === 'loading' && (
             <div className="text-center py-8">
               <Loader2 className="w-12 h-12 text-blue-400 animate-spin mx-auto mb-4" />
-              <p className="text-slate-300">Yükleniyor...</p>
+              <p className="text-slate-300">{t('acceptInvite.yukleniyor')}</p>
             </div>
           )}
 
@@ -128,17 +131,15 @@ export default function AcceptInvite() {
                 <Users className="w-8 h-8 text-yellow-400" />
               </div>
               <h2 className="text-2xl font-bold text-white mb-2">
-                Önce Giriş Yap
+                {t('acceptInvite.once_giris_yap')}
               </h2>
               <p className="text-slate-400 mb-6">
-                Garaj davetini kabul etmek için Garajım hesabına giriş yapman gerekiyor.
-                Hesabın yoksa hızlıca kayıt olabilirsin.
+                {t('acceptInvite.garaj_davetini_kabul_etmek_icin_garajim')}
               </p>
 
               <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 mb-6 text-left">
                 <p className="text-sm text-slate-300">
-                  💡 <strong>İpucu:</strong> Davet email'i hangi adrese gönderildiyse, o email ile giriş yap.
-                  Aksi halde davet kabul edilmez.
+                  💡 <strong>{t('acceptInvite.ipucu')}</strong> {t('acceptInvite.davet_email_i_hangi_adrese_gonderildiyse')}
                 </p>
               </div>
 
@@ -165,16 +166,15 @@ export default function AcceptInvite() {
                 <Users className="w-8 h-8 text-blue-400" />
               </div>
               <h2 className="text-2xl font-bold text-white mb-2">
-                Garaja Davet Edildin!
+                {t('acceptInvite.garaja_davet_edildin')}
               </h2>
               <p className="text-slate-400 mb-6">
-                Bir garajın üyesi olarak araçları görüntüleyebilir,
-                bakım/yakıt kayıtları ekleyebilirsin.
+                {t('acceptInvite.bir_garajin_uyesi_olarak_araclari_goruntuleyebil')}
               </p>
 
               <div className="bg-slate-900/50 border border-slate-700 rounded-xl p-4 mb-6 text-left">
                 <p className="text-sm text-slate-300 mb-1">
-                  <strong>Giriş yaptığın email:</strong>
+                  <strong>{t('acceptInvite.giris_yaptigin_email')}</strong>
                 </p>
                 <p className="text-blue-400 text-sm font-medium">{user?.email}</p>
               </div>
@@ -185,7 +185,7 @@ export default function AcceptInvite() {
                 className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30"
               >
                 <CheckCircle className="w-5 h-5" />
-                Daveti Kabul Et
+                {t('acceptInvite.daveti_kabul_et')}
               </button>
 
               <button
@@ -201,8 +201,8 @@ export default function AcceptInvite() {
           {status === 'accepting' && (
             <div className="text-center py-8">
               <Loader2 className="w-12 h-12 text-blue-400 animate-spin mx-auto mb-4" />
-              <p className="text-white font-medium mb-1">Davet kabul ediliyor...</p>
-              <p className="text-sm text-slate-400">Bir saniye bekle</p>
+              <p className="text-white font-medium mb-1">{t('acceptInvite.davet_kabul_ediliyor')}</p>
+              <p className="text-sm text-slate-400">{t('acceptInvite.bir_saniye_bekle')}</p>
             </div>
           )}
 
@@ -212,16 +212,15 @@ export default function AcceptInvite() {
                 <CheckCircle className="w-8 h-8 text-green-400" />
               </div>
               <h2 className="text-2xl font-bold text-white mb-2">
-                Hoş Geldin! 🎉
+                {t('acceptInvite.hos_geldin')}
               </h2>
               <p className="text-slate-400 mb-6">
-                <span className="text-blue-400 font-medium">"{garageName}"</span> garajına başarıyla katıldın.
-                Birazdan dashboard'a yönlendiriliyorsun...
+                <span className="text-blue-400 font-medium">"{garageName}"</span> {t('acceptInvite.garajina_basariyla_katildin_birazdan_dashboard_a')}
               </p>
 
               <div className="flex items-center justify-center gap-2 text-sm text-slate-500">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Yönlendiriliyor...
+                {t('acceptInvite.yonlendiriliyor')}
               </div>
             </div>
           )}
@@ -232,7 +231,7 @@ export default function AcceptInvite() {
                 <XCircle className="w-8 h-8 text-red-400" />
               </div>
               <h2 className="text-2xl font-bold text-white mb-2">
-                Davet Kabul Edilemedi
+                {t('acceptInvite.davet_kabul_edilemedi')}
               </h2>
               <p className="text-red-300 mb-6 break-words">
                 {error}
@@ -251,7 +250,7 @@ export default function AcceptInvite() {
 
         {/* Footer */}
         <p className="text-center text-xs text-slate-500 mt-6">
-          Aracını takip etmeye bugün başla 🚗
+          {t('acceptInvite.aracini_takip_etmeye_bugun_basla')}
         </p>
       </div>
     </div>

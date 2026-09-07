@@ -1,8 +1,11 @@
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
+import { useTranslation } from 'react-i18next'
 import { calculateConsumption } from '../../utils/fuelHelpers'
 import { formatDate } from '../../utils/dateHelpers'
 
 export default function FuelConsumptionChart({ fuelRecords }) {
+  const { t } = useTranslation()
+
   // Kronolojik sırala ve tüketim hesapla
   const sorted = [...fuelRecords].sort((a, b) => a.km - b.km)
 
@@ -20,7 +23,7 @@ export default function FuelConsumptionChart({ fuelRecords }) {
   if (chartData.length === 0) {
     return (
       <div className="text-center py-12 text-slate-400 text-sm">
-        Tüketim hesabı için en az 2 yakıt kaydı gerekir
+        {t('components.charts.fuelConsumptionChart.tuketim_hesabi_icin_en_az_2')}
       </div>
     )
   }
@@ -38,7 +41,7 @@ export default function FuelConsumptionChart({ fuelRecords }) {
             borderRadius: '8px',
             color: '#fff',
           }}
-          formatter={(value) => [`${value} L/100km`, 'Tüketim']}
+          formatter={(value) => [`${value} L/100km`, t('charts.fuelConsumptionChart.tuketim')]}
         />
         <Line
           type="monotone"

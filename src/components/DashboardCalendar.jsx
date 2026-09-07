@@ -1,4 +1,5 @@
 import { useState, memo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react'
 import { formatDate, toDateKey } from '../utils/dateHelpers'
@@ -11,6 +12,8 @@ const months = [
 const weekDays = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz']
 
 function DashboardCalendar({ events = [] }) {
+  const { t } = useTranslation()
+
   const [currentDate, setCurrentDate] = useState(new Date())
 
   const year = currentDate.getFullYear()
@@ -92,21 +95,21 @@ function DashboardCalendar({ events = [] }) {
           <button
             onClick={prevMonth}
             className="p-1.5 hover:bg-slate-800 rounded-lg transition"
-            title="Önceki ay"
+            title={t('dashboardCalendar.onceki_ay')}
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
             onClick={goToToday}
             className="px-3 py-1 text-xs bg-slate-800 hover:bg-slate-700 rounded-lg transition"
-            title="Bugüne dön"
+            title={t('dashboardCalendar.bugune_don')}
           >
             Bugün
           </button>
           <button
             onClick={nextMonth}
             className="p-1.5 hover:bg-slate-800 rounded-lg transition"
-            title="Sonraki ay"
+            title={t('dashboardCalendar.sonraki_ay')}
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -188,15 +191,15 @@ function DashboardCalendar({ events = [] }) {
       <div className="mt-4 flex items-center justify-center gap-4 text-xs text-slate-400">
         <div className="flex items-center gap-1">
           <div className="w-2 h-2 rounded-full bg-red-400" />
-          <span>Geçmiş</span>
+          <span>{t('dashboardCalendar.gecmis')}</span>
         </div>
         <div className="flex items-center gap-1">
           <div className="w-2 h-2 rounded-full bg-yellow-400" />
-          <span>Yaklaşan</span>
+          <span>{t('dashboardCalendar.yaklasan')}</span>
         </div>
         <div className="flex items-center gap-1">
           <div className="w-2 h-2 rounded-full bg-green-400" />
-          <span>Güvende</span>
+          <span>{t('dashboardCalendar.guvende')}</span>
         </div>
       </div>
     </div>

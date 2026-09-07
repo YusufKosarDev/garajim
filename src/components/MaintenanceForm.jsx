@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Plus, Receipt } from 'lucide-react'
@@ -31,6 +32,8 @@ const commonMaintenanceTypes = [
 ]
 
 export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord = null, prefilledType = null }) {
+  const { t } = useTranslation()
+
   const { addMaintenance, updateMaintenance, vehicles, maintenanceRecords, fuelRecords } = useVehicles()
 
   const vehicle = vehicles.find(v => v.id === vehicleId)
@@ -100,10 +103,10 @@ export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord
   const commit = (data) => {
     if (isEdit) {
       updateMaintenance(editRecord.id, data)
-      toast.success('Bakım kaydı güncellendi 🔧')
+      toast.success(t('maintenanceForm.bakim_kaydi_guncellendi'))
     } else {
       addMaintenance(data)
-      toast.success('Bakım kaydı eklendi 🔧')
+      toast.success(t('maintenanceForm.bakim_kaydi_eklendi'))
     }
     setPendingKmConfirm(null)
     onClose()
@@ -120,7 +123,7 @@ export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord
     commit(buildData(form))
   }
 
-  const onInvalid = () => toast.error('Lütfen hataları düzelt')
+  const onInvalid = () => toast.error(t('maintenanceForm.lutfen_hatalari_duzelt'))
 
   // Fiş OCR'ının önerdiği ve kullanıcının onayladığı alanları forma yazar.
   // Kaydetmez — form açık kalıyor, kullanıcı her zamanki gibi "Bakım Ekle"ye
@@ -135,16 +138,16 @@ export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEdit ? 'Bakım Kaydını Düzenle' : 'Yeni Bakım Kaydı'}
+      title={isEdit ? t('maintenanceForm.bakim_kaydini_duzenle') : t('maintenanceForm.yeni_bakim_kaydi')}
       maxWidth="max-w-lg"
     >
       <form onSubmit={handleSubmit(onValid, onInvalid)} className="p-5 space-y-4">
-        <FormField label="Bakım Türü" required error={errors.type?.message}>
+        <FormField label={t('maintenanceForm.bakim_turu')} required error={errors.type?.message}>
           {(alanProps) => (
             <select autoFocus {...alanProps} {...register('type')}>
-              <option value="">Seç...</option>
-              {commonMaintenanceTypes.map(t => (
-                <option key={t} value={t}>{t}</option>
+              <option value="">{t('maintenanceForm.sec')}</option>
+              {commonMaintenanceTypes.map(tur => (
+                <option key={tur} value={tur}>{tur}</option>
               ))}
             </select>
           )}
@@ -152,7 +155,7 @@ export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord
 
         {isCustom && (
           <FormField
-            placeholder="Bakım türünü yaz..."
+            placeholder={t('maintenanceForm.bakim_turunu_yaz')}
             error={errors.type?.message}
             {...register('customType')}
           />
@@ -160,7 +163,7 @@ export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField
-            label="Tarih"
+            label={t('maintenanceForm.tarih')}
             required
             type="date"
             max={getTodayString()}
@@ -180,7 +183,7 @@ export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord
         </div>
 
         <FormField
-          label="Maliyet (₺)"
+          label={t('maintenanceForm.maliyet')}
           type="number"
           min="0"
           placeholder="0"
@@ -192,7 +195,7 @@ export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord
         <div>
           <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 flex items-center gap-1">
             <Receipt className="w-3 h-3" />
-            Fatura / Fiş
+            {t('maintenanceForm.fatura_fis')}
           </span>
           <Controller
             name="photo"
@@ -202,8 +205,8 @@ export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord
                 <SingleImageUploader
                   photo={field.value}
                   onChange={field.onChange}
-                  label="Fatura"
-                  hint="Fatura, fiş veya parça fotoğrafı"
+                  label={t('maintenanceForm.fatura')}
+                  hint={t('maintenanceForm.fatura_fis_veya_parca_fotografi')}
                   maxSizeMB={1}
                 />
                 {/* Fotoğraf varsa fişten tutar/tarih/km okumayı öner */}
@@ -214,10 +217,10 @@ export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord
         </div>
 
         <FormField
-          label="Notlar (opsiyonel)"
+          label={t('maintenanceForm.notlar_opsiyonel')}
           as="textarea"
           rows={2}
-          placeholder="Servis adı, marka, ek bilgiler..."
+          placeholder={t('maintenanceForm.servis_adi_marka_ek_bilgiler')}
           {...register('notes')}
         />
 
@@ -233,10 +236,10 @@ export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord
             type="submit"
             className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 py-2.5 rounded-lg font-semibold transition"
           >
-            {isEdit ? 'Güncelle' : (
+            {isEdit ? t('maintenanceForm.guncelle') : (
               <>
                 <Plus className="w-4 h-4" />
-                Bakım Ekle
+                {t('maintenanceForm.bakim_ekle')}
               </>
             )}
           </button>
@@ -248,7 +251,7 @@ export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord
         isOpen={!!pendingKmConfirm}
         onClose={() => setPendingKmConfirm(null)}
         onConfirm={() => commit(pendingKmConfirm.data)}
-        title="Geçmişe dönük kayıt mı?"
+        title={t('maintenanceForm.gecmise_donuk_kayit_mi')}
         message={pendingKmConfirm?.message}
         confirmText="Evet, kaydet"
         cancelText="Vazgeç"

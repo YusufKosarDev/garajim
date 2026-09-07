@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -11,6 +12,8 @@ const RECENT_SEARCHES_KEY = 'garajim_recent_searches'
 const MAX_RECENT = 5
 
 export default function CommandPalette({ isOpen, onClose, onNewVehicle, onNewMaintenance, onNewFuel }) {
+  const { t } = useTranslation()
+
   const navigate = useNavigate()
   const { vehicles, maintenanceRecords, fuelRecords } = useVehicles()
   const [query, setQuery] = useState('')
@@ -40,19 +43,19 @@ export default function CommandPalette({ isOpen, onClose, onNewVehicle, onNewMai
   // Sayfa linkleri
   const pages = useMemo(() => [
     { id: 'page-dashboard', type: 'page', icon: LayoutDashboard, title: 'Dashboard', subtitle: 'Ana sayfa', action: () => navigate('/'), keywords: 'dashboard anasayfa ana' },
-    { id: 'page-vehicles', type: 'page', icon: Car, title: 'Araçlarım', subtitle: 'Araç listesi', action: () => navigate('/vehicles'), keywords: 'araç araclar liste' },
-    { id: 'page-calendar', type: 'page', icon: Calendar, title: 'Takvim', subtitle: 'Tüm tarihler ve olaylar', action: () => navigate('/calendar'), keywords: 'takvim tarih olay' },
-    { id: 'page-stats', type: 'page', icon: BarChart3, title: 'İstatistikler', subtitle: 'Grafikler ve analiz', action: () => navigate('/statistics'), keywords: 'istatistik grafik analiz rapor' },
-    { id: 'page-settings', type: 'page', icon: Settings, title: 'Ayarlar', subtitle: 'Uygulama ayarları', action: () => navigate('/settings'), keywords: 'ayar settings tercih' },
-  ], [navigate])
+    { id: 'page-vehicles', type: 'page', icon: Car, title: t('commandPalette.araclarim'), subtitle: t('commandPalette.arac_listesi'), action: () => navigate('/vehicles'), keywords: t('commandPalette.arac_araclar_liste') },
+    { id: 'page-calendar', type: 'page', icon: Calendar, title: 'Takvim', subtitle: t('commandPalette.tum_tarihler_ve_olaylar'), action: () => navigate('/calendar'), keywords: 'takvim tarih olay' },
+    { id: 'page-stats', type: 'page', icon: BarChart3, title: t('commandPalette.istatistikler'), subtitle: 'Grafikler ve analiz', action: () => navigate('/statistics'), keywords: 'istatistik grafik analiz rapor' },
+    { id: 'page-settings', type: 'page', icon: Settings, title: 'Ayarlar', subtitle: t('commandPalette.uygulama_ayarlari'), action: () => navigate('/settings'), keywords: 'ayar settings tercih' },
+  ], [navigate, t])
 
   // Eylemler
   const actions = useMemo(() => [
-    { id: 'action-new-vehicle', type: 'action', icon: Plus, title: 'Yeni Araç Ekle', subtitle: 'Araç kaydı oluştur', action: () => { onNewVehicle?.(); navigate('/vehicles') }, keywords: 'yeni araç ekle ekleme' },
-    { id: 'action-new-maintenance', type: 'action', icon: Wrench, title: 'Yeni Bakım Ekle', subtitle: 'Bakım kaydı oluştur', action: () => onNewMaintenance?.(), keywords: 'yeni bakım ekle' },
-    { id: 'action-new-fuel', type: 'action', icon: Droplet, title: 'Yeni Yakıt Ekle', subtitle: 'Yakıt kaydı oluştur', action: () => onNewFuel?.(), keywords: 'yeni yakıt ekle depo' },
-    { id: 'action-backup', type: 'action', icon: Download, title: 'Verileri İndir', subtitle: 'Yedek dosyası oluştur', action: () => navigate('/settings'), keywords: 'yedek indir backup export' },
-  ], [navigate, onNewVehicle, onNewMaintenance, onNewFuel])
+    { id: 'action-new-vehicle', type: 'action', icon: Plus, title: t('commandPalette.yeni_arac_ekle'), subtitle: t('commandPalette.arac_kaydi_olustur'), action: () => { onNewVehicle?.(); navigate('/vehicles') }, keywords: t('commandPalette.yeni_arac_ekle_ekleme') },
+    { id: 'action-new-maintenance', type: 'action', icon: Wrench, title: t('commandPalette.yeni_bakim_ekle'), subtitle: t('commandPalette.bakim_kaydi_olustur'), action: () => onNewMaintenance?.(), keywords: t('commandPalette.yeni_bakim_ekle_2') },
+    { id: 'action-new-fuel', type: 'action', icon: Droplet, title: t('commandPalette.yeni_yakit_ekle'), subtitle: t('commandPalette.yakit_kaydi_olustur'), action: () => onNewFuel?.(), keywords: t('commandPalette.yeni_yakit_ekle_depo') },
+    { id: 'action-backup', type: 'action', icon: Download, title: t('commandPalette.verileri_indir'), subtitle: t('commandPalette.yedek_dosyasi_olustur'), action: () => navigate('/settings'), keywords: 'yedek indir backup export' },
+  ], [navigate, onNewVehicle, onNewMaintenance, onNewFuel, t])
 
   // Aranabilir araçlar
   const vehicleItems = useMemo(() =>
@@ -162,16 +165,16 @@ export default function CommandPalette({ isOpen, onClose, onNewVehicle, onNewMai
       const defaults = filteredItems.filter(i => i.section === 'default')
       return [
         ...(recents.length > 0 ? [{ label: 'Son Aramalar', items: recents }] : []),
-        { label: 'Hızlı Erişim', items: defaults },
+        { label: t('commandPalette.hizli_erisim'), items: defaults },
       ]
     }
 
     const groups = {
       page: { label: 'Sayfalar', items: [] },
       action: { label: 'Eylemler', items: [] },
-      vehicle: { label: 'Araçlar', items: [] },
-      maintenance: { label: 'Bakım Kayıtları', items: [] },
-      fuel: { label: 'Yakıt Kayıtları', items: [] },
+      vehicle: { label: t('commandPalette.araclar'), items: [] },
+      maintenance: { label: t('commandPalette.bakim_kayitlari'), items: [] },
+      fuel: { label: t('commandPalette.yakit_kayitlari'), items: [] },
     }
     filteredItems.forEach(item => {
       if (groups[item.type]) {
@@ -179,7 +182,7 @@ export default function CommandPalette({ isOpen, onClose, onNewVehicle, onNewMai
       }
     })
     return Object.values(groups).filter(g => g.items.length > 0)
-  }, [filteredItems, query])
+  }, [filteredItems, query, t])
 
   // Düz sıra (keyboard navigasyonu için)
   const flatItems = useMemo(() =>
@@ -245,9 +248,9 @@ export default function CommandPalette({ isOpen, onClose, onNewVehicle, onNewMai
   const typeConfig = {
     page: { color: 'text-blue-400', label: 'Sayfa' },
     action: { color: 'text-green-400', label: 'Eylem' },
-    vehicle: { color: 'text-purple-400', label: 'Araç' },
-    maintenance: { color: 'text-orange-400', label: 'Bakım' },
-    fuel: { color: 'text-cyan-400', label: 'Yakıt' },
+    vehicle: { color: 'text-purple-400', label: t('commandPalette.arac') },
+    maintenance: { color: 'text-orange-400', label: t('commandPalette.bakim') },
+    fuel: { color: 'text-cyan-400', label: t('commandPalette.yakit') },
   }
 
   return createPortal(
@@ -277,13 +280,13 @@ export default function CommandPalette({ isOpen, onClose, onNewVehicle, onNewMai
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Araç, bakım, sayfa veya eylem ara..."
+                placeholder={t('commandPalette.arac_bakim_sayfa_veya_eylem_ara')}
                 className="flex-1 bg-transparent outline-none text-white placeholder-slate-500 text-base"
                 autoComplete="off"
               />
               <div className="hidden sm:flex items-center gap-1 text-[10px] text-slate-500">
                 <kbd className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 font-mono">ESC</kbd>
-                <span>kapat</span>
+                <span>{t('commandPalette.kapat')}</span>
               </div>
             </div>
 
@@ -293,10 +296,10 @@ export default function CommandPalette({ isOpen, onClose, onNewVehicle, onNewMai
                 <div className="py-12 text-center">
                   <Search className="w-10 h-10 text-slate-600 mx-auto mb-3" />
                   <p className="text-sm text-slate-400">
-                    <strong className="text-slate-300">"{query}"</strong> için sonuç bulunamadı
+                    <strong className="text-slate-300">"{query}"</strong> {t('commandPalette.icin_sonuc_bulunamadi')}
                   </p>
                   <p className="text-xs text-slate-500 mt-1">
-                    Başka bir kelimeyle dene
+                    {t('commandPalette.baska_bir_kelimeyle_dene')}
                   </p>
                 </div>
               ) : (
@@ -357,16 +360,16 @@ export default function CommandPalette({ isOpen, onClose, onNewVehicle, onNewMai
               <div className="flex items-center gap-3">
                 <span className="flex items-center gap-1">
                   <kbd className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 font-mono">↑↓</kbd>
-                  gezin
+                  {t('commandPalette.gezin')}
                 </span>
                 <span className="flex items-center gap-1">
                   <kbd className="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-700 font-mono">↵</kbd>
-                  seç
+                  {t('commandPalette.sec')}
                 </span>
               </div>
               <div className="flex items-center gap-1">
                 <Command className="w-3 h-3" />
-                <span>Garajım Arama</span>
+                <span>{t('commandPalette.garajim_arama')}</span>
               </div>
             </div>
           </motion.div>

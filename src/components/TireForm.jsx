@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Plus, Info, Calendar, DollarSign } from 'lucide-react'
@@ -17,6 +18,8 @@ const createEmptyTires = () => TIRE_POSITIONS.map(pos => ({
 }))
 
 export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = null }) {
+  const { t } = useTranslation()
+
   const { addTireSet, updateTireSet, tireSets } = useVehicles()
   const isEdit = !!editTireSet
 
@@ -58,11 +61,11 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
         size: editTireSet.size || '',
         purchaseDate: editTireSet.purchaseDate || '',
         purchasePrice: editTireSet.purchasePrice ? String(editTireSet.purchasePrice) : '',
-        hasSpare: mevcutLastikler.some(t => t.position === 'S'),
+        hasSpare: mevcutLastikler.some(lastik => lastik.position === 'S'),
         notes: editTireSet.notes || '',
         // Eksik pozisyonları doldur
         tires: TIRE_POSITIONS.map(pos => {
-          const varOlan = mevcutLastikler.find(t => t.position === pos.code)
+          const varOlan = mevcutLastikler.find(lastik => lastik.position === pos.code)
           return varOlan
             ? { position: pos.code, dot: varOlan.dot || '', treadDepth: varOlan.treadDepth ?? '' }
             : { position: pos.code, dot: '', treadDepth: '' }
@@ -71,8 +74,8 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
     } else {
       // Yeni set — araçta hangi sezonlar zaten var, eksik olanı seç
       const mevcutSezonlar = tireSets
-        .filter(t => t.vehicleId === vehicleId)
-        .map(t => t.season)
+        .filter(set => set.vehicleId === vehicleId)
+        .map(set => set.season)
 
       const varsayilanSezon = !mevcutSezonlar.includes('summer')
         ? 'summer'
@@ -88,11 +91,11 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
   const onValid = (form) => {
     // Stepney yoksa filtrele
     const filtrelenmis = form.tires
-      .filter(t => t.position !== 'S' || form.hasSpare)
-      .map(t => ({
-        position: t.position,
-        dot: (t.dot || '').trim(),
-        treadDepth: Number(t.treadDepth) || 0,
+      .filter(lastik => lastik.position !== 'S' || form.hasSpare)
+      .map(lastik => ({
+        position: lastik.position,
+        dot: (lastik.dot || '').trim(),
+        treadDepth: Number(lastik.treadDepth) || 0,
       }))
 
     const data = {
@@ -111,7 +114,7 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
     onClose()
   }
 
-  const onInvalid = () => toast.error('Lütfen hataları düzelt')
+  const onInvalid = () => toast.error(t('tireForm.lutfen_hatalari_duzelt'))
 
   // DOT alanı: sadece rakam, en fazla 4 hane
   const dotDegisti = (index) => (e) => {
@@ -125,14 +128,14 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEdit ? 'Lastik Setini Düzenle' : 'Yeni Lastik Seti'}
+      title={isEdit ? t('tireForm.lastik_setini_duzenle') : 'Yeni Lastik Seti'}
       maxWidth="max-w-2xl"
     >
       <form onSubmit={handleSubmit(onValid, onInvalid)} className="p-5 space-y-5">
         {/* Sezon seçimi */}
         <fieldset>
           <legend className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">
-            Sezon
+            {t('tireForm.sezon')}
           </legend>
           <div className="grid grid-cols-2 gap-2">
             {Object.entries(SEASONS).filter(([k]) => k !== 'all-season').map(([key, config]) => (
@@ -158,22 +161,22 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
           {errors.season && <p className="text-xs text-red-400 mt-2" role="alert">{errors.season.message}</p>}
           {isEdit && (
             <p className="text-xs text-slate-500 mt-2">
-              Sezon değiştirilemez — silip yeniden ekle
+              {t('tireForm.sezon_degistirilemez_silip_yeniden_ekle')}
             </p>
           )}
         </fieldset>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField
-            label="Marka"
+            label={t('tireForm.marka')}
             required
-            placeholder="Michelin, Bridgestone..."
+            placeholder={t('tireForm.michelin_bridgestone')}
             autoFocus
             error={errors.brand?.message}
             {...register('brand')}
           />
           <FormField
-            label="Ebat"
+            label={t('tireForm.ebat')}
             required
             placeholder="205/55 R16"
             error={errors.size?.message}
@@ -183,13 +186,13 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <FormField
-            label={<span className="inline-flex items-center gap-1"><Calendar className="w-3 h-3" />Alım Tarihi</span>}
+            label={<span className="inline-flex items-center gap-1"><Calendar className="w-3 h-3" />{t('tireForm.alim_tarihi')}</span>}
             type="date"
             max={getTodayString()}
             {...register('purchaseDate')}
           />
           <FormField
-            label={<span className="inline-flex items-center gap-1"><DollarSign className="w-3 h-3" />Toplam Fiyat (₺)</span>}
+            label={<span className="inline-flex items-center gap-1"><DollarSign className="w-3 h-3" />{t('tireForm.toplam_fiyat')}</span>}
             type="number"
             placeholder="0"
             min="0"
@@ -202,8 +205,8 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
           <label className="flex items-center gap-3 cursor-pointer bg-slate-800/50 p-3 rounded-lg border border-slate-700 hover:bg-slate-800 transition">
             <input type="checkbox" className="w-4 h-4 accent-blue-500" {...register('hasSpare')} />
             <div className="flex-1">
-              <div className="text-sm font-semibold">Stepney dahil</div>
-              <div className="text-xs text-slate-400">Yedek lastiği de takip et</div>
+              <div className="text-sm font-semibold">{t('tireForm.stepney_dahil')}</div>
+              <div className="text-xs text-slate-400">{t('tireForm.yedek_lastigi_de_takip_et')}</div>
             </div>
           </label>
         </div>
@@ -212,7 +215,7 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
         <div>
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
-              Lastik Detayları
+              {t('tireForm.lastik_detaylari')}
             </h3>
             <div className="text-[10px] text-slate-500">
               DOT kodu: HHWW (ör. 3523 = 35. hafta 2023)
@@ -240,7 +243,7 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
                       <div>
                         <input
                           type="text"
-                          placeholder="DOT (3523)"
+                          placeholder={t('tireForm.dot_3523')}
                           maxLength={4}
                           aria-label={`${pos.label} DOT kodu`}
                           className={`w-full bg-slate-800 border rounded px-2 py-1.5 text-xs focus:outline-none transition ${
@@ -268,7 +271,7 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
                           }`}
                           {...register(`tires.${index}.treadDepth`)}
                         />
-                        <span className="text-[10px] text-slate-500">mm</span>
+                        <span className="text-[10px] text-slate-500">{t('tireForm.mm')}</span>
                       </div>
                       {derinlikHata && <div className="text-[9px] text-red-400" role="alert">{derinlikHata}</div>}
                     </div>
@@ -277,7 +280,7 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
               })}
             </div>
             <div className="text-center text-[10px] text-slate-500 mt-3">
-              ↑ Aracın önü
+              {t('tireForm.aracin_onu')}
             </div>
           </div>
 
@@ -287,14 +290,14 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
               <div className="max-w-[180px] mx-auto">
                 <div className="bg-slate-900 border-2 border-slate-700 rounded-lg p-3">
                   <div className="text-xs font-semibold text-slate-400 mb-2 flex items-center gap-1">
-                    <span aria-hidden="true">🛞</span> Stepney
+                    <span aria-hidden="true">🛞</span> {t('tireForm.stepney')}
                   </div>
                   <div className="space-y-2">
                     <input
                       type="text"
                       placeholder="DOT"
                       maxLength={4}
-                      aria-label="Stepney DOT kodu"
+                      aria-label={t('tireForm.stepney_dot_kodu')}
                       className="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-blue-500 transition"
                       {...register(`tires.${spareIndex}.dot`, { onChange: dotDegisti(spareIndex) })}
                     />
@@ -305,11 +308,11 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
                         min="0"
                         max="15"
                         step="0.1"
-                        aria-label="Stepney diş derinliği (mm)"
+                        aria-label={t('tireForm.stepney_dis_derinligi_mm')}
                         className="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-blue-500 transition"
                         {...register(`tires.${spareIndex}.treadDepth`)}
                       />
-                      <span className="text-[10px] text-slate-500">mm</span>
+                      <span className="text-[10px] text-slate-500">{t('tireForm.mm')}</span>
                     </div>
                   </div>
                 </div>
@@ -322,18 +325,18 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
             <div className="flex items-start gap-2 text-xs text-slate-300">
               <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" aria-hidden="true" />
               <div>
-                <p><strong>DOT kodu:</strong> Lastiğin yan yüzünde 4 haneli sayı (örn. 3523 = 2023'ün 35. haftası)</p>
-                <p className="mt-1"><strong>Diş derinliği:</strong> Yasal minimum 1.6mm, kış için 4mm üstü önerilir</p>
+                <p><strong>{t('tireForm.dot_kodu')}</strong> Lastiğin yan yüzünde 4 haneli sayı (örn. 3523 = 2023'ün 35. haftası)</p>
+                <p className="mt-1"><strong>{t('tireForm.dis_derinligi')}</strong> {t('tireForm.yasal_minimum_1_6mm_kis_icin')}</p>
               </div>
             </div>
           </div>
         </div>
 
         <FormField
-          label="Notlar (opsiyonel)"
+          label={t('tireForm.notlar_opsiyonel')}
           as="textarea"
           rows={2}
-          placeholder="Mağaza, garanti, vb."
+          placeholder={t('tireForm.magaza_garanti_vb')}
           {...register('notes')}
         />
 
@@ -353,7 +356,7 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
                 : 'bg-cyan-600 hover:bg-cyan-700'
             }`}
           >
-            {isEdit ? 'Güncelle' : (
+            {isEdit ? t('tireForm.guncelle') : (
               <>
                 <Plus className="w-4 h-4" />
                 {currentSeason.label} Set Ekle

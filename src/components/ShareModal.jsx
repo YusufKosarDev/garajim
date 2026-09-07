@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { QRCodeCanvas } from 'qrcode.react'
 import { Share2, Copy, Check, ExternalLink, AlertTriangle, Info, Send, QrCode, Download, X } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -13,6 +14,8 @@ import { hapticMedium } from '../utils/hapticFeedback'
 import Modal from './Modal'
 
 export default function ShareModal({ isOpen, onClose, vehicle, maintenanceRecords, fuelRecords }) {
+  const { t } = useTranslation()
+
   const [shareUrl, setShareUrl] = useState('')
   const [copied, setCopied] = useState(false)
   const [urlSize, setUrlSize] = useState({ chars: 0, kb: '0' })
@@ -34,10 +37,10 @@ export default function ShareModal({ isOpen, onClose, vehicle, maintenanceRecord
     if (success) {
       setCopied(true)
       hapticMedium()
-      toast.success('Link kopyalandı 📋')
+      toast.success(t('shareModal.link_kopyalandi'))
       setTimeout(() => setCopied(false), 2000)
     } else {
-      toast.error('Kopyalama başarısız')
+      toast.error(t('shareModal.kopyalama_basarisiz'))
     }
   }
 
@@ -50,9 +53,9 @@ export default function ShareModal({ isOpen, onClose, vehicle, maintenanceRecord
 
     if (result.success) {
       hapticMedium()
-      toast.success('Paylaşıldı 🚀')
+      toast.success(t('shareModal.paylasildi'))
     } else if (result.reason === 'unsupported') {
-      toast.error('Tarayıcın native paylaşımı desteklemiyor')
+      toast.error(t('shareModal.tarayicin_native_paylasimi_desteklemiyor'))
     }
   }
 
@@ -68,7 +71,7 @@ export default function ShareModal({ isOpen, onClose, vehicle, maintenanceRecord
   const handleDownloadQR = () => {
     const canvas = qrCanvasRef.current?.querySelector('canvas')
     if (!canvas) {
-      toast.error('QR kod henüz hazır değil')
+      toast.error(t('shareModal.qr_kod_henuz_hazir_degil'))
       return
     }
 
@@ -99,10 +102,10 @@ export default function ShareModal({ isOpen, onClose, vehicle, maintenanceRecord
       document.body.removeChild(link)
 
       hapticMedium()
-      toast.success('QR kod indirildi 📥')
+      toast.success(t('shareModal.qr_kod_indirildi'))
     } catch (err) {
       console.error(err)
-      toast.error('İndirme başarısız')
+      toast.error(t('shareModal.indirme_basarisiz'))
     }
   }
 
@@ -117,7 +120,7 @@ export default function ShareModal({ isOpen, onClose, vehicle, maintenanceRecord
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Aracı Paylaş"
+      title={t('shareModal.araci_paylas')}
       maxWidth="max-w-lg"
     >
       <div className="p-5 space-y-4">
@@ -142,10 +145,10 @@ export default function ShareModal({ isOpen, onClose, vehicle, maintenanceRecord
             <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
             <div className="text-xs text-slate-300">
               <p>
-                <strong className="text-blue-400">Read-only paylaşım:</strong> Link alan kişi raporu sadece görüntüleyebilir, düzenleyemez veya silemez.
+                <strong className="text-blue-400">{t('shareModal.read_only_paylasim')}</strong> {t('shareModal.link_alan_kisi_raporu_sadece_goruntuleyebilir')}
               </p>
               <p className="mt-1.5 text-slate-400">
-                Veriler URL'in içine gömülüdür — bir sunucu kullanılmaz, gizlilik garantilidir.
+                {t('shareModal.veriler_url_in_icine_gomuludur_bir')}
               </p>
             </div>
           </div>
@@ -155,11 +158,11 @@ export default function ShareModal({ isOpen, onClose, vehicle, maintenanceRecord
         <div className="grid grid-cols-3 gap-2">
           <div className="bg-slate-800/50 rounded-lg p-3 text-center border border-slate-800">
             <div className="text-xl font-bold text-blue-400">{maintenanceRecords.length}</div>
-            <div className="text-[10px] text-slate-400 uppercase tracking-wide mt-0.5">Bakım</div>
+            <div className="text-[10px] text-slate-400 uppercase tracking-wide mt-0.5">{t('shareModal.bakim')}</div>
           </div>
           <div className="bg-slate-800/50 rounded-lg p-3 text-center border border-slate-800">
             <div className="text-xl font-bold text-orange-400">{fuelRecords.length}</div>
-            <div className="text-[10px] text-slate-400 uppercase tracking-wide mt-0.5">Yakıt</div>
+            <div className="text-[10px] text-slate-400 uppercase tracking-wide mt-0.5">{t('shareModal.yakit')}</div>
           </div>
           <div className="bg-slate-800/50 rounded-lg p-3 text-center border border-slate-800">
             <div className={`text-xl font-bold ${isLargeUrl ? 'text-yellow-400' : 'text-green-400'}`}>
@@ -175,7 +178,7 @@ export default function ShareModal({ isOpen, onClose, vehicle, maintenanceRecord
             <div className="flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
               <div className="text-xs text-slate-300">
-                <strong className="text-yellow-400">Uzun URL:</strong> Çok fazla kayıt olduğu için URL büyük. Bazı uygulamalar (WhatsApp, SMS) çok uzun URL'leri kabul etmeyebilir. Tavsiye: e-posta veya messenger kullan.
+                <strong className="text-yellow-400">{t('shareModal.uzun_url')}</strong> {t('shareModal.cok_fazla_kayit_oldugu_icin_url')}
               </div>
             </div>
           </div>
@@ -184,7 +187,7 @@ export default function ShareModal({ isOpen, onClose, vehicle, maintenanceRecord
         {/* Paylaşım URL */}
         <div>
           <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
-            Paylaşım Linki
+            {t('shareModal.paylasim_linki')}
           </label>
           <div className="flex gap-2">
             <input
@@ -201,17 +204,17 @@ export default function ShareModal({ isOpen, onClose, vehicle, maintenanceRecord
                   ? 'bg-green-600 hover:bg-green-700 text-white'
                   : 'bg-blue-600 hover:bg-blue-700 text-white'
               }`}
-              title="Kopyala"
+              title={t('shareModal.kopyala')}
             >
               {copied ? (
                 <>
                   <Check className="w-4 h-4" />
-                  <span className="hidden sm:inline">Kopyalandı</span>
+                  <span className="hidden sm:inline">{t('shareModal.kopyalandi')}</span>
                 </>
               ) : (
                 <>
                   <Copy className="w-4 h-4" />
-                  <span className="hidden sm:inline">Kopyala</span>
+                  <span className="hidden sm:inline">{t('shareModal.kopyala')}</span>
                 </>
               )}
             </button>
@@ -231,7 +234,7 @@ export default function ShareModal({ isOpen, onClose, vehicle, maintenanceRecord
             >
               <span className="flex items-center gap-2">
                 <QrCode className="w-4 h-4" />
-                {showQR ? 'QR Kodu Gizle' : 'QR Kod Oluştur'}
+                {showQR ? 'QR Kodu Gizle' : t('shareModal.qr_kod_olustur')}
               </span>
               <span className="text-[10px] text-slate-500">
                 {showQR ? '▲' : '▼'}
@@ -255,10 +258,10 @@ export default function ShareModal({ isOpen, onClose, vehicle, maintenanceRecord
 
                   <div className="text-center">
                     <p className="text-xs font-semibold text-slate-700">
-                      📱 Telefonla Tara
+                      {t('shareModal.telefonla_tara')}
                     </p>
                     <p className="text-[10px] text-slate-500 mt-0.5">
-                      Kamerayı QR koda tut, link otomatik açılsın
+                      {t('shareModal.kamerayi_qr_koda_tut_link_otomatik')}
                     </p>
                   </div>
 
@@ -267,7 +270,7 @@ export default function ShareModal({ isOpen, onClose, vehicle, maintenanceRecord
                     className="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-xs font-semibold transition"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    QR Kodu PNG İndir
+                    {t('shareModal.qr_kodu_png_indir')}
                   </button>
                 </div>
               </div>
@@ -281,7 +284,7 @@ export default function ShareModal({ isOpen, onClose, vehicle, maintenanceRecord
             <div className="flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
               <div className="text-xs text-slate-300">
-                <strong className="text-orange-400">QR kod oluşturulamadı:</strong> Veri çok büyük (URL {urlSize.chars} karakter). QR kodları en fazla ~2900 karakter destekler. Linki manuel kopyala veya kayıt sayısını azalt.
+                <strong className="text-orange-400">{t('shareModal.qr_kod_olusturulamadi')}</strong> Veri çok büyük (URL {urlSize.chars} karakter). QR kodları en fazla ~2900 karakter destekler. Linki manuel kopyala veya kayıt sayısını azalt.
               </div>
             </div>
           </div>
@@ -295,7 +298,7 @@ export default function ShareModal({ isOpen, onClose, vehicle, maintenanceRecord
               className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-2.5 rounded-lg font-semibold transition"
             >
               <Send className="w-4 h-4" />
-              Paylaşım Menüsünü Aç
+              {t('shareModal.paylasim_menusunu_ac')}
             </button>
           )}
 
@@ -304,7 +307,7 @@ export default function ShareModal({ isOpen, onClose, vehicle, maintenanceRecord
             className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 rounded-lg font-semibold transition border border-slate-700"
           >
             <ExternalLink className="w-4 h-4" />
-            Yeni Sekmede Önizle
+            {t('shareModal.yeni_sekmede_onizle')}
           </button>
 
           <button
@@ -317,7 +320,7 @@ export default function ShareModal({ isOpen, onClose, vehicle, maintenanceRecord
 
         {/* Footer not */}
         <div className="text-[10px] text-slate-500 text-center pt-2 border-t border-slate-800">
-          📌 Fotoğraflar paylaşıma dahil edilmez (URL boyut limiti)
+          {t('shareModal.fotograflar_paylasima_dahil_edilmez_url_boyut')}
         </div>
       </div>
     </Modal>

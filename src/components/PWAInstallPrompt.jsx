@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Download, X, Smartphone } from 'lucide-react'
 import { usePWA } from '../hooks/usePWA'
@@ -7,6 +8,8 @@ const DISMISSED_KEY = 'garajim_pwa_prompt_dismissed'
 const DISMISS_DURATION_DAYS = 7 // 7 gün sonra tekrar sorar
 
 export default function PWAInstallPrompt() {
+  const { t } = useTranslation()
+
   const { canInstall, install } = usePWA()
   const [show, setShow] = useState(false)
 
@@ -57,16 +60,16 @@ export default function PWAInstallPrompt() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-bold text-white text-base mb-1">
-                    Garajım'ı Uygulamaya Dönüştür
+                    {t('pWAInstallPrompt.garajim_i_uygulamaya_donustur')}
                   </h3>
                   <p className="text-xs text-blue-100 leading-relaxed">
-                    Ana ekranına ekle, native uygulama gibi kullan. Çevrimdışı da çalışır.
+                    {t('pWAInstallPrompt.ana_ekranina_ekle_native_uygulama_gibi')}
                   </p>
                 </div>
                 <button
                   onClick={handleDismiss}
                   className="p-1 hover:bg-white/10 rounded text-white/70 hover:text-white transition shrink-0"
-                  title="Kapat"
+                  title={t('pWAInstallPrompt.kapat')}
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -78,7 +81,7 @@ export default function PWAInstallPrompt() {
                   className="flex-1 flex items-center justify-center gap-2 bg-white text-blue-600 hover:bg-blue-50 px-4 py-2.5 rounded-lg font-semibold text-sm transition"
                 >
                   <Download className="w-4 h-4" />
-                  Yükle
+                  {t('pWAInstallPrompt.yukle')}
                 </button>
                 <button
                   onClick={handleDismiss}

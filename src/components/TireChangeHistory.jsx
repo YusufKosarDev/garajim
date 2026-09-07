@@ -1,13 +1,16 @@
 import { ArrowRight, X, Calendar, Gauge, History } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { SEASONS } from '../utils/tireHelpers'
 import { formatDate } from '../utils/dateHelpers'
 
 export default function TireChangeHistory({ tireChanges, onDelete }) {
+  const { t } = useTranslation()
+
   if (!tireChanges || tireChanges.length === 0) {
     return (
       <div className="text-center py-8 text-slate-500 text-sm">
         <History className="w-8 h-8 text-slate-700 mx-auto mb-2" />
-        Henüz mevsim değişimi yok
+        {t('tireChangeHistory.henuz_mevsim_degisimi_yok')}
       </div>
     )
   }
@@ -52,7 +55,7 @@ export default function TireChangeHistory({ tireChanges, onDelete }) {
                     </span>
                     {isLatest && (
                       <span className="text-[10px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full font-semibold">
-                        En son
+                        {t('tireChangeHistory.en_son')}
                       </span>
                     )}
                   </div>
@@ -85,7 +88,7 @@ export default function TireChangeHistory({ tireChanges, onDelete }) {
               <button
                 onClick={() => onDelete(change)}
                 className="p-1.5 hover:bg-red-500/10 rounded text-slate-500 hover:text-red-400 transition shrink-0"
-                title="Sil"
+                title={t('tireChangeHistory.sil')}
               >
                 <X className="w-4 h-4" />
               </button>

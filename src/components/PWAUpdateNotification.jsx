@@ -1,9 +1,12 @@
 import { motion, AnimatePresence } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { RefreshCw, X } from 'lucide-react'
 import { useState } from 'react'
 import { usePWA } from '../hooks/usePWA'
 
 export default function PWAUpdateNotification() {
+  const { t } = useTranslation()
+
   const { updateAvailable, reload } = usePWA()
   const [dismissed, setDismissed] = useState(false)
 
@@ -25,10 +28,10 @@ export default function PWAUpdateNotification() {
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-bold text-white text-sm mb-1">
-                  Yeni sürüm hazır 🎉
+                  {t('pWAUpdateNotification.yeni_surum_hazir')}
                 </h3>
                 <p className="text-xs text-blue-100 mb-3">
-                  Güncellemek için sayfayı yenile.
+                  {t('pWAUpdateNotification.guncellemek_icin_sayfayi_yenile')}
                 </p>
                 <div className="flex gap-2">
                   <button

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { MapPin, Fuel, Wrench, CircleDot, Loader2, Navigation, AlertCircle, ExternalLink, RefreshCw } from 'lucide-react'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
@@ -141,7 +142,9 @@ function MapRecenter(props) {
 }
 
 export default function SearchNearby() {
-  usePageTitle('Yakındaki Servisler')
+  const { t } = useTranslation()
+
+  usePageTitle(t('searchNearby.yakindaki_servisler'))
 
   const [userLocation, setUserLocation] = useState(null)
   const [pois, setPois] = useState([])
@@ -153,7 +156,7 @@ export default function SearchNearby() {
 
   const requestLocation = function () {
     if (!navigator.geolocation) {
-      setError('Tarayıcın konum servisini desteklemiyor')
+      setError(t('searchNearby.tarayicin_konum_servisini_desteklemiyor'))
       setPermission('denied')
       return
     }
@@ -175,7 +178,7 @@ export default function SearchNearby() {
         } else if (err.code === err.POSITION_UNAVAILABLE) {
           setError('Konum belirlenemedi.')
         } else {
-          setError('Konum alınamadı: ' + err.message)
+          setError(t('searchNearby.konum_alinamadi') + err.message)
         }
       },
       { timeout: 10000, enableHighAccuracy: false }
@@ -193,14 +196,14 @@ export default function SearchNearby() {
         setPois(data)
       } catch (err) {
         console.error('POI fetch error:', err)
-        setError(err.message || 'Veri alınamadı')
+        setError(err.message || t('searchNearby.veri_alinamadi'))
       } finally {
         setLoading(false)
       }
     }
 
     loadPOIs()
-  }, [userLocation, radius])
+  }, [userLocation, radius, t])
 
   const sortedPois = useMemo(function () {
     if (!userLocation) return []
@@ -236,16 +239,16 @@ export default function SearchNearby() {
             <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600/20 rounded-2xl mb-4">
               <MapPin className="w-8 h-8 text-blue-400" />
             </div>
-            <h1 className="text-2xl font-bold mb-2">Yakındaki Servisler</h1>
+            <h1 className="text-2xl font-bold mb-2">{t('searchNearby.yakindaki_servisler')}</h1>
             <p className="text-slate-400 mb-6">
-              Bulunduğun konuma yakın yakıt istasyonları, oto servisler ve lastikçileri haritada gör.
+              {t('searchNearby.bulundugun_konuma_yakin_yakit_istasyonlari_oto')}
             </p>
             <div className="bg-slate-800/50 rounded-lg p-4 mb-6 text-left">
-              <p className="text-xs text-slate-300 mb-2 font-semibold">Konum kullanılır:</p>
+              <p className="text-xs text-slate-300 mb-2 font-semibold">{t('searchNearby.konum_kullanilir')}</p>
               <ul className="text-xs text-slate-400 space-y-1 list-disc list-inside">
-                <li>Konum bilgin sadece tarayıcında çalışır</li>
-                <li>Sunucumuza gönderilmez</li>
-                <li>OpenStreetMap'ten yakın servisleri buluruz</li>
+                <li>{t('searchNearby.konum_bilgin_sadece_tarayicinda_calisir')}</li>
+                <li>{t('searchNearby.sunucumuza_gonderilmez')}</li>
+                <li>{t('searchNearby.openstreetmap_ten_yakin_servisleri_buluruz')}</li>
               </ul>
             </div>
             <button
@@ -253,7 +256,7 @@ export default function SearchNearby() {
               className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl transition shadow-lg shadow-blue-600/30 flex items-center gap-2 mx-auto"
             >
               <Navigation className="w-5 h-5" />
-              Konumumu Kullan
+              {t('searchNearby.konumumu_kullan')}
             </button>
           </div>
         </div>
@@ -269,14 +272,14 @@ export default function SearchNearby() {
             <div className="inline-flex items-center justify-center w-16 h-16 bg-red-600/20 rounded-2xl mb-4">
               <AlertCircle className="w-8 h-8 text-red-400" />
             </div>
-            <h1 className="text-2xl font-bold mb-2">Konum İzni Gerekli</h1>
+            <h1 className="text-2xl font-bold mb-2">{t('searchNearby.konum_izni_gerekli')}</h1>
             <p className="text-slate-400 mb-6">{error}</p>
             <button
               onClick={requestLocation}
               className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl transition flex items-center gap-2 mx-auto"
             >
               <RefreshCw className="w-5 h-5" />
-              Tekrar Dene
+              {t('searchNearby.tekrar_dene')}
             </button>
           </div>
         </div>
@@ -292,7 +295,7 @@ export default function SearchNearby() {
         <div className="mb-4">
           <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
             <MapPin className="w-6 h-6 text-blue-400" />
-            Yakındaki Servisler
+            {t('searchNearby.yakindaki_servisler')}
           </h1>
           <p className="text-slate-400 text-sm mt-1">{headerSubtitle}</p>
         </div>
@@ -326,21 +329,21 @@ export default function SearchNearby() {
           })}
 
           <div className="ml-auto flex items-center gap-2">
-            <label className="text-xs text-slate-400">Yarıçap:</label>
+            <label className="text-xs text-slate-400">{t('searchNearby.yaricap')}</label>
             <select
               value={radius}
               onChange={function (e) { setRadius(Number(e.target.value)) }}
               className="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500"
             >
-              <option value={2}>2 km</option>
-              <option value={5}>5 km</option>
-              <option value={10}>10 km</option>
-              <option value={20}>20 km</option>
+              <option value={2}>{t('searchNearby.2_km')}</option>
+              <option value={5}>{t('searchNearby.5_km')}</option>
+              <option value={10}>{t('searchNearby.10_km')}</option>
+              <option value={20}>{t('searchNearby.20_km')}</option>
             </select>
             <button
               onClick={requestLocation}
               className="p-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg transition"
-              title="Konumu yenile"
+              title={t('searchNearby.konumu_yenile')}
             >
               <RefreshCw className="w-3.5 h-3.5 text-slate-300" />
             </button>
@@ -350,7 +353,7 @@ export default function SearchNearby() {
         {loading && (
           <div className="flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mb-4">
             <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
-            <p className="text-sm text-slate-300">Yakındaki servisler aranıyor...</p>
+            <p className="text-sm text-slate-300">{t('searchNearby.yakindaki_servisler_araniyor')}</p>
           </div>
         )}
 
@@ -365,7 +368,7 @@ export default function SearchNearby() {
           <div className="lg:col-span-2 space-y-2 max-h-[60vh] lg:max-h-[600px] overflow-y-auto pr-1">
             {sortedPois.length === 0 && !loading && (
               <div className="text-center py-8 text-slate-500 text-sm">
-                Bu yarıçapta sonuç bulunamadı. Yarıçapı arttırmayı dene.
+                {t('searchNearby.bu_yaricapta_sonuc_bulunamadi_yaricapi_arttirmay')}
               </div>
             )}
 
@@ -402,7 +405,7 @@ export default function SearchNearby() {
                         className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 mt-2 transition"
                       >
                         <Navigation className="w-3 h-3" />
-                        Yol Tarifi Al
+                        {t('searchNearby.yol_tarifi_al')}
                         <ExternalLink className="w-3 h-3" />
                       </a>
                     </div>
@@ -430,7 +433,7 @@ export default function SearchNearby() {
                 <MapRecenter center={userLocation} />
 
                 <Marker position={userLocation} icon={userIcon}>
-                  <Popup>Buradasın</Popup>
+                  <Popup>{t('searchNearby.buradasin')}</Popup>
                 </Marker>
 
                 {sortedPois.map(function (poi) {

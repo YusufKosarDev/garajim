@@ -1,9 +1,12 @@
 import { useState, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Bell } from 'lucide-react'
 import { useNotifications } from '../context/NotificationContext'
 import NotificationPanel from './NotificationPanel'
 
 export default function NotificationButton() {
+  const { t } = useTranslation()
+
   const { unreadCount } = useNotifications()
   const [isOpen, setIsOpen] = useState(false)
   const buttonRef = useRef(null)
@@ -18,8 +21,8 @@ export default function NotificationButton() {
             ? 'bg-blue-600/20 border-blue-500/50 text-blue-400'
             : 'bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white border-slate-700'
         }`}
-        title="Bildirimler"
-        aria-label="Bildirimler"
+        title={t('notificationButton.bildirimler')}
+        aria-label={t('notificationButton.bildirimler')}
       >
         <Bell className="w-4 h-4" />
         {unreadCount > 0 && (

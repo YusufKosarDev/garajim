@@ -1,9 +1,12 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Car, Trophy, TrendingUp, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { getVehicleCostAnalysis } from '../../utils/statisticsHelpers'
 
 export default function CostPerKmTable({ vehicles = [], maintenanceRecords = [], fuelRecords = [] }) {
+  const { t } = useTranslation()
+
   const [sortBy, setSortBy] = useState('totalCost')
   const [sortDir, setSortDir] = useState('desc')
 
@@ -72,7 +75,7 @@ export default function CostPerKmTable({ vehicles = [], maintenanceRecords = [],
   if (vehicles.length === 0) {
     return (
       <div className="text-center py-8 text-slate-500 text-sm">
-        Analiz için araç gerekiyor
+        {t('stats.costPerKmTable.analiz_icin_arac_gerekiyor')}
       </div>
     )
   }
@@ -84,7 +87,7 @@ export default function CostPerKmTable({ vehicles = [], maintenanceRecords = [],
           <div className="flex items-center gap-2">
             <Trophy className="w-4 h-4 text-yellow-400" />
             <span className="text-xs text-slate-300">
-              <strong className="text-yellow-400">En ekonomik araç:</strong>{' '}
+              <strong className="text-yellow-400">{t('stats.costPerKmTable.en_ekonomik_arac')}</strong>{' '}
               {mostEfficient.vehicle.brand} {mostEfficient.vehicle.model} —{' '}
               <strong className="text-white">{mostEfficient.costPerKm.toFixed(2)} ₺/km</strong>
             </span>
@@ -96,7 +99,7 @@ export default function CostPerKmTable({ vehicles = [], maintenanceRecords = [],
         <table className="w-full">
           <thead>
             <tr className="border-b border-slate-800 text-[10px] uppercase tracking-wide text-slate-400">
-              <th className="text-left py-2 px-5 font-semibold">Araç</th>
+              <th className="text-left py-2 px-5 font-semibold">{t('stats.costPerKmTable.arac')}</th>
               <th className="text-right py-2 px-3 font-semibold">
                 <button
                   onClick={() => toggleSort('totalCost')}
@@ -196,7 +199,7 @@ export default function CostPerKmTable({ vehicles = [], maintenanceRecords = [],
                         {a.costPerKm.toFixed(2)} ₺
                       </div>
                     ) : (
-                      <span className="text-xs text-slate-600" title="KM verisi yok">—</span>
+                      <span className="text-xs text-slate-600" title={t('stats.costPerKmTable.km_verisi_yok')}>—</span>
                     )}
                   </td>
                   <td className="text-right py-3 px-3 hidden lg:table-cell">
@@ -222,7 +225,7 @@ export default function CostPerKmTable({ vehicles = [], maintenanceRecords = [],
 
       {/* Mobil açıklama */}
       <div className="mt-4 text-[10px] text-slate-500 flex flex-wrap gap-x-4 gap-y-1">
-        <span>💡 <strong>₺/KM</strong>: Kat edilen her km için ortalama maliyet</span>
+        <span>💡 <strong>{t('stats.costPerKmTable.km')}</strong>{t('stats.costPerKmTable.kat_edilen_her_km_icin_ortalama')}</span>
       </div>
     </div>
   )

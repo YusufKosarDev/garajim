@@ -1,10 +1,13 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Wrench, ChevronDown, ChevronUp } from 'lucide-react'
 import { getVehicleRecommendations } from '../utils/maintenanceRecommendations'
 import { useVehicles } from '../context/VehicleContext'
 import MaintenanceRecommendationCard from './MaintenanceRecommendationCard'
 
 export default function VehicleMaintenanceOverview({ vehicle, maintenanceRecords, onQuickAdd }) {
+  const { t } = useTranslation()
+
   const { customIntervals } = useVehicles()
   const [isExpanded, setIsExpanded] = useState(false)
 
@@ -36,14 +39,14 @@ export default function VehicleMaintenanceOverview({ vehicle, maintenanceRecords
             </span>
           ) : (
             <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full border border-green-500/30">
-              ✓ Hepsi güvende
+              {t('vehicleMaintenanceOverview.hepsi_guvende')}
             </span>
           )}
         </h2>
       </div>
 
       <p className="text-xs text-slate-400 mb-4">
-        Geçmiş bakım kayıtlarına ve ayarlardaki periyotlara göre hesaplanmıştır
+        {t('vehicleMaintenanceOverview.gecmis_bakim_kayitlarina_ve_ayarlardaki_periyotl')}
       </p>
 
       <div className="space-y-2">
@@ -73,7 +76,7 @@ export default function VehicleMaintenanceOverview({ vehicle, maintenanceRecords
           className="w-full mt-3 flex items-center justify-center gap-2 py-2.5 bg-slate-800/50 hover:bg-slate-800 rounded-lg transition text-sm text-slate-400 hover:text-white"
         >
           <ChevronUp className="w-4 h-4" />
-          Sadece Dikkat Gerekenleri Göster
+          {t('vehicleMaintenanceOverview.sadece_dikkat_gerekenleri_goster')}
         </button>
       )}
     </div>

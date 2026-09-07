@@ -1,9 +1,12 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { getMonthlyBreakdown } from '../../utils/statisticsHelpers'
 
 const MONTH_LABELS = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara']
 
 export default function SpendingHeatmap({ maintenanceRecords = [], fuelRecords = [] }) {
+  const { t } = useTranslation()
+
   const { grid, maxValue, totalByYear } = useMemo(() => {
     const breakdown = getMonthlyBreakdown(maintenanceRecords, fuelRecords, 2)
 
@@ -57,7 +60,7 @@ export default function SpendingHeatmap({ maintenanceRecords = [], fuelRecords =
   if (maxValue === 0) {
     return (
       <div className="h-[200px] flex items-center justify-center text-slate-500 text-sm">
-        Henüz harcama verisi yok
+        {t('stats.spendingHeatmap.henuz_harcama_verisi_yok')}
       </div>
     )
   }
@@ -115,13 +118,13 @@ export default function SpendingHeatmap({ maintenanceRecords = [], fuelRecords =
 
       {/* Renk açıklama */}
       <div className="flex items-center justify-end gap-2 mt-4 pt-4 border-t border-slate-800 text-xs text-slate-500">
-        <span>Az</span>
+        <span>{t('stats.spendingHeatmap.az')}</span>
         <div className="w-3 h-3 rounded-sm bg-slate-800/30 border border-slate-800"></div>
         <div className="w-3 h-3 rounded-sm bg-blue-500/20 border border-blue-500/30"></div>
         <div className="w-3 h-3 rounded-sm bg-blue-500/40 border border-blue-500/50"></div>
         <div className="w-3 h-3 rounded-sm bg-blue-500/70 border border-blue-500/80"></div>
         <div className="w-3 h-3 rounded-sm bg-blue-500 border border-blue-400"></div>
-        <span>Çok</span>
+        <span>{t('stats.spendingHeatmap.cok')}</span>
       </div>
     </div>
   )

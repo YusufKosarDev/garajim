@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { 
   Users, UserPlus, Mail, Trash2, Loader2, X,
@@ -19,6 +20,8 @@ import ConfirmDialog from './ConfirmDialog'
  *   - Davet linkini kopyala (email gitmediyse manuel)
  */
 export default function GarageMembers() {
+  const { t } = useTranslation()
+
   const { user } = useAuth()
 
   const [garage, setGarage] = useState(null)
@@ -96,7 +99,7 @@ export default function GarageMembers() {
       setInvitations(invitesData || [])
     } catch (err) {
       console.error('Load garage data error:', err)
-      toast.error('Üye bilgileri yüklenemedi')
+      toast.error(t('garageMembers.uye_bilgileri_yuklenemedi'))
     } finally {
       setLoading(false)
     }
@@ -108,7 +111,7 @@ export default function GarageMembers() {
 
     const email = inviteEmail.trim().toLowerCase()
     if (!email || !email.includes('@')) {
-      toast.error('Geçerli bir email adresi gir')
+      toast.error(t('garageMembers.gecerli_bir_email_adresi_gir'))
       return
     }
 
@@ -117,7 +120,7 @@ export default function GarageMembers() {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
-        toast.error('Oturum bulunamadı')
+        toast.error(t('garageMembers.oturum_bulunamadi'))
         return
       }
 
@@ -136,7 +139,7 @@ export default function GarageMembers() {
       const result = await response.json()
 
       if (!response.ok) {
-        toast.error(result.error || 'Davet gönderilemedi')
+        toast.error(result.error || t('garageMembers.davet_gonderilemedi'))
         return
       }
 
@@ -156,7 +159,7 @@ export default function GarageMembers() {
       await loadData()
     } catch (err) {
       console.error('Invite error:', err)
-      toast.error('Bir hata oluştu')
+      toast.error(t('garageMembers.bir_hata_olustu'))
     } finally {
       setInviting(false)
     }
@@ -173,11 +176,11 @@ export default function GarageMembers() {
 
       if (error) throw error
 
-      toast.success('Davet iptal edildi')
+      toast.success(t('garageMembers.davet_iptal_edildi'))
       await loadData()
     } catch (err) {
       console.error('Cancel invite error:', err)
-      toast.error('Davet iptal edilemedi')
+      toast.error(t('garageMembers.davet_iptal_edilemedi'))
     }
   }
 
@@ -192,11 +195,11 @@ export default function GarageMembers() {
 
       if (error) throw error
 
-      toast.success('Üye çıkarıldı')
+      toast.success(t('garageMembers.uye_cikarildi'))
       await loadData()
     } catch (err) {
       console.error('Remove member error:', err)
-      toast.error('Üye çıkarılamadı')
+      toast.error(t('garageMembers.uye_cikarilamadi'))
     }
   }
 
@@ -206,10 +209,10 @@ export default function GarageMembers() {
     try {
       await navigator.clipboard.writeText(lastInviteUrl)
       setCopied(true)
-      toast.success('Link kopyalandı 📋')
+      toast.success(t('garageMembers.link_kopyalandi'))
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      toast.error('Kopyalanamadı')
+      toast.error(t('garageMembers.kopyalanamadi'))
     }
   }
 
@@ -226,10 +229,10 @@ export default function GarageMembers() {
     <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 mb-6">
       <h2 className="text-lg font-bold mb-1 flex items-center gap-2">
         <Users className="w-5 h-5 text-purple-400" />
-        Garaj Üyeleri
+        {t('garageMembers.garaj_uyeleri')}
       </h2>
       <p className="text-sm text-slate-400 mb-4">
-        Garajına başkalarını davet et — araçları birlikte yönetin.
+        {t('garageMembers.garajina_baskalarini_davet_et_araclari_birlikte')}
       </p>
 
       {loading ? (
@@ -242,7 +245,7 @@ export default function GarageMembers() {
           <div className="space-y-2 mb-4">
             {members.length === 0 ? (
               <p className="text-sm text-slate-500 text-center py-4">
-                Henüz üye yok
+                {t('garageMembers.henuz_uye_yok')}
               </p>
             ) : (
               members.map((member) => (
@@ -262,7 +265,7 @@ export default function GarageMembers() {
                       <div className="text-sm text-white font-medium truncate">
                         {member.user_id === user?.id ? user?.email : 'Üye (kullanıcı)'}
                         {member.user_id === user?.id && (
-                          <span className="text-xs text-slate-400 ml-2">(sen)</span>
+                          <span className="text-xs text-slate-400 ml-2">{t('garageMembers.sen')}</span>
                         )}
                       </div>
                       <div className="text-xs text-slate-400">
@@ -278,14 +281,14 @@ export default function GarageMembers() {
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs font-semibold">
-                        ÜYE
+                        {t('garageMembers.uye')}
                       </span>
                     )}
                     {isOwner && member.role !== 'owner' && (
                       <button
                         onClick={() => setRemoveMemberTarget(member)}
                         className="p-1.5 text-red-400 hover:bg-red-500/10 rounded transition"
-                        title="Üyeyi çıkar"
+                        title={t('garageMembers.uyeyi_cikar')}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -305,12 +308,12 @@ export default function GarageMembers() {
                   className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-lg font-semibold transition mb-4"
                 >
                   <UserPlus className="w-4 h-4" />
-                  Yeni Üye Davet Et
+                  {t('garageMembers.yeni_uye_davet_et')}
                 </button>
               ) : (
                 <form onSubmit={handleInvite} className="bg-slate-800/50 rounded-lg p-4 mb-4">
                   <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Davet edilecek email
+                    {t('garageMembers.davet_edilecek_email')}
                   </label>
                   <div className="relative mb-3">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -318,7 +321,7 @@ export default function GarageMembers() {
                       type="email"
                       value={inviteEmail}
                       onChange={(e) => setInviteEmail(e.target.value)}
-                      placeholder="ornek@email.com"
+                      placeholder={t('garageMembers.ornek_email_com')}
                       autoComplete="email"
                       disabled={inviting}
                       autoFocus
@@ -334,12 +337,12 @@ export default function GarageMembers() {
                       {inviting ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          Gönderiliyor...
+                          {t('garageMembers.gonderiliyor')}
                         </>
                       ) : (
                         <>
                           <Send className="w-4 h-4" />
-                          Daveti Gönder
+                          {t('garageMembers.daveti_gonder')}
                         </>
                       )}
                     </button>
@@ -364,7 +367,7 @@ export default function GarageMembers() {
           {lastInviteUrl && (
             <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mb-4">
               <p className="text-xs text-slate-300 mb-2">
-                💡 Davet linkini manuel paylaşmak istersen:
+                {t('garageMembers.davet_linkini_manuel_paylasmak_istersen')}
               </p>
               <div className="flex gap-2">
                 <code className="flex-1 bg-slate-900 px-3 py-2 rounded text-xs text-blue-300 truncate font-mono">
@@ -377,12 +380,12 @@ export default function GarageMembers() {
                   {copied ? (
                     <>
                       <Check className="w-3.5 h-3.5" />
-                      Kopyalandı
+                      {t('garageMembers.kopyalandi')}
                     </>
                   ) : (
                     <>
                       <Copy className="w-3.5 h-3.5" />
-                      Kopyala
+                      {t('garageMembers.kopyala')}
                     </>
                   )}
                 </button>
@@ -417,7 +420,7 @@ export default function GarageMembers() {
                     <button
                       onClick={() => setCancelInviteTarget(invite)}
                       className="p-1.5 text-red-400 hover:bg-red-500/10 rounded transition flex-shrink-0"
-                      title="Daveti iptal et"
+                      title={t('garageMembers.daveti_iptal_et')}
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -433,7 +436,7 @@ export default function GarageMembers() {
         isOpen={!!cancelInviteTarget}
         onClose={() => setCancelInviteTarget(null)}
         onConfirm={() => handleCancelInvite(cancelInviteTarget.id)}
-        title="Davet iptal edilsin mi?"
+        title={t('garageMembers.davet_iptal_edilsin_mi')}
         message={
           cancelInviteTarget
             ? `${cancelInviteTarget.email} adresine gönderilen davet iptal edilecek.`
@@ -447,7 +450,7 @@ export default function GarageMembers() {
         isOpen={!!removeMemberTarget}
         onClose={() => setRemoveMemberTarget(null)}
         onConfirm={() => handleRemoveMember(removeMemberTarget.id)}
-        title="Üye garajdan çıkarılsın mı?"
+        title={t('garageMembers.uye_garajdan_cikarilsin_mi')}
         message="Bu üye artık garajdaki araçlara ve kayıtlara erişemeyecek."
         confirmText="Evet, çıkar"
       />

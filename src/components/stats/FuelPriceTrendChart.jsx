@@ -1,7 +1,10 @@
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine } from 'recharts'
+import { useTranslation } from 'react-i18next'
 import { useMemo } from 'react'
 
 export default function FuelPriceTrendChart({ fuelRecords = [] }) {
+  const { t } = useTranslation()
+
   const data = useMemo(() => {
     const sorted = [...fuelRecords]
       .filter(r => r.pricePerLiter > 0)
@@ -24,7 +27,7 @@ export default function FuelPriceTrendChart({ fuelRecords = [] }) {
   if (data.length < 2) {
     return (
       <div className="h-[250px] flex items-center justify-center text-slate-500 text-sm">
-        Trend için en az 2 yakıt kaydı gerekiyor
+        {t('stats.fuelPriceTrendChart.trend_icin_en_az_2_yakit')}
       </div>
     )
   }
@@ -87,13 +90,13 @@ export default function FuelPriceTrendChart({ fuelRecords = [] }) {
 
       <div className="mt-3 flex items-center justify-between text-xs text-slate-400 flex-wrap gap-2">
         <span>
-          En düşük: <strong className="text-green-400">{minPrice.toFixed(2)} ₺</strong>
+          {t('stats.fuelPriceTrendChart.en_dusuk')} <strong className="text-green-400">{minPrice.toFixed(2)} ₺</strong>
         </span>
         <span>
-          Ortalama: <strong className="text-yellow-400">{avgPrice.toFixed(2)} ₺</strong>
+          {t('stats.fuelPriceTrendChart.ortalama')} <strong className="text-yellow-400">{avgPrice.toFixed(2)} ₺</strong>
         </span>
         <span>
-          En yüksek: <strong className="text-red-400">{maxPrice.toFixed(2)} ₺</strong>
+          {t('stats.fuelPriceTrendChart.en_yuksek')} <strong className="text-red-400">{maxPrice.toFixed(2)} ₺</strong>
         </span>
       </div>
     </div>

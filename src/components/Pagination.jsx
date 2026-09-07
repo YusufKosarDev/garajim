@@ -1,6 +1,9 @@
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 export default function Pagination({ currentPage, totalItems, itemsPerPage, onPageChange }) {
+  const { t } = useTranslation()
+
   const totalPages = Math.ceil(totalItems / itemsPerPage)
 
   // Sayfa gerekmeyecek kadar az kayıt varsa render etme
@@ -55,7 +58,7 @@ export default function Pagination({ currentPage, totalItems, itemsPerPage, onPa
     <div className="flex items-center justify-between flex-wrap gap-3 mt-4 pt-4 border-t border-slate-800">
       <div className="text-xs text-slate-400">
         <span className="font-semibold text-slate-300">{startItem}-{endItem}</span> / toplam{' '}
-        <span className="font-semibold text-slate-300">{totalItems}</span> kayıt
+        <span className="font-semibold text-slate-300">{totalItems}</span> {t('pagination.kayit')}
       </div>
 
       <div className="flex items-center gap-1">
@@ -64,7 +67,7 @@ export default function Pagination({ currentPage, totalItems, itemsPerPage, onPa
           onClick={() => goToPage(1)}
           disabled={currentPage === 1}
           className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-          title="İlk sayfa"
+          title={t('pagination.ilk_sayfa')}
         >
           <ChevronsLeft className="w-4 h-4" />
         </button>
@@ -74,7 +77,7 @@ export default function Pagination({ currentPage, totalItems, itemsPerPage, onPa
           onClick={() => goToPage(currentPage - 1)}
           disabled={currentPage === 1}
           className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-          title="Önceki sayfa"
+          title={t('pagination.onceki_sayfa')}
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
@@ -112,7 +115,7 @@ export default function Pagination({ currentPage, totalItems, itemsPerPage, onPa
           onClick={() => goToPage(currentPage + 1)}
           disabled={currentPage === totalPages}
           className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-          title="Sonraki sayfa"
+          title={t('pagination.sonraki_sayfa')}
         >
           <ChevronRight className="w-4 h-4" />
         </button>
@@ -122,7 +125,7 @@ export default function Pagination({ currentPage, totalItems, itemsPerPage, onPa
           onClick={() => goToPage(totalPages)}
           disabled={currentPage === totalPages}
           className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-          title="Son sayfa"
+          title={t('pagination.son_sayfa')}
         >
           <ChevronsRight className="w-4 h-4" />
         </button>

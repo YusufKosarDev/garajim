@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from 'react'
+import i18n from '../i18n'
 import { useQueries, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
@@ -154,8 +155,8 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!loadError || shownErrorRef.current === loadError) return
     shownErrorRef.current = loadError
-    captureError(loadError, { yer: 'VehicleContext ilk yükleme' })
-    toast.error('Veriler yüklenemedi: ' + formatSupabaseError(loadError))
+    captureError(loadError, { yer: i18n.t('ctx.vehicleContext.vehiclecontext_ilk_yukleme') })
+    toast.error(i18n.t('ctx.vehicleContext.veriler_yuklenemedi') + formatSupabaseError(loadError))
   }, [loadError])
 
   // ============ YAZMA: cache'e yazan setter shim'leri ============
@@ -195,7 +196,7 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
         referansAlanlari: REFERANS_ALANLARI[tanim.tablo] ?? [],
       })
       await sayiyiTazele()
-      toast('Çevrimdışısın — kayıt sıraya alındı, bağlantı gelince gönderilecek', { icon: '📴' })
+      toast(i18n.t('ctx.vehicleContext.cevrimdisisin_kayit_siraya_alindi_baglanti_gelin'), { icon: '📴' })
       return { kuyrukta: true } as const
     }
 
@@ -349,7 +350,7 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
       // Tüm tablolar için tek bir channel (Supabase önerisi - performans)
       channel = tables
         .reduce(
-          (ch, t) => ch.on('postgres_changes', t.config, t.handler),
+          (ch, abone) => ch.on('postgres_changes', abone.config, abone.handler),
           supabase.channel(`user-${user.id}-changes`)
         )
         .subscribe((status) => {
@@ -373,7 +374,7 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
   // ============ ARAÇ CRUD ============
   const addVehicle = useCallback(async (vehicle: Partial<Vehicle>) => {
     if (!user) {
-      toast.error('Giriş yapmalısın')
+      toast.error(i18n.t('ctx.vehicleContext.giris_yapmalisin'))
       return null
     }
 
@@ -383,7 +384,7 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
       if (uploadedPhotos.length > 0) {
         const hasBase64 = uploadedPhotos.some(isBase64)
         if (hasBase64) {
-          const uploadingToast = toast.loading('Fotoğraflar yükleniyor...')
+          const uploadingToast = toast.loading(i18n.t('ctx.vehicleContext.fotograflar_yukleniyor'))
           uploadedPhotos = await uploadPhotosBatch(
             uploadedPhotos,
             user.id,
@@ -404,17 +405,17 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
       if (error) throw error
 
       const newVehicle = vehicleFromDb(data)
-      if (!newVehicle) throw new Error('Araç kaydı okunamadı')
+      if (!newVehicle) throw new Error(i18n.t('ctx.vehicleContext.arac_kaydi_okunamadi'))
       setVehicles(prev => {
         // Real-time event önce gelmiş olabilir, ikinci kez ekleme
         if (prev.some(v => v.id === newVehicle.id)) return prev
         return [...prev, newVehicle]
       })
-      toast.success('Araç eklendi ✓')
+      toast.success(i18n.t('ctx.vehicleContext.arac_eklendi'))
       return newVehicle
     } catch (error) {
       console.error('addVehicle:', error)
-      toast.error('Araç eklenemedi: ' + formatSupabaseError(error as Error))
+      toast.error(i18n.t('ctx.vehicleContext.arac_eklenemedi') + formatSupabaseError(error as Error))
       return null
     }
   }, [user, setVehicles])
@@ -428,7 +429,7 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
       if (uploadedPhotos && uploadedPhotos.length > 0) {
         const hasBase64 = uploadedPhotos.some(isBase64)
         if (hasBase64) {
-          const uploadingToast = toast.loading('Fotoğraflar yükleniyor...')
+          const uploadingToast = toast.loading(i18n.t('ctx.vehicleContext.fotograflar_yukleniyor'))
           // Sadece base64 olanları yükle, mevcut URL'leri koru
           const uploadResults = await Promise.all(
             uploadedPhotos.map(photo => 
@@ -473,12 +474,12 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
       if (error) throw error
 
       const updated = vehicleFromDb(data)
-      if (!updated) throw new Error('Araç kaydı okunamadı')
+      if (!updated) throw new Error(i18n.t('ctx.vehicleContext.arac_kaydi_okunamadi'))
       setVehicles(prev => prev.map(v => (v.id === id ? updated : v)))
-      toast.success('Araç güncellendi ✓')
+      toast.success(i18n.t('ctx.vehicleContext.arac_guncellendi'))
     } catch (error) {
       console.error('updateVehicle:', error)
-      toast.error('Araç güncellenemedi: ' + formatSupabaseError(error as Error))
+      toast.error(i18n.t('ctx.vehicleContext.arac_guncellenemedi') + formatSupabaseError(error as Error))
     }
   }, [user, vehicles, setVehicles])
 
@@ -518,8 +519,8 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
       setVehicles(prev => prev.filter(v => v.id !== id))
       setMaintenanceRecords(prev => prev.filter(r => r.vehicleId !== id))
       setFuelRecords(prev => prev.filter(r => r.vehicleId !== id))
-      setTireSets(prev => prev.filter(t => t.vehicleId !== id))
-      setTireChanges(prev => prev.filter(t => t.vehicleId !== id))
+      setTireSets(prev => prev.filter(set => set.vehicleId !== id))
+      setTireChanges(prev => prev.filter(set => set.vehicleId !== id))
 
       setCustomIntervals(prev => {
         const filtered: CustomIntervals = {}
@@ -531,10 +532,10 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
         return filtered
       })
 
-      toast.success('Araç ve tüm kayıtları silindi')
+      toast.success(i18n.t('ctx.vehicleContext.arac_ve_tum_kayitlari_silindi'))
     } catch (error) {
       console.error('deleteVehicle:', error)
-      toast.error('Araç silinemedi: ' + formatSupabaseError(error as Error))
+      toast.error(i18n.t('ctx.vehicleContext.arac_silinemedi') + formatSupabaseError(error as Error))
     }
   }, [user, vehicles, maintenanceRecords, setVehicles, setMaintenanceRecords, setFuelRecords, setTireSets, setTireChanges, setCustomIntervals])
 
@@ -552,7 +553,7 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
       // 🆕 Bakım fotoğrafını Storage'a yükle (varsa)
       let uploadedPhoto = record.photo
       if (uploadedPhoto && isBase64(uploadedPhoto)) {
-        const uploadingToast = toast.loading('Fotoğraf yükleniyor...')
+        const uploadingToast = toast.loading(i18n.t('ctx.vehicleContext.fotograf_yukleniyor'))
         uploadedPhoto = await uploadPhotoFromBase64(
           uploadedPhoto,
           user.id,
@@ -572,19 +573,19 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
       if (error) throw error
 
       const newRecord = maintenanceFromDb(data)
-      if (!newRecord) throw new Error('Bakım kaydı okunamadı')
+      if (!newRecord) throw new Error(i18n.t('ctx.vehicleContext.bakim_kaydi_okunamadi'))
       setMaintenanceRecords(prev => {
         if (prev.some(r => r.id === newRecord.id)) return prev
         return [...prev, newRecord]
       })
-      toast.success('Bakım kaydı eklendi ✓')
+      toast.success(i18n.t('ctx.vehicleContext.bakim_kaydi_eklendi'))
       return newRecord
     } catch (error) {
       if (agHatasiMi(error)) {
         return kuyrugaAlVeIyimserEkle(record)
       }
       console.error('addMaintenance:', error)
-      toast.error('Bakım eklenemedi: ' + formatSupabaseError(error as Error))
+      toast.error(i18n.t('ctx.vehicleContext.bakim_eklenemedi') + formatSupabaseError(error as Error))
       return null
     }
   }, [user, setMaintenanceRecords, kuyrugaAlVeIyimserEkle])
@@ -596,7 +597,7 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
       // 🆕 Yeni base64 fotoğraf varsa yükle
       let uploadedPhoto = updates.photo
       if (uploadedPhoto && isBase64(uploadedPhoto)) {
-        const uploadingToast = toast.loading('Fotoğraf yükleniyor...')
+        const uploadingToast = toast.loading(i18n.t('ctx.vehicleContext.fotograf_yukleniyor'))
         uploadedPhoto = await uploadPhotoFromBase64(
           uploadedPhoto,
           user.id,
@@ -633,12 +634,12 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
       if (error) throw error
 
       const updated = maintenanceFromDb(data)
-      if (!updated) throw new Error('Bakım kaydı okunamadı')
+      if (!updated) throw new Error(i18n.t('ctx.vehicleContext.bakim_kaydi_okunamadi'))
       setMaintenanceRecords(prev => prev.map(r => (r.id === id ? updated : r)))
-      toast.success('Bakım kaydı güncellendi ✓')
+      toast.success(i18n.t('ctx.vehicleContext.bakim_kaydi_guncellendi'))
     } catch (error) {
       console.error('updateMaintenance:', error)
-      toast.error('Bakım güncellenemedi: ' + formatSupabaseError(error as Error))
+      toast.error(i18n.t('ctx.vehicleContext.bakim_guncellenemedi') + formatSupabaseError(error as Error))
     }
   }, [user, maintenanceRecords, setMaintenanceRecords])
 
@@ -662,10 +663,10 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
       if (error) throw error
 
       setMaintenanceRecords(prev => prev.filter(r => r.id !== id))
-      toast.success('Bakım kaydı silindi')
+      toast.success(i18n.t('ctx.vehicleContext.bakim_kaydi_silindi'))
     } catch (error) {
       console.error('deleteMaintenance:', error)
-      toast.error('Bakım silinemedi: ' + formatSupabaseError(error as Error))
+      toast.error(i18n.t('ctx.vehicleContext.bakim_silinemedi') + formatSupabaseError(error as Error))
     }
   }, [user, maintenanceRecords, setMaintenanceRecords])
 
@@ -684,16 +685,16 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
       if (error) throw error
 
       const newRecord = fuelFromDb(data)
-      if (!newRecord) throw new Error('Yakıt kaydı okunamadı')
+      if (!newRecord) throw new Error(i18n.t('ctx.vehicleContext.yakit_kaydi_okunamadi'))
       setFuelRecords(prev => {
         if (prev.some(r => r.id === newRecord.id)) return prev
         return [...prev, newRecord]
       })
-      toast.success('Yakıt kaydı eklendi ✓')
+      toast.success(i18n.t('ctx.vehicleContext.yakit_kaydi_eklendi'))
       return newRecord
     } catch (error) {
       console.error('addFuel:', error)
-      toast.error('Yakıt eklenemedi: ' + formatSupabaseError(error as Error))
+      toast.error(i18n.t('ctx.vehicleContext.yakit_eklenemedi') + formatSupabaseError(error as Error))
       return null
     }
   }, [user, setFuelRecords])
@@ -715,12 +716,12 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
       if (error) throw error
 
       const updated = fuelFromDb(data)
-      if (!updated) throw new Error('Yakıt kaydı okunamadı')
+      if (!updated) throw new Error(i18n.t('ctx.vehicleContext.yakit_kaydi_okunamadi'))
       setFuelRecords(prev => prev.map(r => (r.id === id ? updated : r)))
-      toast.success('Yakıt kaydı güncellendi ✓')
+      toast.success(i18n.t('ctx.vehicleContext.yakit_kaydi_guncellendi'))
     } catch (error) {
       console.error('updateFuel:', error)
-      toast.error('Yakıt güncellenemedi: ' + formatSupabaseError(error as Error))
+      toast.error(i18n.t('ctx.vehicleContext.yakit_guncellenemedi') + formatSupabaseError(error as Error))
     }
   }, [user, setFuelRecords])
 
@@ -736,10 +737,10 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
       if (error) throw error
 
       setFuelRecords(prev => prev.filter(r => r.id !== id))
-      toast.success('Yakıt kaydı silindi')
+      toast.success(i18n.t('ctx.vehicleContext.yakit_kaydi_silindi'))
     } catch (error) {
       console.error('deleteFuel:', error)
-      toast.error('Yakıt silinemedi: ' + formatSupabaseError(error as Error))
+      toast.error(i18n.t('ctx.vehicleContext.yakit_silinemedi') + formatSupabaseError(error as Error))
     }
   }, [user, setFuelRecords])
 
@@ -758,16 +759,16 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
       if (error) throw error
 
       const newSet = tireSetFromDb(data)
-      if (!newSet) throw new Error('Lastik seti okunamadı')
+      if (!newSet) throw new Error(i18n.t('ctx.vehicleContext.lastik_seti_okunamadi'))
       setTireSets(prev => {
-        if (prev.some(t => t.id === newSet.id)) return prev
+        if (prev.some(set => set.id === newSet.id)) return prev
         return [...prev, newSet]
       })
       toast.success(`${tireSet.season === 'winter' ? 'Kışlık' : 'Yazlık'} lastik seti eklendi ✓`)
       return newSet
     } catch (error) {
       console.error('addTireSet:', error)
-      toast.error('Lastik seti eklenemedi: ' + formatSupabaseError(error as Error))
+      toast.error(i18n.t('ctx.vehicleContext.lastik_seti_eklenemedi') + formatSupabaseError(error as Error))
       return null
     }
   }, [user, setTireSets])
@@ -789,12 +790,12 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
       if (error) throw error
 
       const updated = tireSetFromDb(data)
-      if (!updated) throw new Error('Lastik seti okunamadı')
-      setTireSets(prev => prev.map(t => (t.id === id ? updated : t)))
-      toast.success('Lastik seti güncellendi ✓')
+      if (!updated) throw new Error(i18n.t('ctx.vehicleContext.lastik_seti_okunamadi'))
+      setTireSets(prev => prev.map(set => (set.id === id ? updated : set)))
+      toast.success(i18n.t('ctx.vehicleContext.lastik_seti_guncellendi'))
     } catch (error) {
       console.error('updateTireSet:', error)
-      toast.error('Lastik seti güncellenemedi: ' + formatSupabaseError(error as Error))
+      toast.error(i18n.t('ctx.vehicleContext.lastik_seti_guncellenemedi') + formatSupabaseError(error as Error))
     }
   }, [user, setTireSets])
 
@@ -809,11 +810,11 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) throw error
 
-      setTireSets(prev => prev.filter(t => t.id !== id))
-      toast.success('Lastik seti silindi')
+      setTireSets(prev => prev.filter(set => set.id !== id))
+      toast.success(i18n.t('ctx.vehicleContext.lastik_seti_silindi'))
     } catch (error) {
       console.error('deleteTireSet:', error)
-      toast.error('Lastik seti silinemedi: ' + formatSupabaseError(error as Error))
+      toast.error(i18n.t('ctx.vehicleContext.lastik_seti_silinemedi') + formatSupabaseError(error as Error))
     }
   }, [user, setTireSets])
 
@@ -832,16 +833,16 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
       if (error) throw error
 
       const newChange = tireChangeFromDb(data)
-      if (!newChange) throw new Error('Lastik değişimi okunamadı')
+      if (!newChange) throw new Error(i18n.t('ctx.vehicleContext.lastik_degisimi_okunamadi'))
       setTireChanges(prev => {
-        if (prev.some(t => t.id === newChange.id)) return prev
+        if (prev.some(set => set.id === newChange.id)) return prev
         return [...prev, newChange]
       })
-      toast.success('Lastik değişimi kaydedildi ✓')
+      toast.success(i18n.t('ctx.vehicleContext.lastik_degisimi_kaydedildi'))
       return newChange
     } catch (error) {
       console.error('addTireChange:', error)
-      toast.error('Lastik değişimi eklenemedi: ' + formatSupabaseError(error as Error))
+      toast.error(i18n.t('ctx.vehicleContext.lastik_degisimi_eklenemedi') + formatSupabaseError(error as Error))
       return null
     }
   }, [user, setTireChanges])
@@ -863,12 +864,12 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
       if (error) throw error
 
       const updated = tireChangeFromDb(data)
-      if (!updated) throw new Error('Lastik değişimi okunamadı')
-      setTireChanges(prev => prev.map(t => (t.id === id ? updated : t)))
-      toast.success('Lastik değişimi güncellendi ✓')
+      if (!updated) throw new Error(i18n.t('ctx.vehicleContext.lastik_degisimi_okunamadi'))
+      setTireChanges(prev => prev.map(set => (set.id === id ? updated : set)))
+      toast.success(i18n.t('ctx.vehicleContext.lastik_degisimi_guncellendi'))
     } catch (error) {
       console.error('updateTireChange:', error)
-      toast.error('Lastik değişimi güncellenemedi: ' + formatSupabaseError(error as Error))
+      toast.error(i18n.t('ctx.vehicleContext.lastik_degisimi_guncellenemedi') + formatSupabaseError(error as Error))
     }
   }, [user, setTireChanges])
 
@@ -883,11 +884,11 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) throw error
 
-      setTireChanges(prev => prev.filter(t => t.id !== id))
-      toast.success('Lastik değişim kaydı silindi')
+      setTireChanges(prev => prev.filter(set => set.id !== id))
+      toast.success(i18n.t('ctx.vehicleContext.lastik_degisim_kaydi_silindi'))
     } catch (error) {
       console.error('deleteTireChange:', error)
-      toast.error('Lastik değişimi silinemedi: ' + formatSupabaseError(error as Error))
+      toast.error(i18n.t('ctx.vehicleContext.lastik_degisimi_silinemedi') + formatSupabaseError(error as Error))
     }
   }, [user, setTireChanges])
 
@@ -929,10 +930,10 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
       }
 
       setCustomIntervals(intervals)
-      toast.success('Bakım periyotları güncellendi ✓')
+      toast.success(i18n.t('ctx.vehicleContext.bakim_periyotlari_guncellendi'))
     } catch (error) {
       console.error('updateCustomIntervals:', error)
-      toast.error('Periyotlar güncellenemedi: ' + formatSupabaseError(error as Error))
+      toast.error(i18n.t('ctx.vehicleContext.periyotlar_guncellenemedi') + formatSupabaseError(error as Error))
     }
   }, [user, setCustomIntervals])
 
@@ -972,10 +973,10 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
       setTireChanges([])
       setCustomIntervals({})
 
-      toast.success('Tüm veriler silindi')
+      toast.success(i18n.t('ctx.vehicleContext.tum_veriler_silindi'))
     } catch (error) {
       console.error('clearAllData:', error)
-      toast.error('Veriler silinemedi: ' + formatSupabaseError(error as Error))
+      toast.error(i18n.t('ctx.vehicleContext.veriler_silinemedi') + formatSupabaseError(error as Error))
     }
   }, [user, vehicles, maintenanceRecords, setVehicles, setMaintenanceRecords, setFuelRecords, setTireSets, setTireChanges, setCustomIntervals])
 

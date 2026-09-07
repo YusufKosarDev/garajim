@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { BarChart3, Calendar, Car, Droplet, FileDown } from 'lucide-react'
 import { useVehicles } from '../context/VehicleContext'
 import { usePageTitle } from '../hooks/usePageTitle'
@@ -32,7 +33,9 @@ const tabs = [
 ]
 
 export default function Statistics() {
-  usePageTitle('İstatistikler')
+  const { t } = useTranslation()
+
+  usePageTitle(t('statistics.istatistikler'))
 
   const { vehicles, maintenanceRecords, fuelRecords } = useVehicles()
   const [activeTab, setActiveTab] = useState('overview')
@@ -60,8 +63,8 @@ export default function Statistics() {
         <div className="p-6">
           <EmptyState
             icon={BarChart3}
-            title="Henüz araç yok"
-            description="İstatistikleri görmek için önce araç ekle."
+            title={t('statistics.henuz_arac_yok')}
+            description={t('statistics.istatistikleri_gormek_icin_once_arac_ekle')}
           />
         </div>
       </PageTransition>
@@ -76,8 +79,8 @@ export default function Statistics() {
         <div className="p-6">
           <EmptyState
             icon={BarChart3}
-            title="Henüz kayıt yok"
-            description="Bakım ve yakıt kayıtları eklediğinde istatistikler burada görünecek."
+            title={t('statistics.henuz_kayit_yok')}
+            description={t('statistics.bakim_ve_yakit_kayitlari_eklediginde_istatistikl')}
           />
         </div>
       </PageTransition>
@@ -89,9 +92,9 @@ export default function Statistics() {
       <div className="p-6 space-y-6">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-3xl font-bold">İstatistikler</h1>
+            <h1 className="text-3xl font-bold">{t('statistics.istatistikler')}</h1>
             <p className="text-slate-400 text-sm mt-1">
-              Araçlarının maliyet, tüketim ve trend analizi
+              {t('statistics.araclarinin_maliyet_tuketim_ve_trend_analizi')}
             </p>
           </div>
 
@@ -100,7 +103,7 @@ export default function Statistics() {
             className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-4 py-2 rounded-lg text-sm font-semibold transition shrink-0"
           >
             <FileDown className="w-4 h-4" />
-            CSV İndir
+            {t('statistics.csv_indir')}
           </button>
         </div>
 
@@ -173,6 +176,8 @@ export default function Statistics() {
 }
 
 function OverviewTab({ maintenanceRecords, fuelRecords, vehicles, selectedVehicleId }) {
+  const { t } = useTranslation()
+
   return (
     <div className="space-y-6">
       <SummaryStats maintenanceRecords={maintenanceRecords} fuelRecords={fuelRecords} />
@@ -184,24 +189,24 @@ function OverviewTab({ maintenanceRecords, fuelRecords, vehicles, selectedVehicl
           <PredictionCard maintenanceRecords={maintenanceRecords} fuelRecords={fuelRecords} />
         </div>
         <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-5">
-          <h3 className="text-lg font-bold mb-4">📈 Aylık Harcama Trendi</h3>
+          <h3 className="text-lg font-bold mb-4">{t('statistics.aylik_harcama_trendi')}</h3>
           <MonthlyCostChart maintenanceRecords={maintenanceRecords} fuelRecords={fuelRecords} />
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-          <h3 className="text-lg font-bold mb-4">🔧 Bakım Türüne Göre Dağılım</h3>
+          <h3 className="text-lg font-bold mb-4">{t('statistics.bakim_turune_gore_dagilim')}</h3>
           {maintenanceRecords.length > 0 ? (
             <MaintenanceTypeChart maintenanceRecords={maintenanceRecords} />
           ) : (
-            <p className="text-sm text-slate-500 text-center py-8">Bakım kaydı yok</p>
+            <p className="text-sm text-slate-500 text-center py-8">{t('statistics.bakim_kaydi_yok')}</p>
           )}
         </div>
 
         {!selectedVehicleId && vehicles.length > 1 && (
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-            <h3 className="text-lg font-bold mb-4">🚗 Araç Başına Harcama</h3>
+            <h3 className="text-lg font-bold mb-4">{t('statistics.arac_basina_harcama')}</h3>
             <VehicleCostChart
               vehicles={vehicles}
               maintenanceRecords={maintenanceRecords}
@@ -215,30 +220,32 @@ function OverviewTab({ maintenanceRecords, fuelRecords, vehicles, selectedVehicl
 }
 
 function TimeTab({ maintenanceRecords, fuelRecords }) {
+  const { t } = useTranslation()
+
   return (
     <div className="space-y-6">
       <YearSummaryCards maintenanceRecords={maintenanceRecords} fuelRecords={fuelRecords} />
 
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-        <h3 className="text-lg font-bold mb-1">📊 Yıllık Karşılaştırma</h3>
+        <h3 className="text-lg font-bold mb-1">{t('statistics.yillik_karsilastirma')}</h3>
         <p className="text-xs text-slate-400 mb-4">
-          Bu yıl ve geçen yılın aylık harcamalarını karşılaştır
+          {t('statistics.bu_yil_ve_gecen_yilin_aylik')}
         </p>
         <YearComparisonChart maintenanceRecords={maintenanceRecords} fuelRecords={fuelRecords} />
       </div>
 
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-        <h3 className="text-lg font-bold mb-1">🔥 Harcama Isı Haritası</h3>
+        <h3 className="text-lg font-bold mb-1">{t('statistics.harcama_isi_haritasi')}</h3>
         <p className="text-xs text-slate-400 mb-4">
-          Son 2 yılın aylık harcama yoğunluğu — hangi aylar daha pahalı?
+          {t('statistics.son_2_yilin_aylik_harcama_yogunlugu')}
         </p>
         <SpendingHeatmap maintenanceRecords={maintenanceRecords} fuelRecords={fuelRecords} />
       </div>
 
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-        <h3 className="text-lg font-bold mb-1">🏆 En Çok Harcama Yapılan Aylar</h3>
+        <h3 className="text-lg font-bold mb-1">{t('statistics.en_cok_harcama_yapilan_aylar')}</h3>
         <p className="text-xs text-slate-400 mb-4">
-          Son 2 yılın en pahalı 6 ayı
+          {t('statistics.son_2_yilin_en_pahali_6')}
         </p>
         <TopMonthsTable maintenanceRecords={maintenanceRecords} fuelRecords={fuelRecords} />
       </div>
@@ -247,13 +254,15 @@ function TimeTab({ maintenanceRecords, fuelRecords }) {
 }
 
 function VehiclesTab({ vehicles, maintenanceRecords, fuelRecords, isFiltered }) {
+  const { t } = useTranslation()
+
   if (isFiltered && vehicles.length === 1) {
     return (
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
         <div className="flex items-center gap-2 mb-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
           <Car className="w-4 h-4 text-blue-400 shrink-0" />
           <p className="text-xs text-slate-300">
-            Araç filtresi aktif — karşılaştırma için filtreyi kaldırabilirsin
+            {t('statistics.arac_filtresi_aktif_karsilastirma_icin_filtreyi')}
           </p>
         </div>
         <VehicleBreakdownCards
@@ -268,26 +277,26 @@ function VehiclesTab({ vehicles, maintenanceRecords, fuelRecords, isFiltered }) 
   return (
     <div className="space-y-6">
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-        <h3 className="text-lg font-bold mb-1">💰 Araç Maliyet Analizi</h3>
+        <h3 className="text-lg font-bold mb-1">{t('statistics.arac_maliyet_analizi')}</h3>
         <p className="text-xs text-slate-400 mb-4">
-          Her araç için toplam harcama, KM ve ekonomik performans
+          {t('statistics.her_arac_icin_toplam_harcama_km')}
         </p>
         <CostPerKmTable vehicles={vehicles} maintenanceRecords={maintenanceRecords} fuelRecords={fuelRecords} />
       </div>
 
       <div>
-        <h3 className="text-lg font-bold mb-1">🚗 Araç Detayları</h3>
+        <h3 className="text-lg font-bold mb-1">{t('statistics.arac_detaylari')}</h3>
         <p className="text-xs text-slate-400 mb-4">
-          Her araç için bakım/yakıt dağılımı ve metrikler (tıklayarak detaya git)
+          {t('statistics.her_arac_icin_bakim_yakit_dagilimi')}
         </p>
         <VehicleBreakdownCards vehicles={vehicles} maintenanceRecords={maintenanceRecords} fuelRecords={fuelRecords} />
       </div>
 
       {vehicles.length > 1 && (
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-          <h3 className="text-lg font-bold mb-1">📊 Araç Karşılaştırma</h3>
+          <h3 className="text-lg font-bold mb-1">{t('statistics.arac_karsilastirma')}</h3>
           <p className="text-xs text-slate-400 mb-4">
-            Farklı metriklere göre araçlarını kıyasla
+            {t('statistics.farkli_metriklere_gore_araclarini_kiyasla')}
           </p>
           <VehicleRankingChart vehicles={vehicles} maintenanceRecords={maintenanceRecords} fuelRecords={fuelRecords} />
         </div>
@@ -297,13 +306,15 @@ function VehiclesTab({ vehicles, maintenanceRecords, fuelRecords, isFiltered }) 
 }
 
 function FuelTab({ fuelRecords }) {
+  const { t } = useTranslation()
+
   if (fuelRecords.length === 0) {
     return (
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-8 text-center">
         <Droplet className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-        <p className="text-slate-400 font-semibold mb-1">Henüz yakıt kaydı yok</p>
+        <p className="text-slate-400 font-semibold mb-1">{t('statistics.henuz_yakit_kaydi_yok')}</p>
         <p className="text-xs text-slate-500">
-          Yakıt alımlarını kaydetmeye başladığında detaylı analizleri burada göreceksin
+          {t('statistics.yakit_alimlarini_kaydetmeye_basladiginda_detayli')}
         </p>
       </div>
     )
@@ -316,27 +327,27 @@ function FuelTab({ fuelRecords }) {
 
       {/* Tüketim trendi grafiği */}
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-        <h3 className="text-lg font-bold mb-1">⛽ Yakıt Tüketim Trendi</h3>
+        <h3 className="text-lg font-bold mb-1">{t('statistics.yakit_tuketim_trendi')}</h3>
         <p className="text-xs text-slate-400 mb-4">
-          L/100km bazında tüketim değişimi
+          {t('statistics.l_100km_bazinda_tuketim_degisimi')}
         </p>
         <FuelConsumptionChart fuelRecords={fuelRecords} />
       </div>
 
       {/* Yakıt fiyat trendi */}
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-        <h3 className="text-lg font-bold mb-1">💸 Yakıt Fiyat Trendi</h3>
+        <h3 className="text-lg font-bold mb-1">{t('statistics.yakit_fiyat_trendi')}</h3>
         <p className="text-xs text-slate-400 mb-4">
-          Zaman içinde ₺/L değişimi
+          {t('statistics.zaman_icinde_l_degisimi')}
         </p>
         <FuelPriceTrendChart fuelRecords={fuelRecords} />
       </div>
 
       {/* İstasyon analizi */}
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-        <h3 className="text-lg font-bold mb-1">📍 İstasyon Analizi</h3>
+        <h3 className="text-lg font-bold mb-1">{t('statistics.istasyon_analizi')}</h3>
         <p className="text-xs text-slate-400 mb-4">
-          Hangi istasyondan ne kadar yakıt aldın?
+          {t('statistics.hangi_istasyondan_ne_kadar_yakit_aldin')}
         </p>
         <StationAnalysisTable fuelRecords={fuelRecords} />
       </div>

@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Filter, List, Grid, Wrench, Droplet, Shield, FileCheck, Receipt, X, CalendarPlus } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -28,7 +29,9 @@ const eventTypeConfig = {
 }
 
 export default function Calendar() {
-  usePageTitle('Takvim')
+  const { t } = useTranslation()
+
+  usePageTitle(t('calendar.takvim'))
 
   const { vehicles, maintenanceRecords, fuelRecords } = useVehicles()
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -53,7 +56,7 @@ export default function Calendar() {
   const indirIcs = () => {
     const sayi = exportICS(filteredEvents)
     if (sayi === 0) {
-      toast.error('Aktarılacak olay yok')
+      toast.error(t('calendar.aktarilacak_olay_yok'))
       return
     }
     toast.success(`${sayi} olay .ics dosyasına aktarıldı 📅`)
@@ -140,7 +143,7 @@ export default function Calendar() {
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-2">
               <CalendarIcon className="w-8 h-8 text-blue-400" />
-              Takvim
+              {t('calendar.takvim')}
             </h1>
             <p className="text-slate-400 text-sm mt-1">
               {filteredEvents.length} olay gösteriliyor • {allEvents.length - filteredEvents.length} gizli
@@ -157,7 +160,7 @@ export default function Calendar() {
                 }`}
               >
                 <Grid className="w-4 h-4" />
-                <span className="hidden sm:inline">Ay</span>
+                <span className="hidden sm:inline">{t('calendar.ay')}</span>
               </button>
               <button
                 onClick={() => setViewMode('list')}
@@ -166,7 +169,7 @@ export default function Calendar() {
                 }`}
               >
                 <List className="w-4 h-4" />
-                <span className="hidden sm:inline">Liste</span>
+                <span className="hidden sm:inline">{t('calendar.liste')}</span>
               </button>
             </div>
 
@@ -175,11 +178,11 @@ export default function Calendar() {
             <button
               onClick={indirIcs}
               disabled={filteredEvents.length === 0}
-              title="Görünen olayları .ics dosyası olarak indir"
+              title={t('calendar.gorunen_olaylari_ics_dosyasi_olarak_indir')}
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <CalendarPlus className="w-4 h-4" aria-hidden="true" />
-              <span className="hidden sm:inline">Takvime aktar</span>
+              <span className="hidden sm:inline">{t('calendar.takvime_aktar')}</span>
             </button>
           </div>
         </div>
@@ -236,8 +239,8 @@ export default function Calendar() {
         {vehicles.length === 0 ? (
           <EmptyState
             icon={CalendarIcon}
-            title="Henüz olay yok"
-            description="Araç ekledikçe tarihleri burada görebilirsin."
+            title={t('calendar.henuz_olay_yok')}
+            description={t('calendar.arac_ekledikce_tarihleri_burada_gorebilirsin')}
             action={
               <Link
                 to="/vehicles"
@@ -259,7 +262,7 @@ export default function Calendar() {
                   <button
                     onClick={prevMonth}
                     className="p-2 hover:bg-slate-800 rounded-lg transition"
-                    title="Önceki ay"
+                    title={t('calendar.onceki_ay')}
                   >
                     <ChevronLeft className="w-5 h-5" />
                   </button>
@@ -272,7 +275,7 @@ export default function Calendar() {
                   <button
                     onClick={nextMonth}
                     className="p-2 hover:bg-slate-800 rounded-lg transition"
-                    title="Sonraki ay"
+                    title={t('calendar.sonraki_ay')}
                   >
                     <ChevronRight className="w-5 h-5" />
                   </button>
@@ -374,7 +377,7 @@ export default function Calendar() {
 
                 {selectedEvents.length === 0 ? (
                   <p className="text-sm text-slate-500 text-center py-4">
-                    Bu tarihte olay yok
+                    {t('calendar.bu_tarihte_olay_yok')}
                   </p>
                 ) : (
                   <div className="space-y-2">
@@ -423,11 +426,11 @@ export default function Calendar() {
         ) : (
           /* Liste Görünümü */
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-            <h2 className="text-lg font-bold mb-4">Tüm Olaylar (Kronolojik)</h2>
+            <h2 className="text-lg font-bold mb-4">{t('calendar.tum_olaylar_kronolojik')}</h2>
 
             {listEvents.length === 0 ? (
               <p className="text-sm text-slate-500 text-center py-8">
-                Filtrelerine uyan olay yok
+                {t('calendar.filtrelerine_uyan_olay_yok')}
               </p>
             ) : (
               <div className="space-y-2">

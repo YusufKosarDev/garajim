@@ -1,12 +1,15 @@
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell } from 'recharts'
+import { useTranslation } from 'react-i18next'
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#22c55e', '#06b6d4', '#eab308', '#ef4444']
 
 export default function VehicleCostChart({ vehicles = [], maintenanceRecords = [], fuelRecords = [] }) {
+  const { t } = useTranslation()
+
   if (!vehicles || vehicles.length === 0) {
     return (
       <div className="h-[300px] flex items-center justify-center text-slate-500 text-sm">
-        Araç yok
+        {t('components.charts.vehicleCostChart.arac_yok')}
       </div>
     )
   }
@@ -35,7 +38,7 @@ export default function VehicleCostChart({ vehicles = [], maintenanceRecords = [
   if (data.length === 0) {
     return (
       <div className="h-[300px] flex items-center justify-center text-slate-500 text-sm">
-        Araçlar için harcama kaydı yok
+        {t('components.charts.vehicleCostChart.araclar_icin_harcama_kaydi_yok')}
       </div>
     )
   }

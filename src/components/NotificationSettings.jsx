@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Bell, BellOff, Globe, RotateCcw, Trash2, Smartphone } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useNotifications } from '../context/NotificationContext'
@@ -24,6 +25,8 @@ const PRESET_THRESHOLDS = [
 ]
 
 export default function NotificationSettings() {
+  const { t } = useTranslation()
+
   const {
     settings,
     updateSettings,
@@ -39,22 +42,22 @@ export default function NotificationSettings() {
 
   const handleToggleMaster = () => {
     updateSettings({ enabled: !settings.enabled })
-    toast.success(settings.enabled ? 'Bildirimler kapatıldı' : 'Bildirimler açıldı')
+    toast.success(settings.enabled ? t('notificationSettings.bildirimler_kapatildi') : t('notificationSettings.bildirimler_acildi'))
   }
 
   const handleToggleBrowser = async () => {
     if (settings.browserNotifications) {
       updateSettings({ browserNotifications: false })
-      toast.success('Tarayıcı bildirimleri kapatıldı')
+      toast.success(t('notificationSettings.tarayici_bildirimleri_kapatildi'))
     } else {
       const result = await requestBrowserPermission()
       if (result.granted) {
         updateSettings({ browserNotifications: true })
-        toast.success('Tarayıcı bildirimleri aktif')
+        toast.success(t('notificationSettings.tarayici_bildirimleri_aktif'))
       } else if (result.denied) {
-        toast.error('Tarayıcı izni reddedildi — tarayıcı ayarlarından açabilirsin')
+        toast.error(t('notificationSettings.tarayici_izni_reddedildi_tarayici_ayarlarindan_a'))
       } else if (!result.supported) {
-        toast.error('Tarayıcın bildirim desteklemiyor')
+        toast.error(t('notificationSettings.tarayicin_bildirim_desteklemiyor'))
       }
     }
   }
@@ -65,9 +68,9 @@ export default function NotificationSettings() {
     setHapticEnabled(newValue)
     if (newValue) {
       hapticMedium() // Test titreşim
-      toast.success('Titreşim açıldı')
+      toast.success(t('notificationSettings.titresim_acildi'))
     } else {
-      toast.success('Titreşim kapatıldı')
+      toast.success(t('notificationSettings.titresim_kapatildi'))
     }
   }
 
@@ -78,7 +81,7 @@ export default function NotificationSettings() {
 
   const handleThresholdChange = (typeKey, newThresholds) => {
     updateTypeSettings(typeKey, { daysBefore: newThresholds })
-    toast.success('Eşikler güncellendi')
+    toast.success(t('notificationSettings.esikler_guncellendi'))
   }
 
   const handleResetSettings = () => {
@@ -89,13 +92,13 @@ export default function NotificationSettings() {
         updateSettings({ [key]: DEFAULT_NOTIFICATION_SETTINGS[key] })
       }
     })
-    toast.success('Bildirim ayarları varsayılana döndürüldü')
+    toast.success(t('notificationSettings.bildirim_ayarlari_varsayilana_donduruldu'))
     setIsResetOpen(false)
   }
 
   const handleClearAll = () => {
     clearAll()
-    toast.success('Tüm bildirimler silindi')
+    toast.success(t('notificationSettings.tum_bildirimler_silindi'))
     setIsClearOpen(false)
   }
 
@@ -105,10 +108,10 @@ export default function NotificationSettings() {
     <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 mb-6">
       <h2 className="text-lg font-bold mb-1 flex items-center gap-2">
         <Bell className="w-5 h-5 text-blue-400" />
-        Bildirim Ayarları
+        {t('notificationSettings.bildirim_ayarlari')}
       </h2>
       <p className="text-sm text-slate-400 mb-5">
-        Hangi olaylar için ve ne zaman bildirim alacağını seç
+        {t('notificationSettings.hangi_olaylar_icin_ve_ne_zaman')}
       </p>
 
       {/* Ana toggle */}
@@ -130,12 +133,12 @@ export default function NotificationSettings() {
             </div>
             <div className="min-w-0">
               <div className="font-bold">
-                {settings.enabled ? 'Bildirimler Aktif' : 'Bildirimler Kapalı'}
+                {settings.enabled ? 'Bildirimler Aktif' : t('notificationSettings.bildirimler_kapali')}
               </div>
               <div className="text-xs text-slate-400 mt-0.5">
                 {settings.enabled
-                  ? 'Yaklaşan tarihler ve bakım önerileri için uyarılar gelir'
-                  : 'Hiçbir bildirim gelmeyecek'
+                  ? t('notificationSettings.yaklasan_tarihler_ve_bakim_onerileri_icin')
+                  : t('notificationSettings.hicbir_bildirim_gelmeyecek')
                 }
               </div>
             </div>
@@ -162,9 +165,9 @@ export default function NotificationSettings() {
               settings.browserNotifications ? 'text-green-400' : 'text-slate-500'
             }`} />
             <div className="min-w-0">
-              <div className="font-semibold text-sm">Tarayıcı Bildirimleri</div>
+              <div className="font-semibold text-sm">{t('notificationSettings.tarayici_bildirimleri')}</div>
               <div className="text-xs text-slate-400 mt-0.5">
-                Önemli bildirimleri sistem üzerinden alır (sekme arka plandayken de çalışır)
+                {t('notificationSettings.onemli_bildirimleri_sistem_uzerinden_alir_sekme')}
               </div>
             </div>
           </div>
@@ -190,9 +193,9 @@ export default function NotificationSettings() {
                 hapticEnabled ? 'text-purple-400' : 'text-slate-500'
               }`} />
               <div className="min-w-0">
-                <div className="font-semibold text-sm">Titreşim (Haptic)</div>
+                <div className="font-semibold text-sm">{t('notificationSettings.titresim_haptic')}</div>
                 <div className="text-xs text-slate-400 mt-0.5">
-                  Mobilde swipe ve önemli aksiyonlarda hafif titreşim
+                  {t('notificationSettings.mobilde_swipe_ve_onemli_aksiyonlarda_hafif')}
                 </div>
               </div>
             </div>
@@ -208,7 +211,7 @@ export default function NotificationSettings() {
       {/* Türler */}
       <div className={`mb-4 ${isMasterDisabled ? 'opacity-50 pointer-events-none' : ''}`}>
         <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">
-          Bildirim Türleri
+          {t('notificationSettings.bildirim_turleri')}
         </h3>
 
         <div className="space-y-2">
@@ -251,7 +254,7 @@ export default function NotificationSettings() {
                 {typeSettings.enabled && type.hasThresholds && (
                   <div className="mt-3 pt-3 border-t border-slate-800">
                     <div className="text-[10px] uppercase tracking-wide text-slate-500 mb-2">
-                      Kaç gün önceden uyar?
+                      {t('notificationSettings.kac_gun_onceden_uyar')}
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                       {PRESET_THRESHOLDS.map(preset => {
@@ -289,7 +292,7 @@ export default function NotificationSettings() {
           className="flex items-center gap-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-lg font-semibold transition"
         >
           <RotateCcw className="w-3.5 h-3.5" />
-          Varsayılana Dön
+          {t('notificationSettings.varsayilana_don')}
         </button>
 
         {notifications.length > 0 && (
@@ -306,7 +309,7 @@ export default function NotificationSettings() {
       {/* Bilgi */}
       <div className="mt-4 p-3 bg-blue-500/5 border border-blue-500/20 rounded-lg">
         <p className="text-xs text-slate-400">
-          💡 <strong className="text-slate-300">İpucu:</strong> Bildirimler her uygulama açılışında ve veri değişikliğinde otomatik güncellenir. Aynı uyarı 2 kez gösterilmez (deduplication).
+          💡 <strong className="text-slate-300">{t('notificationSettings.ipucu')}</strong> {t('notificationSettings.bildirimler_her_uygulama_acilisinda_ve_veri')}
         </p>
       </div>
 
@@ -315,7 +318,7 @@ export default function NotificationSettings() {
         isOpen={isResetOpen}
         onClose={() => setIsResetOpen(false)}
         onConfirm={handleResetSettings}
-        title="Ayarları varsayılana döndür?"
+        title={t('notificationSettings.ayarlari_varsayilana_dondur')}
         message="Tüm bildirim türleri ve eşikleri varsayılan değerlere dönecek. Mevcut bildirimler silinmez."
         confirmText="Evet, sıfırla"
       />
@@ -324,7 +327,7 @@ export default function NotificationSettings() {
         isOpen={isClearOpen}
         onClose={() => setIsClearOpen(false)}
         onConfirm={handleClearAll}
-        title="Tüm bildirimleri sil?"
+        title={t('notificationSettings.tum_bildirimleri_sil')}
         message={`${notifications.length} bildirim kalıcı olarak silinecek. Geçmiş bilgiler kaybolur ama kriterlere uyan yeni bildirimler tekrar oluşturulabilir.`}
         confirmText="Evet, hepsini sil"
       />

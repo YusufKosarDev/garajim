@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { 
@@ -12,7 +13,9 @@ import { usePageTitle } from '../hooks/usePageTitle'
 import PageTransition from '../components/PageTransition'
 
 export default function Profile() {
-  usePageTitle('Profilim')
+  const { t } = useTranslation()
+
+  usePageTitle(t('profile.profilim'))
 
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
@@ -69,19 +72,19 @@ export default function Profile() {
     e.preventDefault()
 
     if (!currentPassword) {
-      toast.error('Mevcut şifren gerekli!')
+      toast.error(t('profile.mevcut_sifren_gerekli'))
       return
     }
     if (!passwordChecks.length) {
-      toast.error('Yeni şifre en az 6 karakter olmalı!')
+      toast.error(t('profile.yeni_sifre_en_az_6_karakter'))
       return
     }
     if (!passwordChecks.match) {
-      toast.error('Yeni şifreler eşleşmiyor!')
+      toast.error(t('profile.yeni_sifreler_eslesmiyor'))
       return
     }
     if (currentPassword === newPassword) {
-      toast.error('Yeni şifre eskisiyle aynı olamaz!')
+      toast.error(t('profile.yeni_sifre_eskisiyle_ayni_olamaz'))
       return
     }
 
@@ -95,7 +98,7 @@ export default function Profile() {
       })
 
       if (signInError) {
-        toast.error('Mevcut şifre yanlış!')
+        toast.error(t('profile.mevcut_sifre_yanlis'))
         setPasswordLoading(false)
         return
       }
@@ -106,17 +109,17 @@ export default function Profile() {
       })
 
       if (updateError) {
-        toast.error('Şifre güncellenemedi: ' + updateError.message)
+        toast.error(t('profile.sifre_guncellenemedi') + updateError.message)
         return
       }
 
-      toast.success('Şifren başarıyla güncellendi! 🔐')
+      toast.success(t('profile.sifren_basariyla_guncellendi'))
       setCurrentPassword('')
       setNewPassword('')
       setConfirmNewPassword('')
     } catch (err) {
       console.error('Change password error:', err)
-      toast.error('Bir hata oluştu, tekrar deneyin')
+      toast.error(t('profile.bir_hata_olustu_tekrar_deneyin'))
     } finally {
       setPasswordLoading(false)
     }
@@ -127,11 +130,11 @@ export default function Profile() {
     e.preventDefault()
 
     if (!newEmail.trim()) {
-      toast.error('Yeni email gerekli!')
+      toast.error(t('profile.yeni_email_gerekli'))
       return
     }
     if (newEmail.trim() === user.email) {
-      toast.error('Yeni email mevcut emailinle aynı!')
+      toast.error(t('profile.yeni_email_mevcut_emailinle_ayni'))
       return
     }
 
@@ -143,7 +146,7 @@ export default function Profile() {
       })
 
       if (error) {
-        toast.error('Email güncellenemedi: ' + error.message)
+        toast.error(t('profile.email_guncellenemedi') + error.message)
         return
       }
 
@@ -154,7 +157,7 @@ export default function Profile() {
       setNewEmail('')
     } catch (err) {
       console.error('Change email error:', err)
-      toast.error('Bir hata oluştu, tekrar deneyin')
+      toast.error(t('profile.bir_hata_olustu_tekrar_deneyin'))
     } finally {
       setEmailLoading(false)
     }
@@ -163,7 +166,7 @@ export default function Profile() {
   // Hesap silme
   const handleDeleteAccount = async () => {
     if (!isDeleteFormValid) {
-      toast.error('Lütfen onay metnini ve şifreni doğru gir')
+      toast.error(t('profile.lutfen_onay_metnini_ve_sifreni_dogru'))
       return
     }
 
@@ -174,7 +177,7 @@ export default function Profile() {
       const { data: { session } } = await supabase.auth.getSession()
 
       if (!session) {
-        toast.error('Oturum bulunamadı, lütfen tekrar giriş yap')
+        toast.error(t('profile.oturum_bulunamadi_lutfen_tekrar_giris_yap'))
         setDeleteLoading(false)
         return
       }
@@ -204,7 +207,7 @@ export default function Profile() {
       }
 
       // Başarı: kullanıcıya bilgi ver, sonra logout + redirect
-      toast.success('Hesabın kalıcı olarak silindi 👋', { duration: 4000 })
+      toast.success(t('profile.hesabin_kalici_olarak_silindi'), { duration: 4000 })
       
       // Kısa bir gecikmeyle logout (toast okunabilsin)
       setTimeout(async () => {
@@ -213,7 +216,7 @@ export default function Profile() {
       }, 1500)
     } catch (err) {
       console.error('Delete account error:', err)
-      toast.error('Bir hata oluştu, tekrar deneyin')
+      toast.error(t('profile.bir_hata_olustu_tekrar_deneyin'))
       setDeleteLoading(false)
     }
   }
@@ -238,13 +241,13 @@ export default function Profile() {
           <button
             onClick={() => navigate(-1)}
             className="p-2 hover:bg-slate-800 rounded-lg transition"
-            aria-label="Geri"
+            aria-label={t('profile.geri')}
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-3xl font-bold">Profilim</h1>
-            <p className="text-slate-400 text-sm mt-1">Hesap bilgilerini yönet</p>
+            <h1 className="text-3xl font-bold">{t('profile.profilim')}</h1>
+            <p className="text-slate-400 text-sm mt-1">{t('profile.hesap_bilgilerini_yonet')}</p>
           </div>
         </div>
 
@@ -262,12 +265,12 @@ export default function Profile() {
                 {isGoogleUser ? (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-white/10 rounded-md text-xs font-medium text-slate-200">
                     <GoogleIconSmall />
-                    Google ile bağlı
+                    {t('profile.google_ile_bagli')}
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-white/10 rounded-md text-xs font-medium text-slate-200">
                     <Mail className="w-3 h-3" />
-                    Email + Şifre
+                    {t('profile.email_sifre')}
                   </span>
                 )}
               </div>
@@ -279,29 +282,29 @@ export default function Profile() {
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 mb-6">
           <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
             <Shield className="w-5 h-5 text-blue-400" />
-            Hesap Bilgileri
+            {t('profile.hesap_bilgileri')}
           </h2>
 
           <div className="space-y-3">
             <InfoRow
               icon={<Mail className="w-4 h-4 text-slate-400" />}
-              label="Email"
+              label={t('profile.email')}
               value={user?.email || '-'}
             />
             <InfoRow
               icon={<Calendar className="w-4 h-4 text-slate-400" />}
-              label="Kayıt Tarihi"
+              label={t('profile.kayit_tarihi')}
               value={formatDate(user?.created_at)}
             />
             <InfoRow
               icon={<Calendar className="w-4 h-4 text-slate-400" />}
-              label="Son Giriş"
+              label={t('profile.son_giris')}
               value={formatDate(user?.last_sign_in_at)}
             />
             <InfoRow
               icon={<Shield className="w-4 h-4 text-slate-400" />}
-              label="Auth Provider"
-              value={isGoogleUser ? 'Google OAuth' : 'Email + Şifre'}
+              label={t('profile.auth_provider')}
+              value={isGoogleUser ? 'Google OAuth' : t('profile.email_sifre')}
             />
           </div>
         </div>
@@ -311,17 +314,17 @@ export default function Profile() {
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 mb-6">
             <h2 className="text-lg font-bold mb-1 flex items-center gap-2">
               <Lock className="w-5 h-5 text-orange-400" />
-              Şifre Değiştir
+              {t('profile.sifre_degistir')}
             </h2>
             <p className="text-sm text-slate-400 mb-4">
-              Hesabının güvenliği için güçlü bir şifre kullan.
+              {t('profile.hesabinin_guvenligi_icin_guclu_bir_sifre')}
             </p>
 
             <form onSubmit={handleChangePassword} className="space-y-4">
               {/* Mevcut Şifre */}
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Mevcut Şifre
+                  {t('profile.mevcut_sifre')}
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -329,7 +332,7 @@ export default function Profile() {
                     type={showPasswords ? 'text' : 'password'}
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    placeholder="Mevcut şifren"
+                    placeholder={t('profile.mevcut_sifren')}
                     autoComplete="current-password"
                     disabled={passwordLoading}
                     className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-12 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition disabled:opacity-50"
@@ -348,7 +351,7 @@ export default function Profile() {
               {/* Yeni Şifre */}
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Yeni Şifre
+                  {t('profile.yeni_sifre')}
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -356,7 +359,7 @@ export default function Profile() {
                     type={showPasswords ? 'text' : 'password'}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="En az 6 karakter"
+                    placeholder={t('profile.en_az_6_karakter')}
                     autoComplete="new-password"
                     disabled={passwordLoading}
                     className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition disabled:opacity-50"
@@ -367,7 +370,7 @@ export default function Profile() {
               {/* Yeni Şifre Tekrar */}
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Yeni Şifre (Tekrar)
+                  {t('profile.yeni_sifre_tekrar')}
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -375,7 +378,7 @@ export default function Profile() {
                     type={showPasswords ? 'text' : 'password'}
                     value={confirmNewPassword}
                     onChange={(e) => setConfirmNewPassword(e.target.value)}
-                    placeholder="Yeni şifreni tekrar gir"
+                    placeholder={t('profile.yeni_sifreni_tekrar_gir')}
                     autoComplete="new-password"
                     disabled={passwordLoading}
                     className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition disabled:opacity-50"
@@ -408,12 +411,12 @@ export default function Profile() {
                 {passwordLoading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Güncelleniyor...
+                    {t('profile.guncelleniyor')}
                   </>
                 ) : (
                   <>
                     <Save className="w-4 h-4" />
-                    Şifreyi Değiştir
+                    {t('profile.sifreyi_degistir')}
                   </>
                 )}
               </button>
@@ -426,16 +429,16 @@ export default function Profile() {
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 mb-6">
             <h2 className="text-lg font-bold mb-1 flex items-center gap-2">
               <Mail className="w-5 h-5 text-blue-400" />
-              Email Değiştir
+              {t('profile.email_degistir')}
             </h2>
             <p className="text-sm text-slate-400 mb-4">
-              Yeni email adresine doğrulama linki gönderilir. Linke tıkladıktan sonra değişiklik aktif olur.
+              {t('profile.yeni_email_adresine_dogrulama_linki_gonderilir')}
             </p>
 
             <form onSubmit={handleChangeEmail} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Yeni Email
+                  {t('profile.yeni_email')}
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -443,7 +446,7 @@ export default function Profile() {
                     type="email"
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
-                    placeholder="yeni@email.com"
+                    placeholder={t('profile.yeni_email_com')}
                     autoComplete="email"
                     disabled={emailLoading}
                     className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition disabled:opacity-50"
@@ -459,12 +462,12 @@ export default function Profile() {
                 {emailLoading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Gönderiliyor...
+                    {t('profile.gonderiliyor')}
                   </>
                 ) : (
                   <>
                     <Save className="w-4 h-4" />
-                    Email Değiştir
+                    {t('profile.email_degistir')}
                   </>
                 )}
               </button>
@@ -478,10 +481,9 @@ export default function Profile() {
             <div className="flex items-start gap-3">
               <Shield className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
               <div>
-                <h3 className="font-semibold text-blue-300 mb-1">Google Hesabıyla Bağlısın</h3>
+                <h3 className="font-semibold text-blue-300 mb-1">{t('profile.google_hesabiyla_baglisin')}</h3>
                 <p className="text-sm text-slate-300">
-                  Şifre ve email değişiklikleri Google hesabın üzerinden yapılır.
-                  Bu işlemler için <strong>myaccount.google.com</strong> sayfasını ziyaret et.
+                  {t('profile.sifre_ve_email_degisiklikleri_google_hesabin')} <strong>{t('profile.myaccount_google_com')}</strong> {t('profile.sayfasini_ziyaret_et')}
                 </p>
               </div>
             </div>
@@ -492,18 +494,17 @@ export default function Profile() {
         <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-5 mb-6">
           <h2 className="text-lg font-bold mb-1 flex items-center gap-2 text-red-400">
             <AlertTriangle className="w-5 h-5" />
-            Tehlikeli Bölge
+            {t('profile.tehlikeli_bolge')}
           </h2>
           <p className="text-sm text-slate-400 mb-4">
-            Hesabını silmek <strong className="text-red-400">geri alınamaz</strong> bir işlemdir.
-            Tüm araçların, bakım kayıtların, yakıt kayıtların ve fotoğrafların kalıcı olarak silinir.
+            {t('profile.hesabini_silmek')} <strong className="text-red-400">{t('profile.geri_alinamaz')}</strong> {t('profile.bir_islemdir_tum_araclarin_bakim_kayitlarin')}
           </p>
           <button
             onClick={() => setShowDeleteModal(true)}
             className="flex items-center gap-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 px-5 py-2.5 rounded-lg font-semibold transition"
           >
             <Trash2 className="w-4 h-4" />
-            Hesabımı Sil
+            {t('profile.hesabimi_sil')}
           </button>
         </div>
       </div>
@@ -518,21 +519,21 @@ export default function Profile() {
                 <AlertTriangle className="w-6 h-6 text-red-400" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-white">Hesabını sil?</h3>
-                <p className="text-sm text-slate-400">Bu işlem geri alınamaz</p>
+                <h3 className="text-xl font-bold text-white">{t('profile.hesabini_sil')}</h3>
+                <p className="text-sm text-slate-400">{t('profile.bu_islem_geri_alinamaz')}</p>
               </div>
             </div>
 
             {/* Liste */}
             <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-4">
-              <div className="text-sm text-slate-200 mb-2 font-medium">Şunlar kalıcı olarak silinecek:</div>
+              <div className="text-sm text-slate-200 mb-2 font-medium">{t('profile.sunlar_kalici_olarak_silinecek')}</div>
               <ul className="text-sm text-slate-300 space-y-1">
-                <li className="flex items-center gap-2"><XCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" /> Tüm araç bilgilerin</li>
-                <li className="flex items-center gap-2"><XCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" /> Tüm bakım kayıtların</li>
-                <li className="flex items-center gap-2"><XCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" /> Tüm yakıt kayıtların</li>
-                <li className="flex items-center gap-2"><XCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" /> Tüm lastik kayıtların</li>
-                <li className="flex items-center gap-2"><XCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" /> Tüm yüklediğin fotoğraflar</li>
-                <li className="flex items-center gap-2"><XCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" /> Hesabın</li>
+                <li className="flex items-center gap-2"><XCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" /> {t('profile.tum_arac_bilgilerin')}</li>
+                <li className="flex items-center gap-2"><XCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" /> {t('profile.tum_bakim_kayitlarin')}</li>
+                <li className="flex items-center gap-2"><XCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" /> {t('profile.tum_yakit_kayitlarin')}</li>
+                <li className="flex items-center gap-2"><XCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" /> {t('profile.tum_lastik_kayitlarin')}</li>
+                <li className="flex items-center gap-2"><XCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" /> {t('profile.tum_yukledigin_fotograflar')}</li>
+                <li className="flex items-center gap-2"><XCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" /> {t('profile.hesabin')}</li>
               </ul>
             </div>
 
@@ -540,7 +541,7 @@ export default function Profile() {
             {!isGoogleUser && (
               <div className="mb-4">
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Şifren
+                  {t('profile.sifren')}
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -548,7 +549,7 @@ export default function Profile() {
                     type={showDeletePassword ? 'text' : 'password'}
                     value={deletePassword}
                     onChange={(e) => setDeletePassword(e.target.value)}
-                    placeholder="Hesap şifren"
+                    placeholder={t('profile.hesap_sifren')}
                     autoComplete="current-password"
                     disabled={deleteLoading}
                     className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-12 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition disabled:opacity-50"
@@ -568,7 +569,7 @@ export default function Profile() {
             {/* Onay metni */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Onaylamak için "<span className="text-red-400 font-bold">{REQUIRED_CONFIRM_TEXT}</span>" yaz
+                {t('profile.onaylamak_icin')}<span className="text-red-400 font-bold">{REQUIRED_CONFIRM_TEXT}</span>{t('profile.yaz')}
               </label>
               <input
                 type="text"
@@ -597,12 +598,12 @@ export default function Profile() {
                 {deleteLoading ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Siliniyor...
+                    {t('profile.siliniyor')}
                   </>
                 ) : (
                   <>
                     <Trash2 className="w-4 h-4" />
-                    Sil
+                    {t('profile.sil')}
                   </>
                 )}
               </button>

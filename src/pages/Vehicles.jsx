@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Car } from 'lucide-react'
 import { useVehicles } from '../context/VehicleContext'
@@ -25,7 +26,9 @@ const sortOptions = [
 ]
 
 export default function Vehicles({ globalActionsRef }) {
-  usePageTitle('Araçlarım')
+  const { t } = useTranslation()
+
+  usePageTitle(t('vehicles.araclarim'))
 
   const { vehicles, deleteVehicle, isLoaded } = useVehicles()
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -127,7 +130,7 @@ export default function Vehicles({ globalActionsRef }) {
       <div className="p-6">
         <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Araçlarım</h1>
+            <h1 className="text-3xl font-bold">{t('vehicles.araclarim')}</h1>
             <p className="text-slate-400 text-sm mt-1">
               {filteredAndSorted.length} / {vehicles.length} araç
               {searchQuery && ` • "${searchQuery}" için sonuçlar`}
@@ -138,7 +141,7 @@ export default function Vehicles({ globalActionsRef }) {
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-semibold transition"
           >
             <Plus className="w-5 h-5" />
-            Yeni Araç
+            {t('vehicles.yeni_arac')}
           </button>
         </div>
 
@@ -147,7 +150,7 @@ export default function Vehicles({ globalActionsRef }) {
             <SearchBar
               value={searchQuery}
               onChange={setSearchQuery}
-              placeholder="Plaka, marka, model ara..."
+              placeholder={t('vehicles.plaka_marka_model_ara')}
             />
             <SortDropdown
               value={sortBy}
@@ -160,22 +163,22 @@ export default function Vehicles({ globalActionsRef }) {
         {vehicles.length === 0 ? (
           <EmptyState
             icon={Car}
-            title="Henüz araç eklenmedi"
-            description="İlk aracını ekleyerek bakım, muayene ve MTV takibine hemen başla."
+            title={t('vehicles.henuz_arac_eklenmedi')}
+            description={t('vehicles.ilk_aracini_ekleyerek_bakim_muayene_ve')}
             action={
               <button
                 onClick={() => setIsFormOpen(true)}
                 className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-6 py-2.5 rounded-lg font-semibold transition"
               >
                 <Plus className="w-4 h-4" />
-                İlk Aracını Ekle
+                {t('vehicles.ilk_aracini_ekle')}
               </button>
             }
           />
         ) : filteredAndSorted.length === 0 ? (
           <EmptyState
             icon={Car}
-            title="Sonuç bulunamadı"
+            title={t('vehicles.sonuc_bulunamadi')}
             description={`"${searchQuery}" için eşleşen araç yok. Farklı bir kelimeyle dene.`}
             action={
               <button
@@ -207,7 +210,7 @@ export default function Vehicles({ globalActionsRef }) {
           isOpen={!!deleteTarget}
           onClose={() => setDeleteTarget(null)}
           onConfirm={confirmDelete}
-          title="Aracı sil?"
+          title={t('vehicles.araci_sil')}
           message={
             deleteTarget
               ? `${deleteTarget.brand} ${deleteTarget.model} (${deleteTarget.plate}) ve tüm bakım kayıtları silinecek. Bu işlem geri alınamaz.`

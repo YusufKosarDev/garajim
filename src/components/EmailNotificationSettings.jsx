@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { Mail, Save, Loader2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
@@ -17,6 +18,8 @@ import { useAuth } from '../context/AuthContext'
  * - notify_kasko: kasko
  */
 export default function EmailNotificationSettings() {
+  const { t } = useTranslation()
+
   const { user } = useAuth()
 
   const [loading, setLoading] = useState(true)
@@ -87,10 +90,10 @@ export default function EmailNotificationSettings() {
 
       if (error) throw error
 
-      toast.success('Bildirim tercihleri kaydedildi 🔔')
+      toast.success(t('emailNotificationSettings.bildirim_tercihleri_kaydedildi'))
     } catch (err) {
       console.error('savePrefs:', err)
-      toast.error('Kaydedilemedi: ' + err.message)
+      toast.error(t('emailNotificationSettings.kaydedilemedi') + err.message)
     } finally {
       setSaving(false)
     }
@@ -103,10 +106,10 @@ export default function EmailNotificationSettings() {
     <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 mb-6">
       <h2 className="text-lg font-bold mb-1 flex items-center gap-2">
         <Mail className="w-5 h-5 text-blue-400" />
-        Email Bildirimleri
+        {t('emailNotificationSettings.email_bildirimleri')}
       </h2>
       <p className="text-sm text-slate-400 mb-4">
-        Yaklaşan muayene, MTV, sigorta ve kasko tarihleri için 30, 7 ve 1 gün öncesinden email al.
+        {t('emailNotificationSettings.yaklasan_muayene_mtv_sigorta_ve_kasko')}
       </p>
 
       {loading ? (
@@ -117,8 +120,8 @@ export default function EmailNotificationSettings() {
         <>
           {/* Master Switch */}
           <ToggleRow
-            label="Tüm email bildirimleri"
-            description="Kapatırsan hiçbir email gönderilmez"
+            label={t('emailNotificationSettings.tum_email_bildirimleri')}
+            description={t('emailNotificationSettings.kapatirsan_hicbir_email_gonderilmez')}
             checked={prefs.email_enabled}
             onChange={() => handleToggle('email_enabled')}
             isMaster
@@ -129,29 +132,29 @@ export default function EmailNotificationSettings() {
           {/* Specific Toggles */}
           <div className={`space-y-2 ${isMasterOff ? 'opacity-40' : ''}`}>
             <ToggleRow
-              label="🔧 Muayene yaklaşıyor"
-              description="Araç muayenesi yaklaştığında bildir"
+              label={t('emailNotificationSettings.muayene_yaklasiyor')}
+              description={t('emailNotificationSettings.arac_muayenesi_yaklastiginda_bildir')}
               checked={prefs.notify_inspection}
               onChange={() => handleToggle('notify_inspection')}
               disabled={isMasterOff}
             />
             <ToggleRow
-              label="💸 MTV ödemesi yaklaşıyor"
-              description="MTV ödeme tarihi yaklaştığında bildir"
+              label={t('emailNotificationSettings.mtv_odemesi_yaklasiyor')}
+              description={t('emailNotificationSettings.mtv_odeme_tarihi_yaklastiginda_bildir')}
               checked={prefs.notify_mtv}
               onChange={() => handleToggle('notify_mtv')}
               disabled={isMasterOff}
             />
             <ToggleRow
-              label="🛡️ Sigorta yenilemesi yaklaşıyor"
-              description="Trafik sigortası bitiş tarihi yaklaştığında bildir"
+              label={t('emailNotificationSettings.sigorta_yenilemesi_yaklasiyor')}
+              description={t('emailNotificationSettings.trafik_sigortasi_bitis_tarihi_yaklastiginda_bild')}
               checked={prefs.notify_insurance}
               onChange={() => handleToggle('notify_insurance')}
               disabled={isMasterOff}
             />
             <ToggleRow
-              label="🛡️ Kasko yenilemesi yaklaşıyor"
-              description="Kasko bitiş tarihi yaklaştığında bildir"
+              label={t('emailNotificationSettings.kasko_yenilemesi_yaklasiyor')}
+              description={t('emailNotificationSettings.kasko_bitis_tarihi_yaklastiginda_bildir')}
               checked={prefs.notify_kasko}
               onChange={() => handleToggle('notify_kasko')}
               disabled={isMasterOff}
@@ -167,12 +170,12 @@ export default function EmailNotificationSettings() {
             {saving ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Kaydediliyor...
+                {t('emailNotificationSettings.kaydediliyor')}
               </>
             ) : (
               <>
                 <Save className="w-4 h-4" />
-                Kaydet
+                {t('emailNotificationSettings.kaydet')}
               </>
             )}
           </button>

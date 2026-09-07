@@ -1,9 +1,12 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { X, Clock } from 'lucide-react'
 import { getTypeConfig } from '../utils/notificationManager'
 import { formatRelative } from '../utils/dateHelpers'
 
 export default function NotificationItem({ notification, onDismiss, onMarkRead, onClose }) {
+  const { t } = useTranslation()
+
   const config = getTypeConfig(notification.type)
   const isUnread = !notification.read
   const isStale = notification.stale === true
@@ -98,7 +101,7 @@ export default function NotificationItem({ notification, onDismiss, onMarkRead, 
               <button
                 onClick={handleDismissClick}
                 className="p-1 hover:bg-red-500/10 rounded text-slate-500 hover:text-red-400 transition opacity-0 group-hover:opacity-100 shrink-0"
-                title="Kapat"
+                title={t('notificationItem.kapat')}
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -114,7 +117,7 @@ export default function NotificationItem({ notification, onDismiss, onMarkRead, 
                 <span className={`w-1.5 h-1.5 rounded-full ${colors.bar}`} />
               )}
               {isStale && (
-                <span className="text-[10px] text-slate-600 italic">Geçmiş</span>
+                <span className="text-[10px] text-slate-600 italic">{t('notificationItem.gecmis')}</span>
               )}
             </div>
           </div>

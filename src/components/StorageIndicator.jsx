@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { HardDrive, AlertTriangle, CheckCircle } from 'lucide-react'
 import { getStorageInfo } from '../utils/storage'
 
 export default function StorageIndicator() {
+  const { t } = useTranslation()
+
   const [info, setInfo] = useState(null)
 
   useEffect(() => {
@@ -64,12 +67,12 @@ export default function StorageIndicator() {
     <div className={`border rounded-xl p-5 mb-6 ${colorClass}`}>
       <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
         <HardDrive className={`w-5 h-5 ${textColor}`} />
-        Depolama Alanı
+        {t('storageIndicator.depolama_alani')}
       </h2>
 
       <div className="flex items-center justify-between mb-2 text-sm">
         <span className="text-slate-300">
-          Kullanılan: <strong className="text-white">{usageText}</strong>
+          {t('storageIndicator.kullanilan')} <strong className="text-white">{usageText}</strong>
         </span>
         <span className={`font-semibold ${textColor}`}>
           %{usagePercent.toFixed(1)}
@@ -92,17 +95,17 @@ export default function StorageIndicator() {
           {isCritical ? (
             <>
               <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
-              <span className="text-red-400 font-semibold">Kritik — yedek al</span>
+              <span className="text-red-400 font-semibold">{t('storageIndicator.kritik_yedek_al')}</span>
             </>
           ) : isWarning ? (
             <>
               <AlertTriangle className="w-3.5 h-3.5 text-yellow-400" />
-              <span className="text-yellow-400 font-semibold">Dikkat</span>
+              <span className="text-yellow-400 font-semibold">{t('storageIndicator.dikkat')}</span>
             </>
           ) : (
             <>
               <CheckCircle className="w-3.5 h-3.5 text-green-400" />
-              <span className="text-green-400">Yeterli alan</span>
+              <span className="text-green-400">{t('storageIndicator.yeterli_alan')}</span>
             </>
           )}
         </div>
@@ -110,7 +113,7 @@ export default function StorageIndicator() {
 
       {isCritical && (
         <div className="mt-3 pt-3 border-t border-slate-800 text-xs text-slate-300">
-          <strong className="text-red-400">Uyarı:</strong> Depolama alanı %90'ı geçti. Gerekirse eski verileri dışa aktarıp silebilirsin. Ayarlar &gt; Yedekleme'den yedek alabilirsin.
+          <strong className="text-red-400">{t('storageIndicator.uyari')}</strong> Depolama alanı %90'ı geçti. Gerekirse eski verileri dışa aktarıp silebilirsin. Ayarlar &gt; Yedekleme'den yedek alabilirsin.
         </div>
       )}
     </div>

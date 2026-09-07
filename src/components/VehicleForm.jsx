@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Plus, Calendar } from 'lucide-react'
@@ -18,6 +19,8 @@ const bosForm = () => ({
 })
 
 export default function VehicleForm({ isOpen, onClose, editVehicle = null }) {
+  const { t } = useTranslation()
+
   const { addVehicle, updateVehicle, vehicles } = useVehicles()
   const isEdit = !!editVehicle
 
@@ -84,20 +87,20 @@ export default function VehicleForm({ isOpen, onClose, editVehicle = null }) {
 
     if (isEdit) {
       updateVehicle(editVehicle.id, data)
-      toast.success('Araç güncellendi 🚗')
+      toast.success(t('vehicleForm.arac_guncellendi'))
     } else {
       addVehicle(data)
-      toast.success('Araç eklendi 🚗')
+      toast.success(t('vehicleForm.arac_eklendi'))
     }
     onClose()
   }
 
-  const onInvalid = () => toast.error('Lütfen hataları düzelt')
+  const onInvalid = () => toast.error(t('vehicleForm.lutfen_hatalari_duzelt'))
 
   const tarihAlanlari = [
     ['inspectionDate', 'Muayene'],
     ['mtvDate', 'MTV'],
-    ['insuranceDate', 'Trafik Sigortası'],
+    ['insuranceDate', t('vehicleForm.trafik_sigortasi')],
     ['kaskoDate', 'Kasko'],
   ]
 
@@ -105,14 +108,14 @@ export default function VehicleForm({ isOpen, onClose, editVehicle = null }) {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEdit ? 'Aracı Düzenle' : 'Yeni Araç'}
+      title={isEdit ? t('vehicleForm.araci_duzenle') : t('vehicleForm.yeni_arac')}
       maxWidth="max-w-2xl"
     >
       <form onSubmit={handleSubmit(onValid, onInvalid)} className="p-5 space-y-5">
         <FormField
-          label="Plaka"
+          label={t('vehicleForm.plaka')}
           required
-          placeholder="34 ABC 123"
+          placeholder={t('vehicleForm.34_abc_123')}
           autoFocus
           error={errors.plate?.message}
           {...register('plate', {
@@ -123,13 +126,13 @@ export default function VehicleForm({ isOpen, onClose, editVehicle = null }) {
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <FormField label="Marka" required placeholder="BMW" error={errors.brand?.message} {...register('brand')} />
-          <FormField label="Model" required placeholder="320i" error={errors.model?.message} {...register('model')} />
+          <FormField label={t('vehicleForm.marka')} required placeholder="BMW" error={errors.brand?.message} {...register('brand')} />
+          <FormField label={t('vehicleForm.model')} required placeholder="320i" error={errors.model?.message} {...register('model')} />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <FormField
-            label="Yıl"
+            label={t('vehicleForm.yil')}
             required
             type="number"
             placeholder="2020"
@@ -138,7 +141,7 @@ export default function VehicleForm({ isOpen, onClose, editVehicle = null }) {
             error={errors.year?.message}
             {...register('year')}
           />
-          <FormField label="Yakıt">
+          <FormField label={t('vehicleForm.yakit')}>
             {(alanProps) => (
               <select {...alanProps} {...register('fuelType')}>
                 {fuelTypes.map(f => <option key={f} value={f}>{f}</option>)}
@@ -146,7 +149,7 @@ export default function VehicleForm({ isOpen, onClose, editVehicle = null }) {
             )}
           </FormField>
           <FormField
-            label="Güncel KM"
+            label={t('vehicleForm.guncel_km')}
             type="number"
             placeholder="0"
             min="0"
@@ -158,7 +161,7 @@ export default function VehicleForm({ isOpen, onClose, editVehicle = null }) {
         {/* Fotoğraflar */}
         <div>
           <span className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">
-            Fotoğraflar
+            {t('vehicleForm.fotograflar')}
           </span>
           <Controller
             name="photos"
@@ -173,7 +176,7 @@ export default function VehicleForm({ isOpen, onClose, editVehicle = null }) {
         <div>
           <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 flex items-center gap-1">
             <Calendar className="w-3 h-3" />
-            Önemli Tarihler (opsiyonel)
+            {t('vehicleForm.onemli_tarihler_opsiyonel')}
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {tarihAlanlari.map(([ad, etiket]) => (
@@ -190,10 +193,10 @@ export default function VehicleForm({ isOpen, onClose, editVehicle = null }) {
         </div>
 
         <FormField
-          label="Notlar (opsiyonel)"
+          label={t('vehicleForm.notlar_opsiyonel')}
           as="textarea"
           rows={2}
-          placeholder="Ek bilgiler..."
+          placeholder={t('vehicleForm.ek_bilgiler')}
           {...register('notes')}
         />
 
@@ -209,10 +212,10 @@ export default function VehicleForm({ isOpen, onClose, editVehicle = null }) {
             type="submit"
             className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 py-2.5 rounded-lg font-semibold transition"
           >
-            {isEdit ? 'Güncelle' : (
+            {isEdit ? t('vehicleForm.guncelle') : (
               <>
                 <Plus className="w-4 h-4" />
-                Araç Ekle
+                {t('vehicleForm.arac_ekle')}
               </>
             )}
           </button>

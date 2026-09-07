@@ -1,4 +1,5 @@
 import { useEffect, useRef, useId } from 'react'
+import { useTranslation } from 'react-i18next'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
@@ -42,6 +43,8 @@ export default function Modal({
   labelledBy,
   describedBy,
 }) {
+  const { t } = useTranslation()
+
   const modalIdRef = useRef(`modal-${Date.now()}-${Math.random()}`)
   const modalRef = useRef(null)
   const previousFocusRef = useRef(null)
@@ -178,7 +181,7 @@ export default function Modal({
                 <button
                   onClick={onClose}
                   className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition"
-                  aria-label="Kapat"
+                  aria-label={t('modal.kapat')}
                 >
                   <X className="w-5 h-5" />
                 </button>

@@ -1,7 +1,10 @@
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { getYearComparison } from '../../utils/statisticsHelpers'
 
 export default function YearSummaryCards({ maintenanceRecords = [], fuelRecords = [] }) {
+  const { t } = useTranslation()
+
   const data = getYearComparison(maintenanceRecords, fuelRecords)
 
   const percentChange = data.percentChange
@@ -44,7 +47,7 @@ export default function YearSummaryCards({ maintenanceRecords = [], fuelRecords 
       {/* Değişim */}
       <div className={`border rounded-xl p-5 ${trendBg}`}>
         <div className="text-xs text-slate-400 uppercase tracking-wide mb-2">
-          Değişim
+          {t('stats.yearSummaryCards.degisim')}
         </div>
         <div className={`flex items-center gap-2 mb-1 ${trendColor}`}>
           <TrendIcon className="w-6 h-6" />
@@ -55,7 +58,7 @@ export default function YearSummaryCards({ maintenanceRecords = [], fuelRecords 
         <div className="text-xs text-slate-400">
           {isIncrease && `${Math.abs(data.difference).toLocaleString('tr-TR')} ₺ daha fazla`}
           {isDecrease && `${Math.abs(data.difference).toLocaleString('tr-TR')} ₺ daha az`}
-          {isStable && 'Geçen yılla aynı'}
+          {isStable && t('stats.yearSummaryCards.gecen_yilla_ayni')}
         </div>
       </div>
     </div>

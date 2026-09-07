@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import toast from 'react-hot-toast'
@@ -20,6 +21,8 @@ const bosForm = () => ({
 })
 
 export default function FuelForm({ isOpen, onClose, vehicleId, editRecord = null }) {
+  const { t } = useTranslation()
+
   const { addFuel, updateFuel, vehicles, fuelRecords, updateVehicle } = useVehicles()
 
   const today = getTodayString()
@@ -79,9 +82,9 @@ export default function FuelForm({ isOpen, onClose, vehicleId, editRecord = null
       const f = parseFloat(pricePerLiter)
       if (!isNaN(l) && !isNaN(f)) setValue('totalCost', (l * f).toFixed(2))
     } else if (degisen === 'totalCost') {
-      const t = parseFloat(totalCost)
+      const tutar = parseFloat(totalCost)
       const l = parseFloat(liters)
-      if (!isNaN(t) && !isNaN(l) && l > 0) setValue('pricePerLiter', (t / l).toFixed(2))
+      if (!isNaN(tutar) && !isNaN(l) && l > 0) setValue('pricePerLiter', (tutar / l).toFixed(2))
     }
   }
 
@@ -110,14 +113,14 @@ export default function FuelForm({ isOpen, onClose, vehicleId, editRecord = null
     onClose()
   }
 
-  const onInvalid = () => toast.error('Lütfen hataları düzelt')
+  const onInvalid = () => toast.error(t('fuelForm.lutfen_hatalari_duzelt'))
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={editRecord ? 'Yakıt Kaydını Düzenle' : 'Yakıt Alımı Ekle'}>
+    <Modal isOpen={isOpen} onClose={onClose} title={editRecord ? t('fuelForm.yakit_kaydini_duzenle') : t('fuelForm.yakit_alimi_ekle')}>
       <form onSubmit={handleSubmit(onValid, onInvalid)} className="p-5 space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <FormField
-            label="Tarih"
+            label={t('fuelForm.tarih')}
             labelStyle="plain"
             type="date"
             max={today}
@@ -125,7 +128,7 @@ export default function FuelForm({ isOpen, onClose, vehicleId, editRecord = null
             {...register('date')}
           />
           <FormField
-            label="Kilometre"
+            label={t('fuelForm.kilometre')}
             labelStyle="plain"
             type="number"
             min="0"
@@ -138,7 +141,7 @@ export default function FuelForm({ isOpen, onClose, vehicleId, editRecord = null
 
         <div className="grid grid-cols-2 gap-4">
           <FormField
-            label="Litre"
+            label={t('fuelForm.litre')}
             labelStyle="plain"
             type="number"
             step="0.01"
@@ -148,7 +151,7 @@ export default function FuelForm({ isOpen, onClose, vehicleId, editRecord = null
             {...register('liters', { onChange: () => hesapla('liters') })}
           />
           <FormField
-            label="Litre Başı Fiyat (₺)"
+            label={t('fuelForm.litre_basi_fiyat')}
             labelStyle="plain"
             type="number"
             step="0.01"
@@ -159,36 +162,36 @@ export default function FuelForm({ isOpen, onClose, vehicleId, editRecord = null
         </div>
 
         <FormField
-          label="Toplam Tutar (₺)"
+          label={t('fuelForm.toplam_tutar')}
           labelStyle="plain"
           type="number"
           step="0.01"
           min="0"
-          placeholder="Otomatik hesaplanır"
+          placeholder={t('fuelForm.otomatik_hesaplanir')}
           error={errors.totalCost?.message}
           {...register('totalCost', { onChange: () => hesapla('totalCost') })}
         />
 
         <label className="flex items-center gap-2 cursor-pointer select-none">
           <input type="checkbox" className="w-4 h-4 accent-blue-500" {...register('fullTank')} />
-          <span className="text-sm text-slate-300">Depo tam dolduruldu (tüketim hesabı için önemli)</span>
+          <span className="text-sm text-slate-300">{t('fuelForm.depo_tam_dolduruldu_tuketim_hesabi_icin')}</span>
         </label>
 
         <FormField
-          label="İstasyon (opsiyonel)"
+          label={t('fuelForm.istasyon_opsiyonel')}
           labelStyle="plain"
-          placeholder="Shell, Opet, BP..."
+          placeholder={t('fuelForm.shell_opet_bp')}
           {...register('station')}
         />
 
-        <FormField label="Notlar (opsiyonel)" labelStyle="plain" as="textarea" rows="2" {...register('notes')} />
+        <FormField label={t('fuelForm.notlar_opsiyonel')} labelStyle="plain" as="textarea" rows="2" {...register('notes')} />
 
         <div className="flex gap-3 pt-4">
           <button type="button" onClick={onClose} className="flex-1 bg-slate-800 hover:bg-slate-700 py-2.5 rounded-lg transition">
-            İptal
+            {t('fuelForm.iptal')}
           </button>
           <button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 py-2.5 rounded-lg transition font-semibold">
-            {editRecord ? 'Güncelle' : 'Kaydet'}
+            {editRecord ? t('fuelForm.guncelle') : 'Kaydet'}
           </button>
         </div>
       </form>

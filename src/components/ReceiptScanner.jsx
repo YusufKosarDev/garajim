@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ScanText, Check, Loader2, AlertTriangle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { fistenMetinOku, ocrKapat } from '../lib/ocr'
@@ -23,6 +24,8 @@ const ALANLAR = [
  * gösteriliyor, kullanıcı hangisini istiyorsa onu işaretleyip uyguluyor.
  */
 export default function ReceiptScanner({ photo, onUygula }) {
+  const { t } = useTranslation()
+
   const [okunuyor, setOkunuyor] = useState(false)
   // Sonuç, ÜRETİLDİĞİ FOTOĞRAFLA birlikte tutuluyor. Böylece kullanıcı fotoğrafı
   // değiştirdiğinde eski öneriler bir an bile görünemiyor — bunu bir effect'le
@@ -49,10 +52,10 @@ export default function ReceiptScanner({ photo, onUygula }) {
         secili: Object.fromEntries(ALANLAR.map(a => [a.anahtar, Boolean(oneriler[a.anahtar])])),
       })
 
-      if (!varMi) toast('Fişten okunabilir bilgi çıkmadı', { icon: '🔍' })
+      if (!varMi) toast(t('receiptScanner.fisten_okunabilir_bilgi_cikmadi'), { icon: '🔍' })
     } catch (hata) {
-      captureError(hata, { yer: 'Fiş OCR' })
-      toast.error('Fiş okunamadı. İnternet bağlantını kontrol et (ilk kullanımda dil verisi iniyor).')
+      captureError(hata, { yer: t('receiptScanner.fis_ocr') })
+      toast.error(t('receiptScanner.fis_okunamadi_internet_baglantini_kontrol_et'))
     } finally {
       setOkunuyor(false)
     }
@@ -69,12 +72,12 @@ export default function ReceiptScanner({ photo, onUygula }) {
       }
     }
     if (Object.keys(secilenler).length === 0) {
-      toast.error('Uygulanacak alan seçilmedi')
+      toast.error(t('receiptScanner.uygulanacak_alan_secilmedi'))
       return
     }
     onUygula(secilenler)
     setSonuc(null)
-    toast.success('Alanlar dolduruldu — kaydetmeden önce kontrol et')
+    toast.success(t('receiptScanner.alanlar_dolduruldu_kaydetmeden_once_kontrol_et'))
   }
 
   if (!photo) return null
@@ -93,12 +96,12 @@ export default function ReceiptScanner({ photo, onUygula }) {
           {okunuyor ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-              Fiş okunuyor...
+              {t('receiptScanner.fis_okunuyor')}
             </>
           ) : (
             <>
               <ScanText className="w-4 h-4" aria-hidden="true" />
-              Fişten bilgileri oku
+              {t('receiptScanner.fisten_bilgileri_oku')}
             </>
           )}
         </button>
@@ -106,18 +109,18 @@ export default function ReceiptScanner({ photo, onUygula }) {
         <div className="rounded-lg border border-slate-700 bg-slate-800/40 p-3 space-y-2">
           {bulunanAlanlar.length === 0 ? (
             <div className="text-xs text-slate-400">
-              Fişten tutar, tarih veya kilometre okunamadı. Alanları elle doldurabilirsin.
+              {t('receiptScanner.fisten_tutar_tarih_veya_kilometre_okunamadi')}
             </div>
           ) : (
             <>
               <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
-                Fişte bulunanlar
+                {t('receiptScanner.fiste_bulunanlar')}
               </div>
 
               {gecerli.guven > 0 && gecerli.guven < DUSUK_GUVEN && (
                 <div className="flex items-start gap-1.5 text-[11px] text-amber-400">
                   <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-px" aria-hidden="true" />
-                  Görüntü net okunamadı, değerleri kontrol et.
+                  {t('receiptScanner.goruntu_net_okunamadi_degerleri_kontrol_et')}
                 </div>
               )}
 
@@ -160,7 +163,7 @@ export default function ReceiptScanner({ photo, onUygula }) {
                 className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-xs font-semibold transition"
               >
                 <Check className="w-3.5 h-3.5" aria-hidden="true" />
-                Alanları doldur
+                {t('receiptScanner.alanlari_doldur')}
               </button>
             )}
           </div>

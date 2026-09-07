@@ -1,9 +1,12 @@
 import { useEffect, useState, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ChevronLeft, ChevronRight, Download } from 'lucide-react'
 
 export default function Lightbox({ isOpen, onClose, photos = [], initialIndex = 0 }) {
+  const { t } = useTranslation()
+
   const [currentIndex, setCurrentIndex] = useState(initialIndex)
   const containerRef = useRef(null)
   const touchStartX = useRef(null)
@@ -143,14 +146,14 @@ export default function Lightbox({ isOpen, onClose, photos = [], initialIndex = 
               <button
                 onClick={handleDownload}
                 className="p-2 hover:bg-white/10 rounded-lg text-white/80 hover:text-white transition"
-                title="İndir"
+                title={t('lightbox.indir')}
               >
                 <Download className="w-5 h-5" />
               </button>
               <button
                 onClick={onClose}
                 className="p-2 hover:bg-white/10 rounded-lg text-white/80 hover:text-white transition"
-                title="Kapat (ESC)"
+                title={t('lightbox.kapat_esc')}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -165,7 +168,7 @@ export default function Lightbox({ isOpen, onClose, photos = [], initialIndex = 
                 goToPrev()
               }}
               className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-3 bg-black/40 hover:bg-black/70 rounded-full text-white/80 hover:text-white transition backdrop-blur-sm"
-              title="Önceki (←)"
+              title={t('lightbox.onceki')}
             >
               <ChevronLeft className="w-6 h-6 sm:w-8 sm:h-8" />
             </button>
@@ -179,7 +182,7 @@ export default function Lightbox({ isOpen, onClose, photos = [], initialIndex = 
                 goToNext()
               }}
               className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-3 bg-black/40 hover:bg-black/70 rounded-full text-white/80 hover:text-white transition backdrop-blur-sm"
-              title="Sonraki (→)"
+              title={t('lightbox.sonraki')}
             >
               <ChevronRight className="w-6 h-6 sm:w-8 sm:h-8" />
             </button>
@@ -235,7 +238,7 @@ export default function Lightbox({ isOpen, onClose, photos = [], initialIndex = 
           {/* Kullanım ipucu */}
           {photos.length > 1 && (
             <div className="absolute bottom-24 left-1/2 -translate-x-1/2 text-[10px] text-white/40 hidden sm:block">
-              <span className="px-2 py-1 bg-black/40 rounded">←→ ile gezin • ESC ile kapat</span>
+              <span className="px-2 py-1 bg-black/40 rounded">{t('lightbox.ile_gezin_esc_ile_kapat')}</span>
             </div>
           )}
         </motion.div>

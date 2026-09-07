@@ -1,4 +1,5 @@
 import { Component } from 'react'
+import i18n from '../i18n'
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react'
 import { captureError } from '../lib/errorTracking'
 
@@ -53,9 +54,9 @@ class ErrorBoundary extends Component {
                   <AlertTriangle className="w-7 h-7 text-red-400" />
                 </div>
                 <div className="flex-1">
-                  <h1 className="text-2xl font-bold mb-2">Bir şeyler ters gitti 😟</h1>
+                  <h1 className="text-2xl font-bold mb-2">{i18n.t('errorBoundary.bir_seyler_ters_gitti')}</h1>
                   <p className="text-slate-300">
-                    Uygulamada beklenmedik bir hata oluştu. Endişelenme — verilerin güvende.
+                    {i18n.t('errorBoundary.beklenmedik_hata_verilerin_guvende')}
                   </p>
                 </div>
               </div>
@@ -78,12 +79,12 @@ class ErrorBoundary extends Component {
               {!isDev && (
                 <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-6">
                   <p className="text-sm text-slate-300">
-                    💡 <strong>Ne yapabilirsin?</strong>
+                    💡 <strong>{i18n.t('errorBoundary.ne_yapabilirsin')}</strong>
                   </p>
                   <ul className="text-sm text-slate-400 mt-2 space-y-1 list-disc list-inside">
-                    <li>"Yeniden Dene" butonuna tıkla</li>
-                    <li>Sayfayı yenile (F5)</li>
-                    <li>Problem devam ederse, ayarlardan veri yedeği alıp tarayıcı önbelleğini temizle</li>
+                    <li>{i18n.t('errorBoundary.yeniden_dene_butonuna_tikla')}</li>
+                    <li>{i18n.t('errorBoundary.sayfayi_yenile_f5')}</li>
+                    <li>{i18n.t('errorBoundary.problem_devam_ederse_yedek_al')}</li>
                   </ul>
                 </div>
               )}
@@ -94,26 +95,26 @@ class ErrorBoundary extends Component {
                   className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 py-2.5 rounded-lg transition font-semibold"
                 >
                   <RefreshCw className="w-4 h-4" />
-                  Yeniden Dene
+                  {i18n.t('errorBoundary.yeniden_dene')}
                 </button>
                 <button
                   onClick={this.handleGoHome}
                   className="flex-1 flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 py-2.5 rounded-lg transition font-semibold"
                 >
                   <Home className="w-4 h-4" />
-                  Ana Sayfa
+                  {i18n.t('errorBoundary.ana_sayfa')}
                 </button>
                 <button
                   onClick={this.handleReload}
                   className="flex-1 flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 py-2.5 rounded-lg transition font-semibold"
                 >
                   <RefreshCw className="w-4 h-4" />
-                  Yenile
+                  {i18n.t('errorBoundary.yenile')}
                 </button>
               </div>
 
               <p className="text-xs text-slate-500 text-center mt-6">
-                Hata devam ediyorsa geri bildirim için tarayıcı konsolundaki hatayı kaydedin
+                {i18n.t('errorBoundary.hata_devam_ediyorsa_konsolu_kaydet')}
               </p>
             </div>
           </div>

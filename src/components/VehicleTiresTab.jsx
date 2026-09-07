@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Plus, ArrowLeftRight, Sun, Snowflake, Info, AlertTriangle } from 'lucide-react'
 import { useVehicles } from '../context/VehicleContext'
 import {
@@ -13,6 +14,8 @@ import TireChangeHistory from './TireChangeHistory'
 import ConfirmDialog from './ConfirmDialog'
 
 export default function VehicleTiresTab({ vehicleId }) {
+  const { t } = useTranslation()
+
   const { tireSets, tireChanges, deleteTireSet, deleteTireChange } = useVehicles()
 
   const [isAddOpen, setIsAddOpen] = useState(false)
@@ -23,7 +26,7 @@ export default function VehicleTiresTab({ vehicleId }) {
 
   // Bu araca ait setler ve değişimler
   const vehicleSets = useMemo(
-    () => tireSets.filter(t => t.vehicleId === vehicleId),
+    () => tireSets.filter(set => set.vehicleId === vehicleId),
     [tireSets, vehicleId]
   )
 
@@ -45,8 +48,8 @@ export default function VehicleTiresTab({ vehicleId }) {
     [activeSeason]
   )
 
-  const summerSet = vehicleSets.find(t => t.season === 'summer')
-  const winterSet = vehicleSets.find(t => t.season === 'winter')
+  const summerSet = vehicleSets.find(set => set.season === 'summer')
+  const winterSet = vehicleSets.find(set => set.season === 'winter')
   const hasBothSets = !!summerSet && !!winterSet
 
   const handleAdd = () => {
@@ -84,9 +87,9 @@ export default function VehicleTiresTab({ vehicleId }) {
       <>
         <div className="text-center py-12">
           <div className="text-5xl mb-3">🛞</div>
-          <h3 className="text-xl font-bold mb-2">Henüz lastik seti yok</h3>
+          <h3 className="text-xl font-bold mb-2">{t('vehicleTiresTab.henuz_lastik_seti_yok')}</h3>
           <p className="text-sm text-slate-400 max-w-md mx-auto mb-6">
-            Yazlık ve kışlık lastiklerini ekleyerek diş derinliği, yaş ve mevsim değişimlerini takip et.
+            {t('vehicleTiresTab.yazlik_ve_kislik_lastiklerini_ekleyerek_dis')}
           </p>
 
           <div className="flex flex-col sm:flex-row gap-2 justify-center">
@@ -95,14 +98,14 @@ export default function VehicleTiresTab({ vehicleId }) {
               className="flex items-center justify-center gap-2 bg-yellow-600 hover:bg-yellow-700 px-5 py-2.5 rounded-lg font-semibold transition"
             >
               <Sun className="w-4 h-4" />
-              Yazlık Set Ekle
+              {t('vehicleTiresTab.yazlik_set_ekle')}
             </button>
             <button
               onClick={handleAdd}
               className="flex items-center justify-center gap-2 bg-cyan-600 hover:bg-cyan-700 px-5 py-2.5 rounded-lg font-semibold transition"
             >
               <Snowflake className="w-4 h-4" />
-              Kışlık Set Ekle
+              {t('vehicleTiresTab.kislik_set_ekle')}
             </button>
           </div>
         </div>
@@ -143,7 +146,7 @@ export default function VehicleTiresTab({ vehicleId }) {
             }`}
           >
             <ArrowLeftRight className="w-3 h-3 inline mr-1" />
-            Değiştir
+            {t('vehicleTiresTab.degistir')}
           </button>
         </div>
       )}
@@ -156,7 +159,7 @@ export default function VehicleTiresTab({ vehicleId }) {
             className="flex items-center gap-2 bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded-lg text-sm font-semibold transition"
           >
             <Plus className="w-4 h-4" />
-            Yazlık Ekle
+            {t('vehicleTiresTab.yazlik_ekle')}
           </button>
         )}
         {!winterSet && (
@@ -165,7 +168,7 @@ export default function VehicleTiresTab({ vehicleId }) {
             className="flex items-center gap-2 bg-cyan-600 hover:bg-cyan-700 px-4 py-2 rounded-lg text-sm font-semibold transition"
           >
             <Plus className="w-4 h-4" />
-            Kışlık Ekle
+            {t('vehicleTiresTab.kislik_ekle')}
           </button>
         )}
         {hasBothSets && (
@@ -174,7 +177,7 @@ export default function VehicleTiresTab({ vehicleId }) {
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-semibold transition"
           >
             <ArrowLeftRight className="w-4 h-4" />
-            Sezonu Değiştir
+            {t('vehicleTiresTab.sezonu_degistir')}
           </button>
         )}
       </div>
@@ -205,8 +208,8 @@ export default function VehicleTiresTab({ vehicleId }) {
           <div className="flex items-start gap-2 text-xs text-slate-300">
             <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
             <p>
-              <strong>İpucu:</strong> Diğer sezon setini de ekleyince mevsim değişimlerini kaydedebilirsin
-              {summerSet ? ' (kışlık ekle)' : ' (yazlık ekle)'}.
+              <strong>{t('vehicleTiresTab.ipucu')}</strong> Diğer sezon setini de ekleyince mevsim değişimlerini kaydedebilirsin
+              {summerSet ? t('vehicleTiresTab.kislik_ekle') : t('vehicleTiresTab.yazlik_ekle')}.
             </p>
           </div>
         </div>
@@ -253,7 +256,7 @@ export default function VehicleTiresTab({ vehicleId }) {
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
-        title="Lastik setini sil?"
+        title={t('vehicleTiresTab.lastik_setini_sil')}
         message={
           deleteTarget
             ? `${SEASONS[deleteTarget.season]?.label} lastik seti (${deleteTarget.brand} ${deleteTarget.size}) silinecek.`
@@ -267,7 +270,7 @@ export default function VehicleTiresTab({ vehicleId }) {
         isOpen={!!deleteChangeTarget}
         onClose={() => setDeleteChangeTarget(null)}
         onConfirm={confirmDeleteChange}
-        title="Değişim kaydını sil?"
+        title={t('vehicleTiresTab.degisim_kaydini_sil')}
         message="Bu mevsim değişim kaydı silinecek. Lastik setleri etkilenmez."
         confirmText="Sil"
       />

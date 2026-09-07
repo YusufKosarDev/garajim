@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { TrendingUp, TrendingDown, Minus, Sparkles, Calendar } from 'lucide-react'
 
 /**
@@ -12,6 +13,8 @@ import { TrendingUp, TrendingDown, Minus, Sparkles, Calendar } from 'lucide-reac
  *   - Yılın yüzde kaçı tamamlandı
  */
 export default function YearEndPrediction({ maintenanceRecords = [], fuelRecords = [] }) {
+  const { t } = useTranslation()
+
   const prediction = useMemo(() => {
     const today = new Date()
     const currentYear = today.getFullYear()
@@ -132,7 +135,7 @@ export default function YearEndPrediction({ maintenanceRecords = [], fuelRecords
           {prediction.currentYear} Yıl Sonu Tahmini
         </h3>
         <p className="text-sm text-slate-500 text-center py-6">
-          Bu yıl için henüz kayıt yok. Bakım/yakıt kaydı ekleyince tahmin görünecek.
+          {t('stats.yearEndPrediction.bu_yil_icin_henuz_kayit_yok')}
         </p>
       </div>
     )
@@ -164,14 +167,14 @@ export default function YearEndPrediction({ maintenanceRecords = [], fuelRecords
         <h3 className="text-lg font-bold">{prediction.currentYear} Yıl Sonu Tahmini</h3>
       </div>
       <p className="text-xs text-slate-400 mb-4">
-        Mevcut harcama temposuyla yılı nasıl bitireceğin
+        {t('stats.yearEndPrediction.mevcut_harcama_temposuyla_yili_nasil_bitirecegin')}
       </p>
 
       {/* Ana metrikler */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
         {/* Şu ana kadar */}
         <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-800">
-          <div className="text-xs text-slate-400 mb-1">Bu yıl şu ana kadar</div>
+          <div className="text-xs text-slate-400 mb-1">{t('stats.yearEndPrediction.bu_yil_su_ana_kadar')}</div>
           <div className="text-2xl font-bold text-white">
             {formatTL(prediction.currentYearSpent)}
           </div>
@@ -184,7 +187,7 @@ export default function YearEndPrediction({ maintenanceRecords = [], fuelRecords
         <div className={`rounded-lg p-4 border ${trendBg}`}>
           <div className="text-xs text-slate-400 mb-1 flex items-center gap-1">
             <Sparkles className="w-3 h-3" />
-            Yıl sonu tahmini
+            {t('stats.yearEndPrediction.yil_sonu_tahmini')}
           </div>
           <div className="text-2xl font-bold text-white flex items-baseline gap-2">
             {formatTL(prediction.yearEndPrediction)}
@@ -194,7 +197,7 @@ export default function YearEndPrediction({ maintenanceRecords = [], fuelRecords
               {trendIcon}
               <span>
                 {prediction.yearOverYearTrend === 'flat' 
-                  ? 'Geçen yılla aynı tempoda'
+                  ? t('stats.yearEndPrediction.gecen_yilla_ayni_tempoda')
                   : prediction.yearOverYearTrend === 'up'
                   ? `Geçen yıldan %${Math.abs(prediction.yearOverYearPercent).toFixed(0)} daha çok`
                   : `Geçen yıldan %${Math.abs(prediction.yearOverYearPercent).toFixed(0)} daha az`
@@ -208,12 +211,12 @@ export default function YearEndPrediction({ maintenanceRecords = [], fuelRecords
       {/* Aylık ortalama + Geçen yıl karşılaştırma */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
         <div className="text-center p-3 bg-slate-900/30 rounded-lg">
-          <div className="text-xs text-slate-400 mb-1">Aylık ortalama</div>
+          <div className="text-xs text-slate-400 mb-1">{t('stats.yearEndPrediction.aylik_ortalama')}</div>
           <div className="text-base font-bold text-white">{formatTL(prediction.monthlyAvg)}</div>
         </div>
         {prediction.lastYearSpent > 0 && (
           <div className="text-center p-3 bg-slate-900/30 rounded-lg">
-            <div className="text-xs text-slate-400 mb-1">Geçen yıl aynı dönem</div>
+            <div className="text-xs text-slate-400 mb-1">{t('stats.yearEndPrediction.gecen_yil_ayni_donem')}</div>
             <div className="text-base font-bold text-white">{formatTL(prediction.lastYearSpent)}</div>
           </div>
         )}
@@ -230,7 +233,7 @@ export default function YearEndPrediction({ maintenanceRecords = [], fuelRecords
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-purple-400" />
-            <span className="text-xs text-slate-300 font-medium">Yıl ilerlemesi</span>
+            <span className="text-xs text-slate-300 font-medium">{t('stats.yearEndPrediction.yil_ilerlemesi')}</span>
           </div>
           <span className="text-xs font-bold text-white">
             %{prediction.yearProgress.toFixed(0)}
@@ -251,8 +254,7 @@ export default function YearEndPrediction({ maintenanceRecords = [], fuelRecords
       {prediction.yearOverYearTrend === 'up' && Math.abs(prediction.yearOverYearPercent) > 15 && (
         <div className="mt-3 bg-orange-500/10 border border-orange-500/20 rounded-lg p-3">
           <p className="text-xs text-slate-300">
-            ⚠️ Bu yıl harcamaların geçen yıla göre belirgin artmış. 
-            Tasarruf için Yakıt İstasyonu Analizi'ni kontrol etmek isteyebilirsin.
+            {t('stats.yearEndPrediction.bu_yil_harcamalarin_gecen_yila_gore')}
           </p>
         </div>
       )}

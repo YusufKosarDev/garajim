@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell } from 'recharts'
 import { getVehicleCostAnalysis } from '../../utils/statisticsHelpers'
 
@@ -10,6 +11,8 @@ const metrics = [
 ]
 
 export default function VehicleRankingChart({ vehicles = [], maintenanceRecords = [], fuelRecords = [] }) {
+  const { t } = useTranslation()
+
   const [selectedMetric, setSelectedMetric] = useState('totalCost')
 
   const analysis = useMemo(
@@ -33,7 +36,7 @@ export default function VehicleRankingChart({ vehicles = [], maintenanceRecords 
   if (vehicles.length < 2) {
     return (
       <div className="text-center py-8 text-slate-500 text-sm">
-        Karşılaştırma için en az 2 araç gerekiyor
+        {t('stats.vehicleRankingChart.karsilastirma_icin_en_az_2_arac')}
       </div>
     )
   }
@@ -41,7 +44,7 @@ export default function VehicleRankingChart({ vehicles = [], maintenanceRecords 
   if (data.length === 0) {
     return (
       <div className="text-center py-8 text-slate-500 text-sm">
-        Bu metrik için yeterli veri yok
+        {t('stats.vehicleRankingChart.bu_metrik_icin_yeterli_veri_yok')}
       </div>
     )
   }

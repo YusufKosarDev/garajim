@@ -1,9 +1,12 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Car, Wrench, Droplet, Gauge, Hash, TrendingUp } from 'lucide-react'
 import { useMemo } from 'react'
 import { getVehicleCostAnalysis } from '../../utils/statisticsHelpers'
 
 export default function VehicleBreakdownCards({ vehicles = [], maintenanceRecords = [], fuelRecords = [] }) {
+  const { t } = useTranslation()
+
   const analysis = useMemo(
     () => getVehicleCostAnalysis(vehicles, maintenanceRecords, fuelRecords),
     [vehicles, maintenanceRecords, fuelRecords]
@@ -58,7 +61,7 @@ export default function VehicleBreakdownCards({ vehicles = [], maintenanceRecord
                   } ₺
                 </div>
                 <div className="text-[10px] text-slate-500 uppercase tracking-wide">
-                  Toplam
+                  {t('stats.vehicleBreakdownCards.toplam')}
                 </div>
               </div>
             </div>
@@ -94,7 +97,7 @@ export default function VehicleBreakdownCards({ vehicles = [], maintenanceRecord
               <div>
                 <div className="flex items-center gap-1 text-[10px] text-slate-500 uppercase tracking-wide mb-0.5">
                   <Hash className="w-3 h-3" />
-                  Kayıt
+                  {t('stats.vehicleBreakdownCards.kayit')}
                 </div>
                 <div className="text-sm font-bold text-white">
                   {a.recordCount}
@@ -103,7 +106,7 @@ export default function VehicleBreakdownCards({ vehicles = [], maintenanceRecord
               <div>
                 <div className="flex items-center gap-1 text-[10px] text-slate-500 uppercase tracking-wide mb-0.5">
                   <Gauge className="w-3 h-3" />
-                  KM Aralığı
+                  {t('stats.vehicleBreakdownCards.km_araligi')}
                 </div>
                 <div className="text-sm font-bold text-white">
                   {a.kmRange > 0
@@ -115,7 +118,7 @@ export default function VehicleBreakdownCards({ vehicles = [], maintenanceRecord
               <div>
                 <div className="flex items-center gap-1 text-[10px] text-slate-500 uppercase tracking-wide mb-0.5">
                   <TrendingUp className="w-3 h-3" />
-                  ₺/KM
+                  {t('stats.vehicleBreakdownCards.km')}
                 </div>
                 <div className="text-sm font-bold text-blue-400">
                   {a.costPerKm !== null
@@ -127,7 +130,7 @@ export default function VehicleBreakdownCards({ vehicles = [], maintenanceRecord
               <div>
                 <div className="flex items-center gap-1 text-[10px] text-slate-500 uppercase tracking-wide mb-0.5">
                   <Droplet className="w-3 h-3" />
-                  Ort. ₺/L
+                  {t('stats.vehicleBreakdownCards.ort_l')}
                 </div>
                 <div className="text-sm font-bold text-orange-400">
                   {a.avgFuelPrice

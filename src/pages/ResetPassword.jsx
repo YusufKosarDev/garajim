@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import toast from 'react-hot-toast'
 import { Car, Lock, Eye, EyeOff, KeyRound, CheckCircle2, XCircle } from 'lucide-react'
 
 function ResetPassword() {
+  const { t } = useTranslation()
+
   const navigate = useNavigate()
 
   const [password, setPassword] = useState('')
@@ -40,7 +43,7 @@ function ResetPassword() {
     e.preventDefault()
 
     if (!isFormValid) {
-      toast.error('Şifre kurallarını kontrol et!')
+      toast.error(t('resetPassword.sifre_kurallarini_kontrol_et'))
       return
     }
 
@@ -54,11 +57,11 @@ function ResetPassword() {
         return
       }
 
-      toast.success('Şifren başarıyla değişti! 🎉')
+      toast.success(t('resetPassword.sifren_basariyla_degisti'))
       // Login sayfasına yönlendir
       setTimeout(() => navigate('/login', { replace: true }), 1500)
     } catch (err) {
-      toast.error('Bir hata oluştu, tekrar deneyin')
+      toast.error(t('resetPassword.bir_hata_olustu_tekrar_deneyin'))
       console.error('Reset password error:', err)
     } finally {
       setLoading(false)
@@ -71,7 +74,7 @@ function ResetPassword() {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-slate-400">Doğrulanıyor...</p>
+          <p className="text-slate-400">{t('resetPassword.dogrulaniyor')}</p>
         </div>
       </div>
     )
@@ -86,9 +89,9 @@ function ResetPassword() {
             <div className="inline-flex items-center justify-center w-16 h-16 bg-red-600/20 rounded-2xl mb-4">
               <XCircle className="w-8 h-8 text-red-400" />
             </div>
-            <h1 className="text-2xl font-bold text-white mb-2">Link Geçersiz</h1>
+            <h1 className="text-2xl font-bold text-white mb-2">{t('resetPassword.link_gecersiz')}</h1>
             <p className="text-slate-400">
-              Bu şifre sıfırlama linki geçersiz veya süresi dolmuş.
+              {t('resetPassword.bu_sifre_sifirlama_linki_gecersiz_veya')}
             </p>
           </div>
           <button
@@ -112,23 +115,23 @@ function ResetPassword() {
             <Car className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Garajım</h1>
-          <p className="text-slate-400">Yeni Şifreni Belirle</p>
+          <p className="text-slate-400">{t('resetPassword.yeni_sifreni_belirle')}</p>
         </div>
 
         {/* Card */}
         <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-8 shadow-xl">
           <h2 className="text-2xl font-bold text-white mb-2 text-center">
-            Yeni Şifre 🔐
+            {t('resetPassword.yeni_sifre')}
           </h2>
           <p className="text-sm text-slate-400 text-center mb-6">
-            Güçlü bir şifre seç, kimsenin bilemeyeceği
+            {t('resetPassword.guclu_bir_sifre_sec_kimsenin_bilemeyecegi')}
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Yeni Şifre */}
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Yeni Şifre
+                {t('resetPassword.yeni_sifre_2')}
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -136,7 +139,7 @@ function ResetPassword() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="En az 6 karakter"
+                  placeholder={t('resetPassword.en_az_6_karakter')}
                   autoComplete="new-password"
                   disabled={loading}
                   autoFocus
@@ -156,7 +159,7 @@ function ResetPassword() {
             {/* Şifre Tekrar */}
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Şifre (Tekrar)
+                {t('resetPassword.sifre_tekrar')}
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -164,7 +167,7 @@ function ResetPassword() {
                   type={showPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Şifreni tekrar gir"
+                  placeholder={t('resetPassword.sifreni_tekrar_gir')}
                   autoComplete="new-password"
                   disabled={loading}
                   className="w-full bg-slate-900/50 border border-slate-600 rounded-xl pl-11 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition disabled:opacity-50"
@@ -191,12 +194,12 @@ function ResetPassword() {
               {loading ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Kaydediliyor...
+                  {t('resetPassword.kaydediliyor')}
                 </>
               ) : (
                 <>
                   <KeyRound className="w-5 h-5" />
-                  Şifreyi Güncelle
+                  {t('resetPassword.sifreyi_guncelle')}
                 </>
               )}
             </button>

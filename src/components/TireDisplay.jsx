@@ -1,7 +1,10 @@
 import { AlertTriangle, AlertOctagon } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { evaluateTire, TIRE_POSITIONS } from '../utils/tireHelpers'
 
 export default function TireDisplay({ tire, showWarning = true }) {
+  const { t } = useTranslation()
+
   const evaluation = evaluateTire(tire)
   const pos = TIRE_POSITIONS.find(p => p.code === tire.position)
 
@@ -41,7 +44,7 @@ export default function TireDisplay({ tire, showWarning = true }) {
       <div className="space-y-0.5">
         {depth > 0 && (
           <div className="flex items-center justify-between">
-            <span className="text-[9px] text-slate-500">Diş</span>
+            <span className="text-[9px] text-slate-500">{t('tireDisplay.dis')}</span>
             <span className={`text-xs font-bold ${textColors[evaluation.status]}`}>
               {depth} mm
             </span>
@@ -57,7 +60,7 @@ export default function TireDisplay({ tire, showWarning = true }) {
         )}
         {evaluation.age && (
           <div className="flex items-center justify-between">
-            <span className="text-[9px] text-slate-500">Yaş</span>
+            <span className="text-[9px] text-slate-500">{t('tireDisplay.yas')}</span>
             <span className={`text-xs font-semibold ${textColors[evaluation.status]}`}>
               {evaluation.age.ageYears}y
             </span>

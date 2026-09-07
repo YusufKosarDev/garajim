@@ -1,9 +1,12 @@
 import { Pencil, Trash2, CheckCircle, Calendar, DollarSign, AlertTriangle } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { SEASONS, evaluateTireSet, getAverageTreadDepth } from '../utils/tireHelpers'
 import { formatDate } from '../utils/dateHelpers'
 import TireDisplay from './TireDisplay'
 
 export default function TireCard({ tireSet, isActive = false, onEdit, onDelete }) {
+  const { t } = useTranslation()
+
   const season = SEASONS[tireSet.season]
   const setEvaluation = evaluateTireSet(tireSet)
   const avgDepth = getAverageTreadDepth(tireSet)
@@ -26,8 +29,8 @@ export default function TireCard({ tireSet, isActive = false, onEdit, onDelete }
   const colors = seasonColors[tireSet.season] || seasonColors.summer
 
   // Lastikleri pozisyona göre düzenle
-  const mainTires = tireSet.tires.filter(t => t.position !== 'S')
-  const spareTire = tireSet.tires.find(t => t.position === 'S')
+  const mainTires = tireSet.tires.filter(lastik => lastik.position !== 'S')
+  const spareTire = tireSet.tires.find(lastik => lastik.position === 'S')
 
   return (
     <div className={`bg-gradient-to-br ${colors.bg} border-2 ${colors.border} rounded-xl overflow-hidden transition ${
@@ -46,7 +49,7 @@ export default function TireCard({ tireSet, isActive = false, onEdit, onDelete }
                 {isActive && (
                   <span className="flex items-center gap-1 text-[10px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full font-semibold">
                     <CheckCircle className="w-3 h-3" />
-                    Takılı
+                    {t('tireCard.takili')}
                   </span>
                 )}
               </div>
@@ -60,14 +63,14 @@ export default function TireCard({ tireSet, isActive = false, onEdit, onDelete }
             <button
               onClick={() => onEdit(tireSet)}
               className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-blue-400 transition"
-              title="Düzenle"
+              title={t('tireCard.duzenle')}
             >
               <Pencil className="w-4 h-4" />
             </button>
             <button
               onClick={() => onDelete(tireSet)}
               className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-red-400 transition"
-              title="Sil"
+              title={t('tireCard.sil')}
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -113,7 +116,7 @@ export default function TireCard({ tireSet, isActive = false, onEdit, onDelete }
         <div className="grid grid-cols-3 gap-3 text-xs">
           {avgDepth !== null && (
             <div>
-              <div className="text-[10px] text-slate-500 uppercase tracking-wide">Ort. Diş</div>
+              <div className="text-[10px] text-slate-500 uppercase tracking-wide">{t('tireCard.ort_dis')}</div>
               <div className={`font-bold ${colors.text}`}>
                 {avgDepth.toFixed(1)} mm
               </div>
@@ -123,7 +126,7 @@ export default function TireCard({ tireSet, isActive = false, onEdit, onDelete }
             <div>
               <div className="text-[10px] text-slate-500 uppercase tracking-wide flex items-center gap-0.5">
                 <Calendar className="w-2.5 h-2.5" />
-                Alım
+                {t('tireCard.alim')}
               </div>
               <div className="font-semibold text-slate-300">
                 {formatDate(tireSet.purchaseDate)}
@@ -134,7 +137,7 @@ export default function TireCard({ tireSet, isActive = false, onEdit, onDelete }
             <div>
               <div className="text-[10px] text-slate-500 uppercase tracking-wide flex items-center gap-0.5">
                 <DollarSign className="w-2.5 h-2.5" />
-                Fiyat
+                {t('tireCard.fiyat')}
               </div>
               <div className="font-semibold text-green-400">
                 {tireSet.purchasePrice.toLocaleString('tr-TR')} ₺

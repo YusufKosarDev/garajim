@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { TrendingDown, Info, Gauge, Wrench, CalendarClock } from 'lucide-react'
 import { estimateVehicleValue } from '../utils/vehicleValuation'
 
@@ -33,6 +34,8 @@ const GUVEN_METNI = {
 const yuzde = (oran) => `${oran >= 0 ? '+' : ''}${(oran * 100).toFixed(1)}%`
 
 export default function VehicleValueCard({ vehicle, maintenanceRecords = [] }) {
+  const { t } = useTranslation()
+
   const vehicleId = vehicle?.id
 
   // Cihazda kayıtlı fiyat. Kullanıcının yazdığı değer, AİT OLDUĞU ARAÇLA birlikte
@@ -64,10 +67,10 @@ export default function VehicleValueCard({ vehicle, maintenanceRecords = [] }) {
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
         <h3 className="font-semibold flex items-center gap-2 mb-2">
           <TrendingDown className="w-4 h-4 text-slate-400" aria-hidden="true" />
-          Değer Tahmini
+          {t('vehicleValueCard.deger_tahmini')}
         </h3>
         <p className="text-sm text-slate-400">
-          Tahmin için aracın model yılı gerekiyor. Aracı düzenleyip yılı ekleyebilirsin.
+          {t('vehicleValueCard.tahmin_icin_aracin_model_yili_gerekiyor')}
         </p>
       </div>
     )
@@ -93,7 +96,7 @@ export default function VehicleValueCard({ vehicle, maintenanceRecords = [] }) {
     },
     {
       ikon: Wrench,
-      etiket: 'Bakım geçmişi',
+      etiket: t('vehicleValueCard.bakim_gecmisi'),
       deger: yuzde(tahmin.bilesenler.bakim),
       renk: tahmin.bilesenler.bakim < 0 ? 'text-red-400' : tahmin.bilesenler.bakim > 0 ? 'text-green-400' : 'text-slate-500',
     },
@@ -104,16 +107,16 @@ export default function VehicleValueCard({ vehicle, maintenanceRecords = [] }) {
       <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
         <h3 className="font-semibold flex items-center gap-2">
           <TrendingDown className="w-4 h-4 text-blue-400" aria-hidden="true" />
-          Değer Tahmini
+          {t('vehicleValueCard.deger_tahmini')}
         </h3>
         <span className="text-xs text-slate-500">
-          Güven: <strong className={guven.sinif}>{guven.etiket}</strong>
+          {t('vehicleValueCard.guven')} <strong className={guven.sinif}>{guven.etiket}</strong>
         </span>
       </div>
 
       <div className="flex items-baseline gap-2 mb-1">
         <span className="text-3xl font-bold text-white">%{kalanYuzde}</span>
-        <span className="text-sm text-slate-400">ilk değerini koruyor</span>
+        <span className="text-sm text-slate-400">{t('vehicleValueCard.ilk_degerini_koruyor')}</span>
       </div>
 
       {tahmin.tahminiDeger !== null && (
@@ -138,7 +141,7 @@ export default function VehicleValueCard({ vehicle, maintenanceRecords = [] }) {
 
       <div>
         <label htmlFor="alis-fiyati" className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
-          Alış fiyatı (opsiyonel)
+          {t('vehicleValueCard.alis_fiyati_opsiyonel')}
         </label>
         <input
           id="alis-fiyati"
@@ -147,11 +150,11 @@ export default function VehicleValueCard({ vehicle, maintenanceRecords = [] }) {
           inputMode="numeric"
           value={alisFiyati}
           onChange={e => fiyatDegisti(e.target.value)}
-          placeholder="Örn. 850000"
+          placeholder={t('vehicleValueCard.orn_850000')}
           className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition"
         />
         <p className="text-[11px] text-slate-500 mt-1">
-          Bu rakam yalnızca bu cihazda saklanır, hesaba senkronize edilmez.
+          {t('vehicleValueCard.bu_rakam_yalnizca_bu_cihazda_saklanir')}
         </p>
       </div>
 

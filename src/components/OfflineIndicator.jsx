@@ -1,10 +1,13 @@
 import { motion, AnimatePresence } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { WifiOff, Wifi, Clock } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { usePWA } from '../hooks/usePWA'
 import { useVehicles } from '../context/VehicleContext'
 
 export default function OfflineIndicator() {
+  const { t } = useTranslation()
+
   const { isOnline } = usePWA()
   const { bekleyenSayisi } = useVehicles()
   const [showReconnected, setShowReconnected] = useState(false)
@@ -36,7 +39,7 @@ export default function OfflineIndicator() {
         >
           <div className="max-w-6xl mx-auto flex items-center justify-center gap-2 flex-wrap">
             <WifiOff className="w-4 h-4" />
-            <span>Çevrimdışısın — kayıtların sıraya alınıp bağlantı gelince gönderilecek</span>
+            <span>{t('offlineIndicator.cevrimdisisin_kayitlarin_siraya_alinip_baglanti_')}</span>
             {bekleyenSayisi > 0 && (
               <span className="inline-flex items-center gap-1 bg-yellow-700/60 px-2 py-0.5 rounded-full text-xs">
                 <Clock className="w-3 h-3" />
@@ -55,7 +58,7 @@ export default function OfflineIndicator() {
         >
           <div className="max-w-6xl mx-auto flex items-center justify-center gap-2">
             <Wifi className="w-4 h-4" />
-            <span>Bağlantı geri geldi ✓</span>
+            <span>{t('offlineIndicator.baglanti_geri_geldi')}</span>
           </div>
         </motion.div>
       ) : null}

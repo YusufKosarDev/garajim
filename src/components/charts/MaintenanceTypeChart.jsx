@@ -1,4 +1,5 @@
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts'
+import { useTranslation } from 'react-i18next'
 
 const COLORS = [
   '#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#22c55e',
@@ -7,10 +8,12 @@ const COLORS = [
 ]
 
 export default function MaintenanceTypeChart({ maintenanceRecords = [] }) {
+  const { t } = useTranslation()
+
   if (!maintenanceRecords || maintenanceRecords.length === 0) {
     return (
       <div className="h-[300px] flex items-center justify-center text-slate-500 text-sm">
-        Henüz bakım kaydı yok
+        {t('components.charts.maintenanceTypeChart.henuz_bakim_kaydi_yok')}
       </div>
     )
   }
@@ -31,7 +34,7 @@ export default function MaintenanceTypeChart({ maintenanceRecords = [] }) {
   if (data.length === 0) {
     return (
       <div className="h-[300px] flex items-center justify-center text-slate-500 text-sm">
-        Bakım kayıtlarında maliyet bilgisi yok
+        {t('components.charts.maintenanceTypeChart.bakim_kayitlarinda_maliyet_bilgisi_yok')}
       </div>
     )
   }

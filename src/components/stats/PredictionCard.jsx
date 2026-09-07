@@ -1,7 +1,10 @@
 import { TrendingUp, TrendingDown, Minus, Sparkles } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { getAverageMonthlySpending, getCurrentMonthSpending, getSpendingTrend } from '../../utils/statisticsHelpers'
 
 export default function PredictionCard({ maintenanceRecords, fuelRecords }) {
+  const { t } = useTranslation()
+
   const avgData = getAverageMonthlySpending(maintenanceRecords, fuelRecords, 3)
   const currentMonth = getCurrentMonthSpending(maintenanceRecords, fuelRecords)
   const trend = getSpendingTrend(maintenanceRecords, fuelRecords)
@@ -32,14 +35,14 @@ export default function PredictionCard({ maintenanceRecords, fuelRecords }) {
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
         <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-2 mb-3">
           <Sparkles className="w-4 h-4" />
-          Bu Ay Tahmini
+          {t('stats.predictionCard.bu_ay_tahmini')}
         </h3>
         <div className="text-center py-6">
           <p className="text-sm text-slate-500">
-            Tahmin için en az 3 aylık veri gerekiyor
+            {t('stats.predictionCard.tahmin_icin_en_az_3_aylik')}
           </p>
           <p className="text-xs text-slate-600 mt-1">
-            Daha fazla kayıt ekledikçe akıllı tahminler göreceksin
+            {t('stats.predictionCard.daha_fazla_kayit_ekledikce_akilli_tahminler')}
           </p>
         </div>
       </div>
@@ -50,7 +53,7 @@ export default function PredictionCard({ maintenanceRecords, fuelRecords }) {
     <div className="bg-gradient-to-br from-blue-600/20 via-purple-600/10 to-slate-900 border border-blue-500/30 rounded-xl p-5">
       <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide flex items-center gap-2 mb-3">
         <Sparkles className="w-4 h-4 text-blue-400" />
-        Bu Ay Tahmini
+        {t('stats.predictionCard.bu_ay_tahmini')}
       </h3>
 
       <div className="mb-4">
@@ -58,13 +61,13 @@ export default function PredictionCard({ maintenanceRecords, fuelRecords }) {
           {finalPrediction.toLocaleString('tr-TR')} ₺
         </div>
         <div className="text-xs text-slate-400 mt-1">
-          Son 3 ay ortalaması ve güncel harcama baz alındı
+          {t('stats.predictionCard.son_3_ay_ortalamasi_ve_guncel')}
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-800">
         <div>
-          <div className="text-xs text-slate-500 mb-1">Şu ana kadar</div>
+          <div className="text-xs text-slate-500 mb-1">{t('stats.predictionCard.su_ana_kadar')}</div>
           <div className="text-sm font-bold text-white">
             {currentMonth.total.toLocaleString('tr-TR')} ₺
           </div>
@@ -73,7 +76,7 @@ export default function PredictionCard({ maintenanceRecords, fuelRecords }) {
           </div>
         </div>
         <div>
-          <div className="text-xs text-slate-500 mb-1">Trend (son 3 ay)</div>
+          <div className="text-xs text-slate-500 mb-1">{t('stats.predictionCard.trend_son_3_ay')}</div>
           <div className={`flex items-center gap-1 text-sm font-bold ${trendColor}`}>
             <TrendIcon className="w-3.5 h-3.5" />
             {trendLabel}

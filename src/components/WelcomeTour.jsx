@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Car, Calendar, Wrench, Droplet, Bell, ChevronRight, ChevronLeft, X } from 'lucide-react'
 
@@ -49,6 +50,8 @@ const colors = {
 }
 
 export default function WelcomeTour({ isOpen, onClose }) {
+  const { t } = useTranslation()
+
   const [currentStep, setCurrentStep] = useState(0)
 
   useEffect(() => {
@@ -125,7 +128,7 @@ export default function WelcomeTour({ isOpen, onClose }) {
                     className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 px-4 py-2.5 rounded-lg transition"
                   >
                     <ChevronLeft className="w-4 h-4" />
-                    Geri
+                    {t('welcomeTour.geri')}
                   </button>
                 )}
 

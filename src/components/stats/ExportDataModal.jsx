@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Download, FileSpreadsheet, Car, Wrench, Droplet, Calendar, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Modal from '../Modal'
@@ -50,6 +51,8 @@ const exportTypes = [
 ]
 
 export default function ExportDataModal({ isOpen, onClose, vehicles, maintenanceRecords, fuelRecords }) {
+  const { t } = useTranslation()
+
   const [exportType, setExportType] = useState('all')
   const [dateRange, setDateRange] = useState('all')
   const [isExporting, setIsExporting] = useState(false)
@@ -91,7 +94,7 @@ export default function ExportDataModal({ isOpen, onClose, vehicles, maintenance
       onClose()
     } catch (err) {
       console.error(err)
-      toast.error('Export sırasında hata oluştu')
+      toast.error(t('stats.exportDataModal.export_sirasinda_hata_olustu'))
     } finally {
       setIsExporting(false)
     }
@@ -120,14 +123,14 @@ export default function ExportDataModal({ isOpen, onClose, vehicles, maintenance
     <Modal
       isOpen={isOpen}
       onClose={isExporting ? () => {} : onClose}
-      title="Verileri CSV Olarak İndir"
+      title={t('stats.exportDataModal.verileri_csv_olarak_indir')}
       maxWidth="max-w-2xl"
     >
       <div className="p-5 space-y-5">
         {/* Tip seçimi */}
         <div>
           <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">
-            Ne indirmek istiyorsun?
+            {t('stats.exportDataModal.ne_indirmek_istiyorsun')}
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {exportTypes.map(type => {
@@ -166,7 +169,7 @@ export default function ExportDataModal({ isOpen, onClose, vehicles, maintenance
           <div>
             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2 flex items-center gap-1">
               <Calendar className="w-3 h-3" />
-              Tarih Aralığı
+              {t('stats.exportDataModal.tarih_araligi')}
             </label>
             <div className="flex flex-wrap gap-2">
               {dateRanges.map(range => (
@@ -190,7 +193,7 @@ export default function ExportDataModal({ isOpen, onClose, vehicles, maintenance
         {/* Preview */}
         <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3">
           <div className="text-[10px] text-slate-400 uppercase tracking-wide mb-1">
-            İndirilecek
+            {t('stats.exportDataModal.indirilecek')}
           </div>
           <div className="text-sm font-semibold text-white">
             {previewCount()}
@@ -202,9 +205,9 @@ export default function ExportDataModal({ isOpen, onClose, vehicles, maintenance
           <div className="flex items-start gap-2 text-xs text-slate-300">
             <FileSpreadsheet className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
             <div>
-              <p className="font-semibold text-blue-400 mb-1">Excel & Google Sheets Uyumlu</p>
+              <p className="font-semibold text-blue-400 mb-1">{t('stats.exportDataModal.excel_google_sheets_uyumlu')}</p>
               <p className="text-slate-400">
-                Dosya UTF-8 + BOM formatında oluşturulur — Türkçe karakterler doğru görünür. İndirdikten sonra çift tıklayarak aç veya Google Sheets'e yükle.
+                {t('stats.exportDataModal.dosya_utf_8_bom_formatinda_olusturulur')}
               </p>
             </div>
           </div>
@@ -227,12 +230,12 @@ export default function ExportDataModal({ isOpen, onClose, vehicles, maintenance
             {isExporting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                İndiriliyor...
+                {t('stats.exportDataModal.indiriliyor')}
               </>
             ) : (
               <>
                 <Download className="w-4 h-4" />
-                CSV İndir
+                {t('stats.exportDataModal.csv_indir')}
               </>
             )}
           </button>

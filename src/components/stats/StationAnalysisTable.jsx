@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { MapPin, Trophy, TrendingDown, TrendingUp, Sparkles, Info, LineChart } from 'lucide-react'
 import { getStationAnalysis } from '../../utils/statisticsHelpers'
 import { analyzeFuelPrices } from '../../utils/fuelPriceAnalysis'
@@ -12,6 +13,8 @@ const ayEtiketi = (ay) => {
 }
 
 export default function StationAnalysisTable({ fuelRecords = [] }) {
+  const { t } = useTranslation()
+
   const analysis = useMemo(() => getStationAnalysis(fuelRecords), [fuelRecords])
 
   // Zaman farkındalıklı fiyat analizi (madde 27).
@@ -45,7 +48,7 @@ export default function StationAnalysisTable({ fuelRecords = [] }) {
   if (analysis.length === 0) {
     return (
       <div className="text-center py-8 text-slate-500 text-sm">
-        Henüz yakıt kaydı yok
+        {t('stats.stationAnalysisTable.henuz_yakit_kaydi_yok')}
       </div>
     )
   }
@@ -62,7 +65,7 @@ export default function StationAnalysisTable({ fuelRecords = [] }) {
           <div className="flex items-start gap-2">
             <Sparkles className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" aria-hidden="true" />
             <div className="text-xs">
-              <div className="text-blue-300 font-semibold mb-1">Kaçırılan tasarruf</div>
+              <div className="text-blue-300 font-semibold mb-1">{t('stats.stationAnalysisTable.kacirilan_tasarruf')}</div>
               <p className="text-slate-300 leading-relaxed">
                 Her alımda o günlerde açık ara en ucuz olan istasyonu seçseydin yaklaşık{' '}
                 <strong className="text-green-400">
@@ -98,7 +101,7 @@ export default function StationAnalysisTable({ fuelRecords = [] }) {
           <div className="flex items-center gap-2 p-2.5 bg-green-500/10 border border-green-500/20 rounded-lg">
             <TrendingDown className="w-4 h-4 text-green-400 shrink-0" aria-hidden="true" />
             <div className="text-xs min-w-0">
-              <div className="text-green-400 font-semibold">Dönemin piyasasına göre en ucuz</div>
+              <div className="text-green-400 font-semibold">{t('stats.stationAnalysisTable.donemin_piyasasina_gore_en_ucuz')}</div>
               <div className="text-slate-300 truncate">
                 {cheapest.station} — <strong>{Math.abs(cheapest.ortSapma).toFixed(2)} ₺/L altında</strong>
                 <span className="text-slate-500"> ({cheapest.count} alım)</span>
@@ -108,7 +111,7 @@ export default function StationAnalysisTable({ fuelRecords = [] }) {
           <div className="flex items-center gap-2 p-2.5 bg-red-500/10 border border-red-500/20 rounded-lg">
             <TrendingUp className="w-4 h-4 text-red-400 shrink-0" aria-hidden="true" />
             <div className="text-xs min-w-0">
-              <div className="text-red-400 font-semibold">Dönemin piyasasına göre en pahalı</div>
+              <div className="text-red-400 font-semibold">{t('stats.stationAnalysisTable.donemin_piyasasina_gore_en_pahali')}</div>
               <div className="text-slate-300 truncate">
                 {mostExpensive.station} — <strong>{mostExpensive.ortSapma.toFixed(2)} ₺/L üstünde</strong>
                 <span className="text-slate-500"> ({mostExpensive.count} alım)</span>
@@ -123,7 +126,7 @@ export default function StationAnalysisTable({ fuelRecords = [] }) {
         <div className="flex items-center gap-2 p-2.5 mb-4 bg-slate-800/40 border border-slate-700 rounded-lg text-xs">
           <LineChart className="w-4 h-4 text-slate-400 shrink-0" aria-hidden="true" />
           <div className="min-w-0">
-            <span className="text-slate-400">Senin ödediğin fiyat: </span>
+            <span className="text-slate-400">{t('stats.stationAnalysisTable.senin_odedigin_fiyat')} </span>
             <strong className="text-white">{ayEtiketi(seyir.ilk.ay)}</strong>
             {' '}{seyir.ilk.ortFiyat.toFixed(2)} ₺/L
             {' → '}
@@ -170,7 +173,7 @@ export default function StationAnalysisTable({ fuelRecords = [] }) {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="font-semibold text-sm truncate">
-                      {station.station || 'Belirtilmemiş'}
+                      {station.station || t('stats.stationAnalysisTable.belirtilmemis')}
                     </div>
                     <div className="text-[10px] text-slate-500">
                       {station.count} alım • {station.liters.toFixed(1)} L

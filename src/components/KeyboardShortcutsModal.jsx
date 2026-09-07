@@ -1,4 +1,5 @@
 import { Keyboard } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import Modal from './Modal'
 
 const shortcutGroups = [
@@ -38,16 +39,18 @@ const shortcutGroups = [
 ]
 
 export default function KeyboardShortcutsModal({ isOpen, onClose }) {
+  const { t } = useTranslation()
+
   // Mac tespiti
   const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Klavye Kısayolları" maxWidth="max-w-2xl">
+    <Modal isOpen={isOpen} onClose={onClose} title={t('keyboardShortcutsModal.klavye_kisayollari')} maxWidth="max-w-2xl">
       <div className="p-5">
         <div className="flex items-center gap-3 mb-5 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
           <Keyboard className="w-5 h-5 text-blue-400 shrink-0" />
           <p className="text-sm text-slate-300">
-            İki tuşlu kısayollar için ilk tuşa bas, sonra <strong>1 saniye içinde</strong> ikinci tuşa bas. <strong>Ctrl+K</strong> input içinde bile çalışır.
+            {t('keyboardShortcutsModal.iki_tuslu_kisayollar_icin_ilk_tusa')} <strong>{t('keyboardShortcutsModal.1_saniye_icinde')}</strong> {t('keyboardShortcutsModal.ikinci_tusa_bas')} <strong>{t('keyboardShortcutsModal.ctrl_k')}</strong> {t('keyboardShortcutsModal.input_icinde_bile_calisir')}
           </p>
         </div>
 
@@ -69,7 +72,7 @@ export default function KeyboardShortcutsModal({ isOpen, onClose }) {
                       <div className="flex items-center gap-1">
                         {displayKeys.map((key, j) => (
                           <span key={j} className="flex items-center gap-1">
-                            {j > 0 && !shortcut.altKeys && <span className="text-xs text-slate-500 mx-0.5">sonra</span>}
+                            {j > 0 && !shortcut.altKeys && <span className="text-xs text-slate-500 mx-0.5">{t('keyboardShortcutsModal.sonra')}</span>}
                             {j > 0 && shortcut.altKeys && <span className="text-xs text-slate-500 mx-0.5">+</span>}
                             <kbd className="inline-flex items-center justify-center min-w-[28px] h-7 px-2 bg-slate-800 border border-slate-700 rounded text-xs font-mono font-semibold text-slate-200 shadow-sm">
                               {key}
@@ -86,7 +89,7 @@ export default function KeyboardShortcutsModal({ isOpen, onClose }) {
         </div>
 
         <div className="mt-5 pt-5 border-t border-slate-800 text-xs text-slate-500 text-center">
-          💡 İpucu: Input içindeyken kısayollar çalışmaz (Ctrl+K hariç), rahat yaz.
+          {t('keyboardShortcutsModal.ipucu_input_icindeyken_kisayollar_calismaz_ctrl')}
         </div>
       </div>
     </Modal>

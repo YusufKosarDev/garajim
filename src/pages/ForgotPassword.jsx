@@ -1,10 +1,13 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
 import { Car, Mail, ArrowLeft, Send, CheckCircle2 } from 'lucide-react'
 
 function ForgotPassword() {
+  const { t } = useTranslation()
+
   const { resetPassword } = useAuth()
 
   const [email, setEmail] = useState('')
@@ -15,7 +18,7 @@ function ForgotPassword() {
     e.preventDefault()
 
     if (!email.trim()) {
-      toast.error('Email adresi gerekli!')
+      toast.error(t('forgotPassword.email_adresi_gerekli'))
       return
     }
 
@@ -31,9 +34,9 @@ function ForgotPassword() {
 
       // Başarılı — bilgi göster
       setEmailSent(true)
-      toast.success('Sıfırlama linki gönderildi! 📧')
+      toast.success(t('forgotPassword.sifirlama_linki_gonderildi'))
     } catch (err) {
-      toast.error('Bir hata oluştu, tekrar deneyin')
+      toast.error(t('forgotPassword.bir_hata_olustu_tekrar_deneyin'))
       console.error('Reset password error:', err)
     } finally {
       setLoading(false)
@@ -49,7 +52,7 @@ function ForgotPassword() {
             <Car className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Garajım</h1>
-          <p className="text-slate-400">Araç Takip Asistanı</p>
+          <p className="text-slate-400">{t('forgotPassword.arac_takip_asistani')}</p>
         </div>
 
         {/* Card */}
@@ -57,17 +60,17 @@ function ForgotPassword() {
           {!emailSent ? (
             <>
               <h2 className="text-2xl font-bold text-white mb-2 text-center">
-                Şifreni mi Unuttun? 🔑
+                {t('forgotPassword.sifreni_mi_unuttun')}
               </h2>
               <p className="text-sm text-slate-400 text-center mb-6">
-                Email adresini gir, sıfırlama linki gönderelim
+                {t('forgotPassword.email_adresini_gir_sifirlama_linki_gonderelim')}
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Email */}
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Email
+                    {t('forgotPassword.email')}
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -75,7 +78,7 @@ function ForgotPassword() {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="ornek@email.com"
+                      placeholder={t('forgotPassword.ornek_email_com')}
                       autoComplete="email"
                       disabled={loading}
                       autoFocus
@@ -93,12 +96,12 @@ function ForgotPassword() {
                   {loading ? (
                     <>
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Gönderiliyor...
+                      {t('forgotPassword.gonderiliyor')}
                     </>
                   ) : (
                     <>
                       <Send className="w-5 h-5" />
-                      Sıfırlama Linki Gönder
+                      {t('forgotPassword.sifirlama_linki_gonder')}
                     </>
                   )}
                 </button>
@@ -111,20 +114,19 @@ function ForgotPassword() {
                 <CheckCircle2 className="w-8 h-8 text-green-400" />
               </div>
               <h2 className="text-2xl font-bold text-white mb-2">
-                Email Gönderildi! 📧
+                {t('forgotPassword.email_gonderildi')}
               </h2>
               <p className="text-slate-400 mb-6">
-                <span className="text-blue-400 font-medium">{email}</span> adresine sıfırlama linki gönderdik.
-                Email'i kontrol et ve linke tıkla.
+                <span className="text-blue-400 font-medium">{email}</span> {t('forgotPassword.adresine_sifirlama_linki_gonderdik_email_i')}
               </p>
               <div className="bg-slate-900/50 border border-slate-700 rounded-xl p-4 mb-6 text-left">
                 <p className="text-sm text-slate-300 mb-2">
-                  💡 <strong>Email gelmediyse:</strong>
+                  💡 <strong>{t('forgotPassword.email_gelmediyse')}</strong>
                 </p>
                 <ul className="text-sm text-slate-400 space-y-1 list-disc list-inside">
-                  <li>Spam klasörünü kontrol et</li>
-                  <li>Email adresini doğru yazdığından emin ol</li>
-                  <li>Birkaç dakika bekle</li>
+                  <li>{t('forgotPassword.spam_klasorunu_kontrol_et')}</li>
+                  <li>{t('forgotPassword.email_adresini_dogru_yazdigindan_emin_ol')}</li>
+                  <li>{t('forgotPassword.birkac_dakika_bekle')}</li>
                 </ul>
               </div>
               <button
@@ -146,7 +148,7 @@ function ForgotPassword() {
               className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition"
             >
               <ArrowLeft className="w-4 h-4" />
-              Giriş sayfasına dön
+              {t('forgotPassword.giris_sayfasina_don')}
             </Link>
           </div>
         </div>

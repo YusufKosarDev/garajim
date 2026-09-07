@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Upload, X, Image as ImageIconLucide, Maximize2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { compressImage, getImageSize } from '../utils/imageHelpers'
@@ -7,10 +8,17 @@ import Lightbox from './Lightbox'
 export default function SingleImageUploader({
   photo,
   onChange,
-  label = 'Fotoğraf',
-  hint = 'Fatura, fiş veya parça fotoğrafı',
+  label: labelProp,
+  hint: hintProp,
   maxSizeMB = 1,
 }) {
+  const { t } = useTranslation()
+
+  // Varsayılanlar parametre listesinde OLAMAZ: orası hook'un kapsamı dışında,
+  // `t` henüz tanımlı değil. Bileşen çalışma zamanında çökerdi.
+  const label = labelProp ?? t('singleImageUploader.fotograf')
+  const hint = hintProp ?? t('singleImageUploader.fatura_fis_veya_parca_fotografi')
+
   const fileInputRef = useRef(null)
   const [isUploading, setIsUploading] = useState(false)
   const [lightboxOpen, setLightboxOpen] = useState(false)
@@ -20,22 +28,22 @@ export default function SingleImageUploader({
     if (!file) return
 
     if (!file.type.startsWith('image/')) {
-      toast.error('Lütfen bir görsel dosyası seç')
+      toast.error(t('singleImageUploader.lutfen_bir_gorsel_dosyasi_sec'))
       if (fileInputRef.current) fileInputRef.current.value = ''
       return
     }
 
     setIsUploading(true)
-    const loadingToast = toast.loading('Fotoğraf işleniyor...')
+    const loadingToast = toast.loading(t('singleImageUploader.fotograf_isleniyor'))
 
     try {
       const compressed = await compressImage(file)
       onChange(compressed)
       toast.dismiss(loadingToast)
-      toast.success('Fotoğraf eklendi 📸')
+      toast.success(t('singleImageUploader.fotograf_eklendi'))
     } catch (err) {
       toast.dismiss(loadingToast)
-      toast.error(err.message || 'Fotoğraf yüklenemedi')
+      toast.error(err.message || t('singleImageUploader.fotograf_yuklenemedi'))
     } finally {
       setIsUploading(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -75,11 +83,11 @@ export default function SingleImageUploader({
               type="button"
               onClick={handleOpenLightbox}
               className="relative w-16 h-16 rounded-lg overflow-hidden border-2 border-slate-700 hover:border-blue-500/50 transition cursor-zoom-in shrink-0 group/thumb"
-              title="Büyüt"
+              title={t('singleImageUploader.buyut')}
             >
               <img
                 src={photo}
-                alt="Yüklenen fatura fotoğrafı"
+                alt={t('singleImageUploader.yuklenen_fatura_fotografi')}
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-black/0 group-hover/thumb:bg-black/40 transition flex items-center justify-center">
@@ -89,7 +97,7 @@ export default function SingleImageUploader({
 
             <div className="flex-1 min-w-0">
               <div className="text-sm font-semibold text-white">
-                Fatura fotoğrafı eklendi
+                {t('singleImageUploader.fatura_fotografi_eklendi')}
               </div>
               <div className="text-xs text-slate-400">
                 {sizeKB > 1024 ? `${(sizeKB / 1024).toFixed(2)} MB` : `${sizeKB} KB`}

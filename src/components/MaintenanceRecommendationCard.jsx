@@ -1,4 +1,5 @@
 import { memo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Wrench, AlertTriangle, Clock, Plus } from 'lucide-react'
 
@@ -34,6 +35,8 @@ const statusConfig = {
 }
 
 function MaintenanceRecommendationCard({ recommendation, onQuickAdd, showVehicle = true }) {
+  const { t } = useTranslation()
+
   const config = statusConfig[recommendation.status]
   const Icon = config.icon
 
@@ -74,7 +77,7 @@ function MaintenanceRecommendationCard({ recommendation, onQuickAdd, showVehicle
           <button
             onClick={() => onQuickAdd(recommendation)}
             className="p-2 hover:bg-slate-700/50 rounded-lg text-slate-400 hover:text-blue-400 transition"
-            title="Şimdi Ekle"
+            title={t('maintenanceRecommendationCard.simdi_ekle')}
           >
             <Plus className="w-4 h-4" />
           </button>

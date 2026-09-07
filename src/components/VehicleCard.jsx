@@ -1,10 +1,13 @@
 import { memo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Pencil, Trash2, Car, Calendar, Fuel, Gauge, AlertTriangle, ImageIcon } from 'lucide-react'
 import { formatDate, getDateStatus, daysUntil } from '../utils/dateHelpers'
 
 function VehicleCard({ vehicle, onEdit, onDelete }) {
+  const { t } = useTranslation()
+
   // Çoklu fotoğraf desteği — eski `photo` ile uyumlu
   const photos = Array.isArray(vehicle.photos) ? vehicle.photos : (vehicle.photo ? [vehicle.photo] : [])
   const mainPhoto = photos[0] || null
@@ -80,14 +83,14 @@ function VehicleCard({ vehicle, onEdit, onDelete }) {
             <button
               onClick={handleEditClick}
               className="p-1.5 bg-black/70 hover:bg-blue-500/80 backdrop-blur-sm rounded-md text-white transition"
-              title="Düzenle"
+              title={t('vehicleCard.duzenle')}
             >
               <Pencil className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={handleDeleteClick}
               className="p-1.5 bg-black/70 hover:bg-red-500/80 backdrop-blur-sm rounded-md text-white transition"
-              title="Sil"
+              title={t('vehicleCard.sil')}
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
@@ -105,7 +108,7 @@ function VehicleCard({ vehicle, onEdit, onDelete }) {
                 mostUrgent.days < 0
                   ? `${Math.abs(mostUrgent.days)}g geçti`
                   : mostUrgent.days === 0
-                  ? 'Bugün'
+                  ? t('vehicleCard.bugun')
                   : `${mostUrgent.days}g`
               }
             </div>

@@ -1,10 +1,13 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
 import { Car, Mail, Lock, Eye, EyeOff, UserPlus, CheckCircle2, XCircle, MailCheck } from 'lucide-react'
 
 function Register() {
+  const { t } = useTranslation()
+
   const { signUp, signInWithGoogle } = useAuth()
   const navigate = useNavigate()
 
@@ -34,15 +37,15 @@ function Register() {
 
     // Validasyon
     if (!email.trim()) {
-      toast.error('Email gerekli!')
+      toast.error(t('register.email_gerekli'))
       return
     }
     if (!passwordChecks.length) {
-      toast.error('Şifre en az 6 karakter olmalı!')
+      toast.error(t('register.sifre_en_az_6_karakter_olmali'))
       return
     }
     if (!passwordChecks.match) {
-      toast.error('Şifreler eşleşmiyor!')
+      toast.error(t('register.sifreler_eslesmiyor'))
       return
     }
 
@@ -54,11 +57,11 @@ function Register() {
       if (error) {
         // Yaygın hataları Türkçeleştir
         if (error.message.includes('already registered')) {
-          toast.error('Bu email zaten kayıtlı! Giriş yapmayı dene.')
+          toast.error(t('register.bu_email_zaten_kayitli_giris_yapmayi'))
         } else if (error.message.includes('Password should be')) {
-          toast.error('Şifre yeterince güçlü değil!')
+          toast.error(t('register.sifre_yeterince_guclu_degil'))
         } else if (error.message.includes('Invalid email')) {
-          toast.error('Geçersiz email adresi!')
+          toast.error(t('register.gecersiz_email_adresi'))
         } else {
           toast.error(error.message)
         }
@@ -70,17 +73,17 @@ function Register() {
         // Confirm Email KAPALI ise: data.session dolu olur (otomatik login)
         if (data.session) {
           // Otomatik login (Confirm Email kapalıysa)
-          toast.success('Hesabın oluşturuldu! 🎉')
+          toast.success(t('register.hesabin_olusturuldu'))
           navigate('/', { replace: true })
         } else {
           // Email doğrulama gerekiyor
           setRegisteredEmail(email.trim())
           setEmailSent(true)
-          toast.success('Hesabın oluşturuldu! Email\'ini doğrula 📧')
+          toast.success(t('register.hesabin_olusturuldu_emailini_dogrula'))
         }
       }
     } catch (err) {
-      toast.error('Bir hata oluştu, tekrar deneyin')
+      toast.error(t('register.bir_hata_olustu_tekrar_deneyin'))
       console.error('Register error:', err)
     } finally {
       setLoading(false)
@@ -93,13 +96,13 @@ function Register() {
     try {
       const { error } = await signInWithGoogle()
       if (error) {
-        toast.error('Google ile giriş başarısız: ' + error.message)
+        toast.error(t('register.google_ile_giris_basarisiz') + error.message)
         setGoogleLoading(false)
       }
       // Başarılı olursa kullanıcı Google'a yönlendirilir, geri dönünce
       // AuthContext otomatik olarak session'ı yakalar.
     } catch (err) {
-      toast.error('Bir hata oluştu, tekrar deneyin')
+      toast.error(t('register.bir_hata_olustu_tekrar_deneyin'))
       console.error('Google login error:', err)
       setGoogleLoading(false)
     }
@@ -123,21 +126,20 @@ function Register() {
                 <MailCheck className="w-8 h-8 text-green-400" />
               </div>
               <h2 className="text-2xl font-bold text-white mb-2">
-                Email'ini Doğrula 📧
+                {t('register.email_ini_dogrula')}
               </h2>
               <p className="text-slate-400 mb-6">
-                <span className="text-blue-400 font-medium">{registeredEmail}</span> adresine bir doğrulama linki gönderdik.
-                Email'i açıp linke tıklayarak hesabını aktifleştir.
+                <span className="text-blue-400 font-medium">{registeredEmail}</span> {t('register.adresine_bir_dogrulama_linki_gonderdik_email')}
               </p>
 
               <div className="bg-slate-900/50 border border-slate-700 rounded-xl p-4 mb-6 text-left">
                 <p className="text-sm text-slate-300 mb-2">
-                  💡 <strong>Email gelmediyse:</strong>
+                  💡 <strong>{t('register.email_gelmediyse')}</strong>
                 </p>
                 <ul className="text-sm text-slate-400 space-y-1 list-disc list-inside">
-                  <li>Spam/Junk klasörünü kontrol et</li>
-                  <li>Email adresini doğru yazdığından emin ol</li>
-                  <li>Birkaç dakika bekle (bazen gecikebilir)</li>
+                  <li>{t('register.spam_junk_klasorunu_kontrol_et')}</li>
+                  <li>{t('register.email_adresini_dogru_yazdigindan_emin_ol')}</li>
+                  <li>{t('register.birkac_dakika_bekle_bazen_gecikebilir')}</li>
                 </ul>
               </div>
 
@@ -176,16 +178,16 @@ function Register() {
             <Car className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Garajım</h1>
-          <p className="text-slate-400">Araç Takip Asistanı</p>
+          <p className="text-slate-400">{t('register.arac_takip_asistani')}</p>
         </div>
 
         {/* Register Card */}
         <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-8 shadow-xl">
           <h2 className="text-2xl font-bold text-white mb-2 text-center">
-            Hesap Oluştur 🚀
+            {t('register.hesap_olustur')}
           </h2>
           <p className="text-sm text-slate-400 text-center mb-6">
-            Aracını takip etmeye bugün başla
+            {t('register.aracini_takip_etmeye_bugun_basla')}
           </p>
 
           {/* Google Sign Up Button */}
@@ -197,12 +199,12 @@ function Register() {
             {googleLoading ? (
               <>
                 <div className="w-5 h-5 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
-                Yönlendiriliyor...
+                {t('register.yonlendiriliyor')}
               </>
             ) : (
               <>
                 <GoogleIcon />
-                Google ile Devam Et
+                {t('register.google_ile_devam_et')}
               </>
             )}
           </button>
@@ -213,7 +215,7 @@ function Register() {
               <div className="w-full border-t border-slate-600"></div>
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="bg-slate-800/50 px-3 text-slate-400 uppercase">veya</span>
+              <span className="bg-slate-800/50 px-3 text-slate-400 uppercase">{t('register.veya')}</span>
             </div>
           </div>
 
@@ -221,7 +223,7 @@ function Register() {
             {/* Email */}
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Email
+                {t('register.email')}
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -229,7 +231,7 @@ function Register() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="ornek@email.com"
+                  placeholder={t('register.ornek_email_com')}
                   autoComplete="email"
                   disabled={loading || googleLoading}
                   className="w-full bg-slate-900/50 border border-slate-600 rounded-xl pl-11 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition disabled:opacity-50"
@@ -240,7 +242,7 @@ function Register() {
             {/* Password */}
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Şifre
+                {t('register.sifre')}
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -248,7 +250,7 @@ function Register() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="En az 6 karakter"
+                  placeholder={t('register.en_az_6_karakter')}
                   autoComplete="new-password"
                   disabled={loading || googleLoading}
                   className="w-full bg-slate-900/50 border border-slate-600 rounded-xl pl-11 pr-12 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition disabled:opacity-50"
@@ -267,7 +269,7 @@ function Register() {
             {/* Confirm Password */}
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Şifre (Tekrar)
+                {t('register.sifre_tekrar')}
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -275,7 +277,7 @@ function Register() {
                   type={showPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Şifreni tekrar gir"
+                  placeholder={t('register.sifreni_tekrar_gir')}
                   autoComplete="new-password"
                   disabled={loading || googleLoading}
                   className="w-full bg-slate-900/50 border border-slate-600 rounded-xl pl-11 pr-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition disabled:opacity-50"
@@ -308,12 +310,12 @@ function Register() {
               {loading ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Hesap oluşturuluyor...
+                  {t('register.hesap_olusturuluyor')}
                 </>
               ) : (
                 <>
                   <UserPlus className="w-5 h-5" />
-                  Hesap Oluştur
+                  {t('register.hesap_olustur_2')}
                 </>
               )}
             </button>
@@ -335,7 +337,7 @@ function Register() {
 
         {/* Footer */}
         <p className="text-center text-xs text-slate-500 mt-6">
-          Hesap oluşturarak <span className="text-slate-400">Kullanım Şartları</span>'nı kabul etmiş olursun
+          {t('register.hesap_olusturarak')} <span className="text-slate-400">{t('register.kullanim_sartlari')}</span>{t('register.ni_kabul_etmis_olursun')}
         </p>
       </div>
     </div>

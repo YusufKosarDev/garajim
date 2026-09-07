@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { Car, AlertTriangle, Calendar, Plus, TrendingUp, Sparkles, Droplet, Wrench, DollarSign, Clock } from 'lucide-react'
 import { useVehicles } from '../context/VehicleContext'
@@ -16,7 +17,9 @@ import MaintenanceRecommendationCard from '../components/MaintenanceRecommendati
 import DashboardSkeleton from '../components/skeletons/DashboardSkeleton'
 
 export default function Dashboard({ globalActionsRef }) {
-  usePageTitle('Dashboard')
+  const { t } = useTranslation()
+
+  usePageTitle(t('dashboard.dashboard'))
   const navigate = useNavigate()
 
   const { vehicles, maintenanceRecords, fuelRecords, customIntervals, isLoaded } = useVehicles()
@@ -125,29 +128,29 @@ export default function Dashboard({ globalActionsRef }) {
           <div className="bg-gradient-to-br from-blue-600/20 via-purple-600/10 to-slate-900 border border-blue-500/30 rounded-2xl p-10 text-center">
             <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-300 text-xs px-3 py-1 rounded-full mb-4 border border-blue-500/30">
               <Sparkles className="w-3 h-3" />
-              Garajıma Hoş Geldin
+              {t('dashboard.garajima_hos_geldin')}
             </div>
             <Car className="w-16 h-16 text-blue-400 mx-auto mb-4" />
-            <h1 className="text-3xl font-bold mb-3">Aracını Takip Etmeye Başla 🚗</h1>
+            <h1 className="text-3xl font-bold mb-3">{t('dashboard.aracini_takip_etmeye_basla')}</h1>
             <p className="text-slate-300 mb-2 max-w-md mx-auto">
-              Muayene, MTV, sigorta ve bakım tarihlerini bir daha asla unutma.
+              {t('dashboard.muayene_mtv_sigorta_ve_bakim_tarihlerini')}
             </p>
             <p className="text-slate-400 text-sm mb-6 max-w-md mx-auto">
-              Araçlarını ekle, tarihleri gir, biz sana hatırlatalım.
+              {t('dashboard.araclarini_ekle_tarihleri_gir_biz_sana')}
             </p>
             <Link to="/vehicles" className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-semibold transition">
               <Plus className="w-5 h-5" />
-              İlk Aracını Ekle
+              {t('dashboard.ilk_aracini_ekle')}
             </Link>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-10 text-left">
-              <FeatureCard icon="📅" title="Tarih Takibi" desc="Muayene, MTV, sigorta, kasko" />
-              <FeatureCard icon="🔧" title="Bakım & Yakıt" desc="Tüm harcamalar tek yerde" />
-              <FeatureCard icon="🔔" title="Akıllı Bildirim" desc="Tarih yaklaşınca haber verir" />
+              <FeatureCard icon="📅" title={t('dashboard.tarih_takibi')} desc="Muayene, MTV, sigorta, kasko" />
+              <FeatureCard icon="🔧" title={t('dashboard.bakim_yakit')} desc="Tüm harcamalar tek yerde" />
+              <FeatureCard icon="🔔" title={t('dashboard.akilli_bildirim')} desc="Tarih yaklaşınca haber verir" />
             </div>
 
             <div className="mt-8 text-xs text-slate-500">
-              💡 İpucu: <kbd className="px-1.5 py-0.5 bg-slate-800 rounded font-mono">?</kbd> tuşuna basarak klavye kısayollarını görebilirsin
+              {t('dashboard.ipucu')} <kbd className="px-1.5 py-0.5 bg-slate-800 rounded font-mono">?</kbd> {t('dashboard.tusuna_basarak_klavye_kisayollarini_gorebilirsin')}
             </div>
           </div>
         </div>
@@ -159,35 +162,35 @@ export default function Dashboard({ globalActionsRef }) {
     <PageTransition>
       <div className="p-6 space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <h1 className="text-3xl font-bold">{t('dashboard.dashboard')}</h1>
           <p className="text-slate-400 text-sm mt-1">
             {vehicles.length} araç • Toplam harcama: <span className="text-green-400 font-semibold">{totalCost.toLocaleString('tr-TR')} ₺</span>
           </p>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard icon={Car} label="Toplam Araç" value={vehicles.length} color="blue" />
-          <StatCard icon={AlertTriangle} label="Süresi Geçmiş" value={expiredCount} color="red" />
-          <StatCard icon={Calendar} label="Yaklaşan (30 gün)" value={warningCount} color="yellow" />
-          <StatCard icon={DollarSign} label="Toplam Harcama" value={`${(totalCost / 1000).toFixed(1)}k ₺`} color="green" />
+          <StatCard icon={Car} label={t('dashboard.toplam_arac')} value={vehicles.length} color="blue" />
+          <StatCard icon={AlertTriangle} label={t('dashboard.suresi_gecmis')} value={expiredCount} color="red" />
+          <StatCard icon={Calendar} label={t('dashboard.yaklasan_30_gun')} value={warningCount} color="yellow" />
+          <StatCard icon={DollarSign} label={t('dashboard.toplam_harcama')} value={`${(totalCost / 1000).toFixed(1)}k ₺`} color="green" />
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-          <h2 className="text-lg font-bold mb-4">⚡ Hızlı Eylemler</h2>
+          <h2 className="text-lg font-bold mb-4">{t('dashboard.hizli_eylemler')}</h2>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            <QuickAction icon={Wrench} label="Bakım Ekle" color="blue" onClick={() => openQuickMaintenance()} />
-            <QuickAction icon={Droplet} label="Yakıt Ekle" color="green" onClick={() => openQuickFuel()} />
+            <QuickAction icon={Wrench} label={t('dashboard.bakim_ekle')} color="blue" onClick={() => openQuickMaintenance()} />
+            <QuickAction icon={Droplet} label={t('dashboard.yakit_ekle')} color="green" onClick={() => openQuickFuel()} />
             <Link to="/vehicles" className="flex flex-col items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl p-4 transition group">
               <Car className="w-6 h-6 text-purple-400 group-hover:scale-110 transition" />
-              <span className="text-sm font-semibold">Araçlar</span>
+              <span className="text-sm font-semibold">{t('dashboard.araclar')}</span>
             </Link>
             <Link to="/calendar" className="flex flex-col items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl p-4 transition group">
               <Calendar className="w-6 h-6 text-cyan-400 group-hover:scale-110 transition" />
-              <span className="text-sm font-semibold">Takvim</span>
+              <span className="text-sm font-semibold">{t('dashboard.takvim')}</span>
             </Link>
             <Link to="/statistics" className="flex flex-col items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl p-4 transition group">
               <TrendingUp className="w-6 h-6 text-orange-400 group-hover:scale-110 transition" />
-              <span className="text-sm font-semibold">İstatistik</span>
+              <span className="text-sm font-semibold">{t('dashboard.istatistik')}</span>
             </Link>
           </div>
         </div>
@@ -197,14 +200,14 @@ export default function Dashboard({ globalActionsRef }) {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <Wrench className="w-5 h-5 text-blue-400" />
-                🧠 Akıllı Bakım Önerileri
+                {t('dashboard.akilli_bakim_onerileri')}
                 <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full border border-blue-500/30">
                   {criticalRecommendations.length}
                 </span>
               </h2>
             </div>
             <p className="text-xs text-slate-400 mb-3">
-              Geçmiş bakım kayıtlarına göre, sıradaki bakımların zamanı yaklaşıyor
+              {t('dashboard.gecmis_bakim_kayitlarina_gore_siradaki_bakimlari')}
             </p>
             <div className="space-y-2 max-h-[400px] overflow-y-auto">
               {criticalRecommendations.slice(0, 8).map((rec) => (
@@ -227,17 +230,17 @@ export default function Dashboard({ globalActionsRef }) {
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
             <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <Clock className="w-5 h-5 text-blue-400" />
-              Yaklaşan & Geçmiş Tarihler
+              {t('dashboard.yaklasan_gecmis_tarihler')}
             </h2>
 
             {criticalDates.length === 0 ? (
               <EmptyState
                 icon={Calendar}
-                title="Yaklaşan tarih yok 🎉"
+                title={t('dashboard.yaklasan_tarih_yok')}
                 description={
                   upcomingDates.length === 0
-                    ? 'Araçlarına henüz tarih bilgisi girmedin.'
-                    : 'Harika! Tüm tarihler 60 günden uzakta.'
+                    ? t('dashboard.araclarina_henuz_tarih_bilgisi_girmedin')
+                    : t('dashboard.harika_tum_tarihler_60_gunden_uzakta')
                 }
               />
             ) : (
@@ -264,7 +267,7 @@ export default function Dashboard({ globalActionsRef }) {
 
         {allActivities.length > 0 && (
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-            <h2 className="text-lg font-bold mb-4">📋 Son Aktiviteler</h2>
+            <h2 className="text-lg font-bold mb-4">{t('dashboard.son_aktiviteler')}</h2>
             <div className="space-y-2">
               {allActivities.map(a => (
                 <Link

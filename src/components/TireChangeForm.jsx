@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowLeftRight, Calendar, Gauge, DollarSign, Info } from 'lucide-react'
@@ -11,6 +12,8 @@ import Modal from './Modal'
 import FormField from './FormField'
 
 export default function TireChangeForm({ isOpen, onClose, vehicleId, currentSeason, targetSeason }) {
+  const { t } = useTranslation()
+
   const { addTireChange, vehicles } = useVehicles()
 
   const vehicle = vehicles.find(v => v.id === vehicleId)
@@ -49,20 +52,20 @@ export default function TireChangeForm({ isOpen, onClose, vehicleId, currentSeas
     onClose()
   }
 
-  const onInvalid = () => toast.error('Lütfen hataları düzelt')
+  const onInvalid = () => toast.error(t('tireChangeForm.lutfen_hatalari_duzelt'))
 
   const fromConfig = SEASONS[currentSeason]
   const toConfig = SEASONS[targetSeason]
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Mevsim Değişimi" maxWidth="max-w-md">
+    <Modal isOpen={isOpen} onClose={onClose} title={t('tireChangeForm.mevsim_degisimi')} maxWidth="max-w-md">
       <form onSubmit={handleSubmit(onValid, onInvalid)} className="p-5 space-y-4">
         {/* Sezon değişim görseli */}
         <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4">
           <div className="flex items-center justify-around gap-3">
             <div className="text-center flex-1">
               <div className="text-3xl mb-1" aria-hidden="true">{fromConfig.icon}</div>
-              <div className="text-xs text-slate-400 uppercase tracking-wide">Çıkar</div>
+              <div className="text-xs text-slate-400 uppercase tracking-wide">{t('tireChangeForm.cikar')}</div>
               <div className="text-sm font-bold text-slate-300">{fromConfig.label}</div>
             </div>
 
@@ -70,7 +73,7 @@ export default function TireChangeForm({ isOpen, onClose, vehicleId, currentSeas
 
             <div className="text-center flex-1">
               <div className="text-3xl mb-1" aria-hidden="true">{toConfig.icon}</div>
-              <div className="text-xs text-slate-400 uppercase tracking-wide">Tak</div>
+              <div className="text-xs text-slate-400 uppercase tracking-wide">{t('tireChangeForm.tak')}</div>
               <div className={`text-sm font-bold ${
                 targetSeason === 'summer' ? 'text-yellow-400' : 'text-cyan-400'
               }`}>
@@ -81,7 +84,7 @@ export default function TireChangeForm({ isOpen, onClose, vehicleId, currentSeas
         </div>
 
         <FormField
-          label={<span className="inline-flex items-center gap-1"><Calendar className="w-3 h-3" />Değişim Tarihi</span>}
+          label={<span className="inline-flex items-center gap-1"><Calendar className="w-3 h-3" />{t('tireChangeForm.degisim_tarihi')}</span>}
           required
           type="date"
           max={getTodayString()}
@@ -91,7 +94,7 @@ export default function TireChangeForm({ isOpen, onClose, vehicleId, currentSeas
         />
 
         <FormField
-          label={<span className="inline-flex items-center gap-1"><Gauge className="w-3 h-3" />KM (değişim anındaki)</span>}
+          label={<span className="inline-flex items-center gap-1"><Gauge className="w-3 h-3" />{t('tireChangeForm.km_degisim_anindaki')}</span>}
           required
           type="number"
           placeholder="0"
@@ -104,19 +107,19 @@ export default function TireChangeForm({ isOpen, onClose, vehicleId, currentSeas
         />
 
         <FormField
-          label={<span className="inline-flex items-center gap-1"><DollarSign className="w-3 h-3" />İşçilik Ücreti (₺)</span>}
+          label={<span className="inline-flex items-center gap-1"><DollarSign className="w-3 h-3" />{t('tireChangeForm.iscilik_ucreti')}</span>}
           type="number"
           placeholder="0"
           min="0"
-          hint="Lastik tamiri/balansı ödediğin tutar (opsiyonel)"
+          hint={t('tireChangeForm.lastik_tamiri_balansi_odedigin_tutar_opsiyonel')}
           {...register('cost')}
         />
 
         <FormField
-          label="Notlar"
+          label={t('tireChangeForm.notlar')}
           as="textarea"
           rows={2}
-          placeholder="Lastik bakım yeri, balans, vb."
+          placeholder={t('tireChangeForm.lastik_bakim_yeri_balans_vb')}
           {...register('notes')}
         />
 
@@ -125,7 +128,7 @@ export default function TireChangeForm({ isOpen, onClose, vehicleId, currentSeas
           <div className="flex items-start gap-2 text-xs text-slate-300">
             <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" aria-hidden="true" />
             <p>
-              Bu kayıt seninle araç arasında bir <strong>değişim notu</strong>. Mevcut lastik setlerini değiştirmiyor — sadece geçişi belgeliyor.
+              {t('tireChangeForm.bu_kayit_seninle_arac_arasinda_bir')} <strong>{t('tireChangeForm.degisim_notu')}</strong>{t('tireChangeForm.mevcut_lastik_setlerini_degistirmiyor_sadece_gec')}
             </p>
           </div>
         </div>
@@ -143,7 +146,7 @@ export default function TireChangeForm({ isOpen, onClose, vehicleId, currentSeas
             className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 py-2.5 rounded-lg font-semibold transition"
           >
             <ArrowLeftRight className="w-4 h-4" />
-            Değişimi Kaydet
+            {t('tireChangeForm.degisimi_kaydet')}
           </button>
         </div>
       </form>

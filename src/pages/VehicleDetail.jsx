@@ -1,4 +1,5 @@
 import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useState, useMemo, useEffect } from 'react'
 import { ArrowLeft, Pencil, Trash2, Car, Fuel, Gauge, Calendar, Plus, Wrench, X, FileDown, Droplet, TrendingDown, DollarSign, ImageIcon, Receipt, Share2 } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -38,6 +39,8 @@ const maintenanceSortOptions = [
 ]
 
 export default function VehicleDetail({ globalActionsRef }) {
+  const { t } = useTranslation()
+
   const { id } = useParams()
   const navigate = useNavigate()
   const { vehicles, maintenanceRecords, fuelRecords, deleteVehicle, deleteMaintenance, deleteFuel, isLoaded } = useVehicles()
@@ -87,7 +90,7 @@ export default function VehicleDetail({ globalActionsRef }) {
     [vehicle]
   )
 
-  usePageTitle(vehicle ? `${vehicle.brand} ${vehicle.model}` : 'Araç Detayı')
+  usePageTitle(vehicle ? `${vehicle.brand} ${vehicle.model}` : t('vehicleDetail.arac_detayi'))
 
   useEffect(() => {
     if (!globalActionsRef) return
@@ -156,8 +159,8 @@ export default function VehicleDetail({ globalActionsRef }) {
     return (
       <PageTransition>
         <div className="p-6 text-center">
-          <p className="text-slate-400 mb-4">Araç bulunamadı</p>
-          <Link to="/vehicles" className="text-blue-400 hover:underline">← Araçlara dön</Link>
+          <p className="text-slate-400 mb-4">{t('vehicleDetail.arac_bulunamadi')}</p>
+          <Link to="/vehicles" className="text-blue-400 hover:underline">{t('vehicleDetail.araclara_don')}</Link>
         </div>
       </PageTransition>
     )
@@ -169,15 +172,15 @@ export default function VehicleDetail({ globalActionsRef }) {
   }
 
   const handleDownloadPDF = async () => {
-    const loadingToast = toast.loading('PDF hazırlanıyor...')
+    const loadingToast = toast.loading(t('vehicleDetail.pdf_hazirlaniyor'))
     try {
       await generateVehicleReport(vehicle, allRecords, vehicleFuelRecords)
       toast.dismiss(loadingToast)
-      toast.success('PDF raporu indirildi 📄')
+      toast.success(t('vehicleDetail.pdf_raporu_indirildi'))
     } catch (error) {
       console.error(error)
       toast.dismiss(loadingToast)
-      toast.error('PDF oluşturulurken hata oluştu')
+      toast.error(t('vehicleDetail.pdf_olusturulurken_hata_olustu'))
     }
   }
 
@@ -188,8 +191,8 @@ export default function VehicleDetail({ globalActionsRef }) {
 
   const dates = [
     { label: 'Muayene', date: vehicle.inspectionDate },
-    { label: 'MTV Son Ödeme', date: vehicle.mtvDate },
-    { label: 'Trafik Sigortası', date: vehicle.insuranceDate },
+    { label: t('vehicleDetail.mtv_son_odeme'), date: vehicle.mtvDate },
+    { label: t('vehicleDetail.trafik_sigortasi'), date: vehicle.insuranceDate },
     { label: 'Kasko', date: vehicle.kaskoDate },
   ]
 
@@ -211,7 +214,7 @@ export default function VehicleDetail({ globalActionsRef }) {
       <div className="p-4 md:p-6">
         <Link to="/vehicles" className="inline-flex items-center gap-2 text-slate-400 hover:text-white mb-4 transition">
           <ArrowLeft className="w-4 h-4" />
-          Araçlara Dön
+          {t('vehicleDetail.araclara_don_2')}
         </Link>
 
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 mb-6">
@@ -222,7 +225,7 @@ export default function VehicleDetail({ globalActionsRef }) {
                   type="button"
                   onClick={() => setIsHeroLightboxOpen(true)}
                   className="relative w-20 h-20 rounded-xl overflow-hidden border border-slate-700 hover:border-blue-500/50 transition cursor-zoom-in shrink-0 group"
-                  title="Fotoğrafları görüntüle"
+                  title={t('vehicleDetail.fotograflari_goruntule')}
                 >
                   <img
                     src={photos[0]}
@@ -260,35 +263,35 @@ export default function VehicleDetail({ globalActionsRef }) {
               <button
                 onClick={() => setIsShareOpen(true)}
                 className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-4 py-2 rounded-lg transition font-semibold text-white"
-                title="Aracı paylaş"
+                title={t('vehicleDetail.araci_paylas')}
               >
-                <Share2 className="w-4 h-4" /> Paylaş
+                <Share2 className="w-4 h-4" /> {t('vehicleDetail.paylas')}
               </button>
               <button onClick={handleDownloadPDF} className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-4 py-2 rounded-lg transition font-semibold">
-                <FileDown className="w-4 h-4" /> PDF İndir
+                <FileDown className="w-4 h-4" /> {t('vehicleDetail.pdf_indir')}
               </button>
               <button onClick={() => setIsEditOpen(true)} className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg transition">
-                <Pencil className="w-4 h-4" /> Düzenle
+                <Pencil className="w-4 h-4" /> {t('vehicleDetail.duzenle')}
               </button>
               <button onClick={() => setIsDeleteVehicleOpen(true)} className="flex items-center gap-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 px-4 py-2 rounded-lg transition">
-                <Trash2 className="w-4 h-4" /> Sil
+                <Trash2 className="w-4 h-4" /> {t('vehicleDetail.sil')}
               </button>
             </div>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mt-5 pt-5 border-t border-slate-800">
-            <StatChip label="Toplam Harcama" value={`${totalCost.toLocaleString('tr-TR')} ₺`} color="emerald" highlighted icon={DollarSign} />
-            <StatChip label="Bakım" value={`${totalMaintenanceCost.toLocaleString('tr-TR')} ₺`} color="blue" icon={Wrench} />
-            <StatChip label="Yakıt" value={`${totalFuelCost.toLocaleString('tr-TR')} ₺`} color="orange" icon={Droplet} />
-            <StatChip label="Ort. Tüketim" value={avgConsumption ? `${avgConsumption.toFixed(1)} L/100km` : '-'} color="purple" />
-            <StatChip label="Ort. Litre Fiyatı" value={avgPrice ? `${avgPrice.toFixed(2)} ₺` : '-'} color="slate" />
+            <StatChip label={t('vehicleDetail.toplam_harcama')} value={`${totalCost.toLocaleString('tr-TR')} ₺`} color="emerald" highlighted icon={DollarSign} />
+            <StatChip label={t('vehicleDetail.bakim')} value={`${totalMaintenanceCost.toLocaleString('tr-TR')} ₺`} color="blue" icon={Wrench} />
+            <StatChip label={t('vehicleDetail.yakit')} value={`${totalFuelCost.toLocaleString('tr-TR')} ₺`} color="orange" icon={Droplet} />
+            <StatChip label={t('vehicleDetail.ort_tuketim')} value={avgConsumption ? `${avgConsumption.toFixed(1)} L/100km` : '-'} color="purple" />
+            <StatChip label={t('vehicleDetail.ort_litre_fiyati')} value={avgPrice ? `${avgPrice.toFixed(2)} ₺` : '-'} color="slate" />
           </div>
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 mb-6">
           <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
             <Calendar className="w-5 h-5 text-blue-400" />
-            Önemli Tarihler
+            {t('vehicleDetail.onemli_tarihler')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {dates.map(({ label, date }) => {
@@ -322,7 +325,7 @@ export default function VehicleDetail({ globalActionsRef }) {
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 mb-6">
             <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <ImageIcon className="w-5 h-5 text-blue-400" />
-              Galeri
+              {t('vehicleDetail.galeri')}
               <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-normal">
                 {photos.length} foto
               </span>
@@ -384,13 +387,13 @@ export default function VehicleDetail({ globalActionsRef }) {
                     onClick={() => setIsMaintenanceOpen(true)}
                     className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg text-sm font-semibold transition"
                   >
-                    <Plus className="w-4 h-4" /> Bakım Ekle
+                    <Plus className="w-4 h-4" /> {t('vehicleDetail.bakim_ekle')}
                   </button>
                 </div>
 
                 {allRecords.length > 0 && (
                   <div className="flex items-center gap-3 mb-4 flex-wrap">
-                    <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Tür veya not ara..." />
+                    <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder={t('vehicleDetail.tur_veya_not_ara')} />
                     <SortDropdown value={sortBy} onChange={setSortBy} options={maintenanceSortOptions} />
                   </div>
                 )}
@@ -398,22 +401,22 @@ export default function VehicleDetail({ globalActionsRef }) {
                 {allRecords.length === 0 ? (
                   <EmptyState
                     icon={Wrench}
-                    title="Henüz bakım kaydı yok"
-                    description="Yağ değişimi, filtre, lastik gibi bakımları kaydet."
+                    title={t('vehicleDetail.henuz_bakim_kaydi_yok')}
+                    description={t('vehicleDetail.yag_degisimi_filtre_lastik_gibi_bakimlari')}
                     action={
                       <button onClick={() => setIsMaintenanceOpen(true)} className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-5 py-2 rounded-lg font-semibold transition">
-                        <Plus className="w-4 h-4" /> İlk Bakımı Ekle
+                        <Plus className="w-4 h-4" /> {t('vehicleDetail.ilk_bakimi_ekle')}
                       </button>
                     }
                   />
                 ) : filteredMaintenance.length === 0 ? (
                   <EmptyState
                     icon={Wrench}
-                    title="Sonuç bulunamadı"
+                    title={t('vehicleDetail.sonuc_bulunamadi')}
                     description={`"${searchQuery}" için eşleşen bakım kaydı yok.`}
                     action={
                       <button onClick={() => setSearchQuery('')} className="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 px-5 py-2 rounded-lg font-semibold transition">
-                        Aramayı Temizle
+                        {t('vehicleDetail.aramayi_temizle')}
                       </button>
                     }
                   />
@@ -433,11 +436,11 @@ export default function VehicleDetail({ globalActionsRef }) {
                                 type="button"
                                 onClick={() => setMaintenancePhotoLightbox(r.photo)}
                                 className="relative w-12 h-12 rounded-lg overflow-hidden border border-slate-700 hover:border-blue-500/50 transition cursor-zoom-in shrink-0 group/thumb"
-                                title="Faturayı görüntüle"
+                                title={t('vehicleDetail.faturayi_goruntule')}
                               >
                                 <img
                                   src={r.photo}
-                                  alt="Bakım faturası fotoğrafı"
+                                  alt={t('vehicleDetail.bakim_faturasi_fotografi')}
                                   className="w-full h-full object-cover"
                                 />
                                 <div className="absolute inset-0 bg-black/0 group-hover/thumb:bg-black/40 transition flex items-center justify-center">
@@ -452,7 +455,7 @@ export default function VehicleDetail({ globalActionsRef }) {
                                 {r.photo && (
                                   <span className="text-[10px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-1.5 py-0.5 rounded font-normal flex items-center gap-0.5">
                                     <Receipt className="w-2.5 h-2.5" />
-                                    Fatura
+                                    {t('vehicleDetail.fatura')}
                                   </span>
                                 )}
                               </div>
@@ -469,14 +472,14 @@ export default function VehicleDetail({ globalActionsRef }) {
                                 <button
                                   onClick={() => setEditMaintenanceTarget(r)}
                                   className="p-2 hover:bg-blue-500/10 rounded-lg text-slate-500 hover:text-blue-400 transition"
-                                  title="Düzenle"
+                                  title={t('vehicleDetail.duzenle')}
                                 >
                                   <Pencil className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => setDeleteMaintenanceTarget(r)}
                                   className="p-2 hover:bg-red-500/10 rounded-lg text-slate-500 hover:text-red-400 transition"
-                                  title="Sil"
+                                  title={t('vehicleDetail.sil')}
                                 >
                                   <X className="w-4 h-4" />
                                 </button>
@@ -506,18 +509,18 @@ export default function VehicleDetail({ globalActionsRef }) {
                     onClick={() => setIsFuelOpen(true)}
                     className="flex items-center gap-2 bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded-lg text-sm font-semibold transition"
                   >
-                    <Plus className="w-4 h-4" /> Yakıt Ekle
+                    <Plus className="w-4 h-4" /> {t('vehicleDetail.yakit_ekle')}
                   </button>
                 </div>
 
                 {vehicleFuelRecords.length === 0 ? (
                   <EmptyState
                     icon={Droplet}
-                    title="Henüz yakıt kaydı yok"
-                    description="Her yakıt alımını kaydederek tüketim ve harcama takibi yap."
+                    title={t('vehicleDetail.henuz_yakit_kaydi_yok')}
+                    description={t('vehicleDetail.her_yakit_alimini_kaydederek_tuketim_ve')}
                     action={
                       <button onClick={() => setIsFuelOpen(true)} className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 px-5 py-2 rounded-lg font-semibold transition">
-                        <Plus className="w-4 h-4" /> İlk Yakıt Kaydını Ekle
+                        <Plus className="w-4 h-4" /> {t('vehicleDetail.ilk_yakit_kaydini_ekle')}
                       </button>
                     }
                   />
@@ -526,7 +529,7 @@ export default function VehicleDetail({ globalActionsRef }) {
                     <div className="bg-slate-800/30 rounded-lg p-4 mb-4">
                       <h3 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
                         <TrendingDown className="w-4 h-4 text-green-400" />
-                        Tüketim Trendi (L/100km)
+                        {t('vehicleDetail.tuketim_trendi_l_100km')}
                       </h3>
                       <FuelConsumptionChart fuelRecords={vehicleFuelRecords} />
                     </div>
@@ -560,14 +563,14 @@ export default function VehicleDetail({ globalActionsRef }) {
                                 <button
                                   onClick={() => setEditFuelTarget(r)}
                                   className="p-2 hover:bg-blue-500/10 rounded-lg text-slate-500 hover:text-blue-400 transition"
-                                  title="Düzenle"
+                                  title={t('vehicleDetail.duzenle')}
                                 >
                                   <Pencil className="w-4 h-4" />
                                 </button>
                                 <button
                                   onClick={() => setDeleteFuelTarget(r)}
                                   className="p-2 hover:bg-red-500/10 rounded-lg text-slate-500 hover:text-red-400 transition"
-                                  title="Sil"
+                                  title={t('vehicleDetail.sil')}
                                 >
                                   <X className="w-4 h-4" />
                                 </button>
@@ -623,7 +626,7 @@ export default function VehicleDetail({ globalActionsRef }) {
           isOpen={isDeleteVehicleOpen}
           onClose={() => setIsDeleteVehicleOpen(false)}
           onConfirm={confirmDeleteVehicle}
-          title="Aracı sil?"
+          title={t('vehicleDetail.araci_sil')}
           message={`${vehicle.brand} ${vehicle.model} (${vehicle.plate}) ve tüm kayıtları silinecek.`}
           confirmText="Evet, sil"
         />
@@ -631,7 +634,7 @@ export default function VehicleDetail({ globalActionsRef }) {
           isOpen={!!deleteMaintenanceTarget}
           onClose={() => setDeleteMaintenanceTarget(null)}
           onConfirm={() => deleteMaintenanceTarget && deleteMaintenance(deleteMaintenanceTarget.id)}
-          title="Bakım kaydını sil?"
+          title={t('vehicleDetail.bakim_kaydini_sil')}
           message={deleteMaintenanceTarget ? `"${deleteMaintenanceTarget.type}" kaydı silinecek.` : ''}
           confirmText="Sil"
         />
@@ -639,7 +642,7 @@ export default function VehicleDetail({ globalActionsRef }) {
           isOpen={!!deleteFuelTarget}
           onClose={() => setDeleteFuelTarget(null)}
           onConfirm={() => deleteFuelTarget && deleteFuel(deleteFuelTarget.id)}
-          title="Yakıt kaydını sil?"
+          title={t('vehicleDetail.yakit_kaydini_sil')}
           message={deleteFuelTarget ? `${deleteFuelTarget.liters} L / ${deleteFuelTarget.totalCost} ₺ kaydı silinecek.` : ''}
           confirmText="Sil"
         />

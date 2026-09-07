@@ -1,9 +1,12 @@
 import { useState, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Upload, X, Star, Move, AlertCircle, ImagePlus } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { compressMultipleImages, MAX_VEHICLE_PHOTOS, getImageSize } from '../utils/imageHelpers'
 
 export default function MultiImageUploader({ photos = [], onChange, maxPhotos = MAX_VEHICLE_PHOTOS }) {
+  const { t } = useTranslation()
+
   const fileInputRef = useRef(null)
   const [isUploading, setIsUploading] = useState(false)
   const [draggedIndex, setDraggedIndex] = useState(null)
@@ -18,7 +21,7 @@ export default function MultiImageUploader({ photos = [], onChange, maxPhotos = 
     // Sadece resim dosyaları
     const imageFiles = files.filter(f => f.type.startsWith('image/'))
     if (imageFiles.length === 0) {
-      toast.error('Lütfen geçerli görsel dosyaları seç')
+      toast.error(t('multiImageUploader.lutfen_gecerli_gorsel_dosyalari_sec'))
       if (fileInputRef.current) fileInputRef.current.value = ''
       return
     }
@@ -50,11 +53,11 @@ export default function MultiImageUploader({ photos = [], onChange, maxPhotos = 
       } else if (successful.length > 0) {
         toast.success(`${successful.length} eklendi, ${failed.length} başarısız`)
       } else {
-        toast.error('Hiçbir fotoğraf yüklenemedi')
+        toast.error(t('multiImageUploader.hicbir_fotograf_yuklenemedi'))
       }
     } catch (err) {
       toast.dismiss(loadingToast)
-      toast.error('Fotoğraf işleme hatası: ' + err.message)
+      toast.error(t('multiImageUploader.fotograf_isleme_hatasi') + err.message)
     } finally {
       setIsUploading(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -73,7 +76,7 @@ export default function MultiImageUploader({ photos = [], onChange, maxPhotos = 
     const [selected] = newPhotos.splice(index, 1)
     newPhotos.unshift(selected)
     onChange(newPhotos)
-    toast.success('Ana fotoğraf değişti')
+    toast.success(t('multiImageUploader.ana_fotograf_degisti'))
   }
 
   // Drag & drop sıralama
@@ -139,13 +142,13 @@ export default function MultiImageUploader({ photos = [], onChange, maxPhotos = 
         >
           <Upload className="w-10 h-10 text-slate-500 mx-auto mb-3" />
           <div className="text-sm font-semibold text-slate-300 mb-1">
-            Fotoğraf yüklemek için tıkla
+            {t('multiImageUploader.fotograf_yuklemek_icin_tikla')}
           </div>
           <div className="text-xs text-slate-500">
             JPG, PNG, WEBP — max {maxPhotos} fotoğraf
           </div>
           <div className="text-[10px] text-slate-600 mt-2">
-            Görseller otomatik sıkıştırılır (~1MB altına)
+            {t('multiImageUploader.gorseller_otomatik_sikistirilir_1mb_altina')}
           </div>
         </button>
       ) : (
@@ -191,7 +194,7 @@ export default function MultiImageUploader({ photos = [], onChange, maxPhotos = 
                         handleSetAsMain(index)
                       }}
                       className="p-1.5 bg-yellow-500/90 hover:bg-yellow-500 text-yellow-950 rounded-md transition"
-                      title="Ana fotoğraf yap"
+                      title={t('multiImageUploader.ana_fotograf_yap')}
                     >
                       <Star className="w-3.5 h-3.5" />
                     </button>
@@ -203,7 +206,7 @@ export default function MultiImageUploader({ photos = [], onChange, maxPhotos = 
                       handleRemove(index)
                     }}
                     className="p-1.5 bg-red-500/90 hover:bg-red-500 text-white rounded-md transition"
-                    title="Sil"
+                    title={t('multiImageUploader.sil')}
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -226,7 +229,7 @@ export default function MultiImageUploader({ photos = [], onChange, maxPhotos = 
               >
                 <Upload className="w-6 h-6 text-slate-500 group-hover:text-blue-400 transition mb-1" />
                 <span className="text-[10px] text-slate-500 group-hover:text-blue-400 transition">
-                  Ekle
+                  {t('multiImageUploader.ekle')}
                 </span>
               </button>
             )}
@@ -236,7 +239,7 @@ export default function MultiImageUploader({ photos = [], onChange, maxPhotos = 
           <div className="mt-3 flex items-start gap-2 text-[10px] text-slate-500">
             <AlertCircle className="w-3 h-3 shrink-0 mt-0.5" />
             <div>
-              <strong className="text-slate-400">İpucu:</strong> Yıldız ⭐ ikonu ile ana fotoğrafı değiştir, sürükleyerek sıralayabilirsin. İlk fotoğraf araç kartında görünür.
+              <strong className="text-slate-400">{t('multiImageUploader.ipucu')}</strong> {t('multiImageUploader.yildiz_ikonu_ile_ana_fotografi_degistir')}
             </div>
           </div>
         </>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { CloudUpload, CheckCircle2, XCircle, Loader2, AlertTriangle } from 'lucide-react'
 import Modal from './Modal'
 
@@ -12,6 +13,8 @@ export default function MigrationModal({
   data,           // { vehicles, maintenance, fuel, ... } - migrate edilecek veri
   onConfirm,      // () => Promise<result> - migration'ı başlatacak fonksiyon
 }) {
+  const { t } = useTranslation()
+
   const [phase, setPhase] = useState('confirm') // 'confirm' | 'running' | 'done' | 'error'
   const [progress, setProgress] = useState({})
   const [result, setResult] = useState(null)
@@ -72,7 +75,7 @@ export default function MigrationModal({
       phase === 'confirm' ? '☁️ Buluta Yükle' :
       phase === 'running' ? '🔄 Yükleniyor...' :
       phase === 'done' ? '✅ Tamamlandı!' :
-      '⚠️ Hata Oluştu'
+      t('migrationModal.hata_olustu')
     }>
       <div className="p-5">
         {/* CONFIRM PHASE */}
@@ -82,53 +85,52 @@ export default function MigrationModal({
               <div className="flex items-start gap-3">
                 <CloudUpload className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
                 <div className="text-sm text-slate-300">
-                  Cihazındaki/yedeğindeki verileri <strong>Supabase bulutuna</strong> yükle.
-                  Bu sayede başka cihazlardan da erişebilirsin.
+                  {t('migrationModal.cihazindaki_yedegindeki_verileri')} <strong>{t('migrationModal.supabase_bulutuna')}</strong> {t('migrationModal.yukle_bu_sayede_baska_cihazlardan_da')}
                 </div>
               </div>
             </div>
 
             <div className="bg-slate-800/50 rounded-lg p-4 mb-4">
-              <div className="text-sm text-slate-400 mb-3">Yüklenecek veriler:</div>
+              <div className="text-sm text-slate-400 mb-3">{t('migrationModal.yuklenecek_veriler')}</div>
               <div className="space-y-2 text-sm">
                 {counts.vehicles > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-slate-300">🚗 Araç</span>
+                    <span className="text-slate-300">{t('migrationModal.arac')}</span>
                     <span className="text-blue-400 font-semibold">{counts.vehicles}</span>
                   </div>
                 )}
                 {counts.maintenance > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-slate-300">🔧 Bakım Kaydı</span>
+                    <span className="text-slate-300">{t('migrationModal.bakim_kaydi')}</span>
                     <span className="text-blue-400 font-semibold">{counts.maintenance}</span>
                   </div>
                 )}
                 {counts.fuel > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-slate-300">⛽ Yakıt Kaydı</span>
+                    <span className="text-slate-300">{t('migrationModal.yakit_kaydi')}</span>
                     <span className="text-blue-400 font-semibold">{counts.fuel}</span>
                   </div>
                 )}
                 {counts.tireSets > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-slate-300">🛞 Lastik Seti</span>
+                    <span className="text-slate-300">{t('migrationModal.lastik_seti')}</span>
                     <span className="text-blue-400 font-semibold">{counts.tireSets}</span>
                   </div>
                 )}
                 {counts.tireChanges > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-slate-300">🔄 Lastik Değişimi</span>
+                    <span className="text-slate-300">{t('migrationModal.lastik_degisimi')}</span>
                     <span className="text-blue-400 font-semibold">{counts.tireChanges}</span>
                   </div>
                 )}
                 {counts.intervals > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-slate-300">⚙️ Özel Periyot</span>
+                    <span className="text-slate-300">{t('migrationModal.ozel_periyot')}</span>
                     <span className="text-blue-400 font-semibold">{counts.intervals}</span>
                   </div>
                 )}
                 <div className="flex justify-between pt-2 border-t border-slate-700 mt-2">
-                  <span className="text-slate-400 font-semibold">Toplam</span>
+                  <span className="text-slate-400 font-semibold">{t('migrationModal.toplam')}</span>
                   <span className="text-white font-bold">{totalItems} kayıt</span>
                 </div>
               </div>
@@ -138,9 +140,7 @@ export default function MigrationModal({
               <div className="flex items-start gap-2">
                 <AlertTriangle className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
                 <p className="text-xs text-slate-300">
-                  Bu işlem mevcut Supabase verilerini <strong>etkilemez</strong>, üzerine ekler.
-                  Aynı veriyi 2 kez yüklersen <strong>kopyalanır</strong>.
-                  Fotoğraflar Supabase Storage'a yüklenecek (biraz zaman alabilir).
+                  {t('migrationModal.bu_islem_mevcut_supabase_verilerini')} <strong>{t('migrationModal.etkilemez')}</strong>{t('migrationModal.uzerine_ekler_ayni_veriyi_2_kez')} <strong>{t('migrationModal.kopyalanir')}</strong>{t('migrationModal.fotograflar_supabase_storage_a_yuklenecek_biraz')}
                 </p>
               </div>
             </div>
@@ -158,7 +158,7 @@ export default function MigrationModal({
                 className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-700 disabled:cursor-not-allowed text-white py-2.5 rounded-lg font-semibold transition flex items-center justify-center gap-2"
               >
                 <CloudUpload className="w-4 h-4" />
-                Yüklemeyi Başlat
+                {t('migrationModal.yuklemeyi_baslat')}
               </button>
             </div>
           </>
@@ -171,13 +171,13 @@ export default function MigrationModal({
               <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600/20 rounded-full mb-3">
                 <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
               </div>
-              <p className="text-slate-300">Verilerin yükleniyor, lütfen bekle...</p>
+              <p className="text-slate-300">{t('migrationModal.verilerin_yukleniyor_lutfen_bekle')}</p>
             </div>
 
             {/* Progress Bar */}
             <div className="mb-4">
               <div className="flex justify-between text-xs text-slate-400 mb-1.5">
-                <span>İlerleme</span>
+                <span>{t('migrationModal.ilerleme')}</span>
                 <span>{percentage}%</span>
               </div>
               <div className="bg-slate-800 rounded-full h-3 overflow-hidden">
@@ -190,16 +190,16 @@ export default function MigrationModal({
 
             {/* Aşamalar */}
             <div className="space-y-2 text-sm">
-              <ProgressItem label="🚗 Araçlar" progress={progress.vehicles} total={counts.vehicles} />
-              <ProgressItem label="🔧 Bakım Kayıtları" progress={progress.maintenance} total={counts.maintenance} />
-              <ProgressItem label="⛽ Yakıt Kayıtları" progress={progress.fuel} total={counts.fuel} />
-              <ProgressItem label="🛞 Lastik Setleri" progress={progress.tireSets} total={counts.tireSets} />
-              <ProgressItem label="🔄 Lastik Değişimleri" progress={progress.tireChanges} total={counts.tireChanges} />
-              <ProgressItem label="⚙️ Özel Periyotlar" progress={progress.customIntervals} total={counts.intervals} />
+              <ProgressItem label={t('migrationModal.araclar')} progress={progress.vehicles} total={counts.vehicles} />
+              <ProgressItem label={t('migrationModal.bakim_kayitlari')} progress={progress.maintenance} total={counts.maintenance} />
+              <ProgressItem label={t('migrationModal.yakit_kayitlari')} progress={progress.fuel} total={counts.fuel} />
+              <ProgressItem label={t('migrationModal.lastik_setleri')} progress={progress.tireSets} total={counts.tireSets} />
+              <ProgressItem label={t('migrationModal.lastik_degisimleri')} progress={progress.tireChanges} total={counts.tireChanges} />
+              <ProgressItem label={t('migrationModal.ozel_periyotlar')} progress={progress.customIntervals} total={counts.intervals} />
             </div>
 
             <p className="text-xs text-slate-500 mt-4 text-center">
-              ⚠️ Sayfayı kapatma! Yükleme devam ediyor.
+              {t('migrationModal.sayfayi_kapatma_yukleme_devam_ediyor')}
             </p>
           </>
         )}
@@ -211,17 +211,17 @@ export default function MigrationModal({
               <div className="inline-flex items-center justify-center w-16 h-16 bg-green-600/20 rounded-full mb-3">
                 <CheckCircle2 className="w-8 h-8 text-green-400" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">Başarıyla Yüklendi! 🎉</h3>
-              <p className="text-slate-400 text-sm">Tüm verilerin Supabase'de güvende</p>
+              <h3 className="text-xl font-bold text-white mb-2">{t('migrationModal.basariyla_yuklendi')}</h3>
+              <p className="text-slate-400 text-sm">{t('migrationModal.tum_verilerin_supabase_de_guvende')}</p>
             </div>
 
             <div className="bg-slate-800/50 rounded-lg p-4 mb-4 space-y-2 text-sm">
-              <ResultRow label="🚗 Araçlar" stats={result.vehicles} />
-              <ResultRow label="🔧 Bakım Kayıtları" stats={result.maintenance} />
-              <ResultRow label="⛽ Yakıt Kayıtları" stats={result.fuel} />
-              <ResultRow label="🛞 Lastik Setleri" stats={result.tireSets} />
-              <ResultRow label="🔄 Lastik Değişimleri" stats={result.tireChanges} />
-              <ResultRow label="⚙️ Özel Periyotlar" stats={result.customIntervals} />
+              <ResultRow label={t('migrationModal.araclar')} stats={result.vehicles} />
+              <ResultRow label={t('migrationModal.bakim_kayitlari')} stats={result.maintenance} />
+              <ResultRow label={t('migrationModal.yakit_kayitlari')} stats={result.fuel} />
+              <ResultRow label={t('migrationModal.lastik_setleri')} stats={result.tireSets} />
+              <ResultRow label={t('migrationModal.lastik_degisimleri')} stats={result.tireChanges} />
+              <ResultRow label={t('migrationModal.ozel_periyotlar')} stats={result.customIntervals} />
             </div>
 
             <button
@@ -240,21 +240,21 @@ export default function MigrationModal({
               <div className="inline-flex items-center justify-center w-16 h-16 bg-red-600/20 rounded-full mb-3">
                 <XCircle className="w-8 h-8 text-red-400" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">Kısmi Başarı veya Hata</h3>
-              <p className="text-slate-400 text-sm">Bazı kayıtlar yüklenemedi</p>
+              <h3 className="text-xl font-bold text-white mb-2">{t('migrationModal.kismi_basari_veya_hata')}</h3>
+              <p className="text-slate-400 text-sm">{t('migrationModal.bazi_kayitlar_yuklenemedi')}</p>
             </div>
 
             <div className="bg-slate-800/50 rounded-lg p-4 mb-4 space-y-2 text-sm">
-              <ResultRow label="🚗 Araçlar" stats={result.vehicles} />
-              <ResultRow label="🔧 Bakım Kayıtları" stats={result.maintenance} />
-              <ResultRow label="⛽ Yakıt Kayıtları" stats={result.fuel} />
-              <ResultRow label="🛞 Lastik Setleri" stats={result.tireSets} />
-              <ResultRow label="🔄 Lastik Değişimleri" stats={result.tireChanges} />
+              <ResultRow label={t('migrationModal.araclar')} stats={result.vehicles} />
+              <ResultRow label={t('migrationModal.bakim_kayitlari')} stats={result.maintenance} />
+              <ResultRow label={t('migrationModal.yakit_kayitlari')} stats={result.fuel} />
+              <ResultRow label={t('migrationModal.lastik_setleri')} stats={result.tireSets} />
+              <ResultRow label={t('migrationModal.lastik_degisimleri')} stats={result.tireChanges} />
             </div>
 
             {result.errors && result.errors.length > 0 && (
               <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4 max-h-32 overflow-y-auto">
-                <div className="text-xs text-red-400 font-semibold mb-1">Hatalar:</div>
+                <div className="text-xs text-red-400 font-semibold mb-1">{t('migrationModal.hatalar')}</div>
                 <ul className="text-xs text-slate-400 space-y-1 list-disc list-inside">
                   {result.errors.slice(0, 5).map((err, i) => (
                     <li key={i}>{err}</li>

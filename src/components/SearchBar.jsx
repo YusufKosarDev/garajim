@@ -1,6 +1,9 @@
 import { Search, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 export default function SearchBar({ value, onChange, placeholder = 'Ara...' }) {
+  const { t } = useTranslation()
+
   return (
     <div className="relative flex-1 min-w-[200px]">
       <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -15,7 +18,7 @@ export default function SearchBar({ value, onChange, placeholder = 'Ara...' }) {
         <button
           onClick={() => onChange('')}
           className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-white transition"
-          title="Temizle"
+          title={t('searchBar.temizle')}
         >
           <X className="w-3.5 h-3.5" />
         </button>

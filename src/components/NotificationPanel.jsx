@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Bell, BellOff, CheckCheck, Settings as SettingsIcon, Trash2, BellRing } from 'lucide-react'
@@ -8,6 +9,8 @@ import toast from 'react-hot-toast'
 import NotificationItem from './NotificationItem'
 
 export default function NotificationPanel({ isOpen, onClose, anchorRef }) {
+  const { t } = useTranslation()
+
   const {
     notifications,
     unreadCount,
@@ -54,11 +57,11 @@ export default function NotificationPanel({ isOpen, onClose, anchorRef }) {
     const result = await requestBrowserPermission()
     if (result.granted) {
       updateSettings({ browserNotifications: true })
-      toast.success('Tarayıcı bildirimleri aktif')
+      toast.success(t('notificationPanel.tarayici_bildirimleri_aktif'))
     } else if (result.denied) {
-      toast.error('Tarayıcı izni reddedildi — tarayıcı ayarlarından aç')
+      toast.error(t('notificationPanel.tarayici_izni_reddedildi_tarayici_ayarlarindan_a'))
     } else if (!result.supported) {
-      toast.error('Tarayıcın bildirim desteklemiyor')
+      toast.error(t('notificationPanel.tarayicin_bildirim_desteklemiyor'))
     }
   }
 
@@ -79,7 +82,7 @@ export default function NotificationPanel({ isOpen, onClose, anchorRef }) {
           <div className="flex items-center justify-between p-3 border-b border-slate-800 bg-slate-900/95 backdrop-blur-sm">
             <div className="flex items-center gap-2">
               <Bell className="w-4 h-4 text-blue-400" />
-              <h3 className="text-sm font-bold">Bildirimler</h3>
+              <h3 className="text-sm font-bold">{t('notificationPanel.bildirimler')}</h3>
               {unreadCount > 0 && (
                 <span className="text-[10px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full font-semibold">
                   {unreadCount} yeni
@@ -92,7 +95,7 @@ export default function NotificationPanel({ isOpen, onClose, anchorRef }) {
                 <button
                   onClick={markAllAsRead}
                   className="p-1.5 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition"
-                  title="Hepsini okundu işaretle"
+                  title={t('notificationPanel.hepsini_okundu_isaretle')}
                 >
                   <CheckCheck className="w-4 h-4" />
                 </button>
@@ -101,7 +104,7 @@ export default function NotificationPanel({ isOpen, onClose, anchorRef }) {
                 to="/settings"
                 onClick={onClose}
                 className="p-1.5 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition"
-                title="Ayarlar"
+                title={t('notificationPanel.ayarlar')}
               >
                 <SettingsIcon className="w-4 h-4" />
               </Link>
@@ -115,7 +118,7 @@ export default function NotificationPanel({ isOpen, onClose, anchorRef }) {
                 <BellRing className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <div className="text-xs text-slate-300 mb-1.5">
-                    Önemli bildirimleri sistem üzerinden almak ister misin?
+                    {t('notificationPanel.onemli_bildirimleri_sistem_uzerinden_almak_ister')}
                   </div>
                   <button
                     onClick={handleEnableBrowser}
@@ -134,10 +137,10 @@ export default function NotificationPanel({ isOpen, onClose, anchorRef }) {
               <div className="py-12 px-6 text-center">
                 <BellOff className="w-10 h-10 text-slate-700 mx-auto mb-3" />
                 <p className="text-sm text-slate-400 font-semibold mb-1">
-                  Bildirim yok
+                  {t('notificationPanel.bildirim_yok')}
                 </p>
                 <p className="text-xs text-slate-500">
-                  Yaklaşan tarihler ve bakım önerileri burada görünecek
+                  {t('notificationPanel.yaklasan_tarihler_ve_bakim_onerileri_burada')}
                 </p>
               </div>
             ) : (
@@ -161,12 +164,12 @@ export default function NotificationPanel({ isOpen, onClose, anchorRef }) {
               <button
                 onClick={() => {
                   clearAllDismissed()
-                  toast.success('Eski bildirimler temizlendi')
+                  toast.success(t('notificationPanel.eski_bildirimler_temizlendi'))
                 }}
                 className="w-full flex items-center justify-center gap-2 text-xs text-slate-400 hover:text-red-400 hover:bg-red-500/10 px-3 py-2 rounded transition"
               >
                 <Trash2 className="w-3 h-3" />
-                Geçmiş bildirimleri temizle
+                {t('notificationPanel.gecmis_bildirimleri_temizle')}
               </button>
             </div>
           )}

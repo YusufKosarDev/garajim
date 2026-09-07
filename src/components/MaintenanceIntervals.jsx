@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Settings2, RotateCcw, Check, X, Car } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useVehicles } from '../context/VehicleContext'
@@ -10,6 +11,8 @@ import {
 import ConfirmDialog from './ConfirmDialog'
 
 export default function MaintenanceIntervals() {
+  const { t } = useTranslation()
+
   const { vehicles, customIntervals, updateCustomIntervals } = useVehicles()
   const [selectedVehicleId, setSelectedVehicleId] = useState('')
   const [editingType, setEditingType] = useState(null)
@@ -43,11 +46,11 @@ export default function MaintenanceIntervals() {
   const handleSave = async (type) => {
     const value = Number(editValue)
     if (!Number.isFinite(value) || value < 500) {
-      toast.error('Geçersiz değer (en az 500 km olmalı)')
+      toast.error(t('maintenanceIntervals.gecersiz_deger_en_az_500_km'))
       return
     }
     if (value > 500000) {
-      toast.error('Çok yüksek değer (en fazla 500.000 km olabilir)')
+      toast.error(t('maintenanceIntervals.cok_yuksek_deger_en_fazla_500'))
       return
     }
 
@@ -92,10 +95,10 @@ export default function MaintenanceIntervals() {
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 mb-6">
         <h2 className="text-lg font-bold flex items-center gap-2 mb-1">
           <Settings2 className="w-5 h-5 text-blue-400" />
-          Bakım Periyotları
+          {t('maintenanceIntervals.bakim_periyotlari')}
         </h2>
         <p className="text-sm text-slate-400">
-          Periyotlar araç bazlı ayarlanır — önce bir araç ekle.
+          {t('maintenanceIntervals.periyotlar_arac_bazli_ayarlanir_once_bir')}
         </p>
       </div>
     )
@@ -107,10 +110,10 @@ export default function MaintenanceIntervals() {
         <div>
           <h2 className="text-lg font-bold flex items-center gap-2">
             <Settings2 className="w-5 h-5 text-blue-400" />
-            Bakım Periyotları
+            {t('maintenanceIntervals.bakim_periyotlari')}
           </h2>
           <p className="text-sm text-slate-400 mt-1">
-            Akıllı öneri sistemine göre kendi km periyotlarını belirle
+            {t('maintenanceIntervals.akilli_oneri_sistemine_gore_kendi_km')}
           </p>
         </div>
         {hasAnyCustom && (
@@ -120,7 +123,7 @@ export default function MaintenanceIntervals() {
             className="flex items-center gap-2 text-xs bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-lg transition text-slate-400 hover:text-white disabled:opacity-50"
           >
             <RotateCcw className="w-3 h-3" />
-            Tümünü Sıfırla
+            {t('maintenanceIntervals.tumunu_sifirla')}
           </button>
         )}
       </div>
@@ -175,7 +178,7 @@ export default function MaintenanceIntervals() {
                     Özel • Varsayılan: {defaultValue.toLocaleString('tr-TR')} km
                   </div>
                 ) : (
-                  <div className="text-xs text-slate-500 mt-0.5">Varsayılan</div>
+                  <div className="text-xs text-slate-500 mt-0.5">{t('maintenanceIntervals.varsayilan')}</div>
                 )}
               </div>
 
@@ -195,19 +198,19 @@ export default function MaintenanceIntervals() {
                     max="500000"
                     step="500"
                   />
-                  <span className="text-xs text-slate-400">km</span>
+                  <span className="text-xs text-slate-400">{t('maintenanceIntervals.km')}</span>
                   <button
                     onClick={() => handleSave(type)}
                     disabled={saving}
                     className="p-1 hover:bg-green-500/20 rounded text-green-400 disabled:opacity-50"
-                    title="Kaydet"
+                    title={t('maintenanceIntervals.kaydet')}
                   >
                     <Check className="w-4 h-4" />
                   </button>
                   <button
                     onClick={handleCancel}
                     className="p-1 hover:bg-red-500/20 rounded text-red-400"
-                    title="İptal"
+                    title={t('maintenanceIntervals.iptal')}
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -229,7 +232,7 @@ export default function MaintenanceIntervals() {
                       onClick={() => handleResetSingle(type)}
                       disabled={saving}
                       className="p-1.5 hover:bg-slate-700 rounded text-slate-500 hover:text-white transition disabled:opacity-50"
-                      title="Varsayılana dön"
+                      title={t('maintenanceIntervals.varsayilana_don')}
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
                     </button>
@@ -242,14 +245,14 @@ export default function MaintenanceIntervals() {
       </div>
 
       <div className="mt-4 bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 text-xs text-slate-300">
-        💡 <strong>İpucu:</strong> Değerleri aracının kullanım şekline göre ayarla. Şehir içi sık kullanım varsa yağı daha sık değiştirmen önerilir (7.500-8.000 km).
+        💡 <strong>{t('maintenanceIntervals.ipucu')}</strong> {t('maintenanceIntervals.degerleri_aracinin_kullanim_sekline_gore_ayarla')}
       </div>
 
       <ConfirmDialog
         isOpen={isResetOpen}
         onClose={() => setIsResetOpen(false)}
         onConfirm={handleResetAll}
-        title="Tüm periyotları sıfırla?"
+        title={t('maintenanceIntervals.tum_periyotlari_sifirla')}
         message="Bu araç için özelleştirdiğin tüm bakım periyotları varsayılan değerlere dönecek."
         confirmText="Evet, sıfırla"
         variant="warning"

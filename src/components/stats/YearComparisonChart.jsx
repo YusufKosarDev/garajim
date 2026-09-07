@@ -1,9 +1,12 @@
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts'
+import { useTranslation } from 'react-i18next'
 import { useMemo } from 'react'
 
 const MONTH_LABELS = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara']
 
 export default function YearComparisonChart({ maintenanceRecords = [], fuelRecords = [] }) {
+  const { t } = useTranslation()
+
   const data = useMemo(() => {
     const currentYear = new Date().getFullYear()
     const previousYear = currentYear - 1
@@ -37,7 +40,7 @@ export default function YearComparisonChart({ maintenanceRecords = [], fuelRecor
   if (!hasCurrentData && !hasPreviousData) {
     return (
       <div className="h-[300px] flex items-center justify-center text-slate-500 text-sm">
-        Karşılaştırma için yeterli veri yok
+        {t('stats.yearComparisonChart.karsilastirma_icin_yeterli_veri_yok')}
       </div>
     )
   }
