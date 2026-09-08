@@ -122,7 +122,7 @@ export class OfflineQueue {
     this.store = store
   }
 
-  async uzunluk(): Promise<number> {
+  async length(): Promise<number> {
     return (await this.store.all()).length
   }
 
@@ -155,7 +155,7 @@ export class OfflineQueue {
    * Bir girdi başarısız olursa DURUR — arkasındaki girdiler ona bağımlı
    * olabilir (çevrimdışı eklenen araca eklenen bakım kaydı gibi).
    */
-  async replay(gonder: Sender): Promise<ReplayResult> {
+  async replay(flushQueue: Sender): Promise<ReplayResult> {
     const idEslesmeleri: Record<string, string> = {}
     let sent = 0
 
@@ -167,7 +167,7 @@ export class OfflineQueue {
       const cozulmus = applyIdMappings(entry, idEslesmeleri)
 
       try {
-        const result = await gonder(cozulmus)
+        const result = await flushQueue(cozulmus)
         if (cozulmus.tempId && result && result.gercekId) {
           idEslesmeleri[cozulmus.tempId] = result.gercekId
         }

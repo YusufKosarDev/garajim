@@ -34,7 +34,7 @@ describe('OfflineQueue — sıra', () => {
     expect(sentEntries).toEqual(['vehicles', 'fuel_records'])
     expect(result.sent).toBe(2)
     expect(result.remaining).toBe(0)
-    expect(await q.uzunluk()).toBe(0)
+    expect(await q.length()).toBe(0)
   })
 })
 
@@ -80,12 +80,12 @@ describe('OfflineQueue — hata durumunda durma', () => {
     await q.replay(async (g) => {
       if (patlat && g.payload?.plate === 'B') throw new Error('geçici')
     })
-    expect(await q.uzunluk()).toBe(1)
+    expect(await q.length()).toBe(1)
 
     patlat = false
     const second = await q.replay(async () => {})
     expect(second.sent).toBe(1)
-    expect(await q.uzunluk()).toBe(0)
+    expect(await q.length()).toBe(0)
   })
 })
 
@@ -156,7 +156,7 @@ describe('kalıcılık', () => {
 
     // Sekme kapanıp açılmış gibi
     const q2 = new OfflineQueue(store)
-    expect(await q2.uzunluk()).toBe(1)
+    expect(await q2.length()).toBe(1)
 
     // Sıra numarası çakışmamalı
     await q2.enqueue({ tablo: 'vehicles', operation: 'insert', payload: { plate: 'B' } })
