@@ -5,7 +5,6 @@ import { ArrowLeft, Pencil, Trash2, Car, Fuel, Gauge, Calendar, Plus, Wrench, X,
 import toast from 'react-hot-toast'
 import { useVehicles } from '../context/vehicle-context'
 import { formatDate, getDateStatus, daysUntil } from '../utils/dateHelpers'
-import { generateVehicleReport } from '../utils/pdfGenerator'
 import { getAverageConsumption, getTotalFuelCost, getAveragePrice } from '../utils/fuelHelpers'
 import { usePageTitle } from '../hooks/usePageTitle'
 import VehicleValueCard from '../components/VehicleValueCard'
@@ -183,6 +182,11 @@ export default function VehicleDetail({ globalActionsRef }) {
   const handleDownloadPDF = async () => {
     const loadingToast = toast.loading(t('vehicleDetail.pdf_hazirlaniyor'))
     try {
+      // jsPDF + html2canvas + gömülü Roboto fontları birlikte ~200 kB gzip.
+      // Statik import edildiklerinde araç detay sayfasını AÇAN herkes bunu
+      // indiriyordu; oysa PDF'i yalnızca butona basan kullanıcı istiyor.
+      // (Aynı desen src/lib/ocr.ts'te Tesseract için de kullanılıyor.)
+      const { generateVehicleReport } = await import('../utils/pdfGenerator')
       await generateVehicleReport(vehicle, allRecords, vehicleFuelRecords)
       toast.dismiss(loadingToast)
       toast.success(t('vehicleDetail.pdf_raporu_indirildi'))
