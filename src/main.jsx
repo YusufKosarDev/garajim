@@ -23,7 +23,7 @@ const queryClient = new QueryClient({
       staleTime: 5 * 60 * 1000,
       // Geçici ağ hatalarında elle yazılmış katmanda hiç retry yoktu.
       retry: 2,
-      retryDelay: (deneme) => Math.min(1000 * 2 ** deneme, 15000),
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 15000),
       // Sekmeye dönünce sessizce tazele — realtime kopmuşsa telafi eder.
       refetchOnWindowFocus: true,
       refetchOnReconnect: true,

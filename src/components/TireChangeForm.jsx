@@ -30,11 +30,11 @@ export default function TireChangeForm({ isOpen, onClose, vehicleId, currentSeas
 
   // Formu SADECE modal açılırken doldur — currentKm bağımlılığı yüzünden
   // araç km'si başka bir yerden güncellenince alanlar sıfırlanıyordu.
-  const acikMiydiRef = useRef(false)
+  const wasOpenRef = useRef(false)
   useEffect(() => {
-    const yeniAcildi = isOpen && !acikMiydiRef.current
-    acikMiydiRef.current = isOpen
-    if (!yeniAcildi) return
+    const justOpened = isOpen && !wasOpenRef.current
+    wasOpenRef.current = isOpen
+    if (!justOpened) return
 
     reset({ date: getTodayString(), km: String(currentKm), cost: '', notes: '' })
   }, [isOpen, currentKm, reset])

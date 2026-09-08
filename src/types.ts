@@ -12,9 +12,9 @@
 // FRONTEND (camelCase)
 // ============================================================
 
-export type YakitTipi = 'Benzin' | 'Dizel' | 'LPG' | 'Hibrit' | 'Elektrik'
-export type Sezon = 'summer' | 'winter' | 'all-season'
-export type LastikPozisyonu = 'FL' | 'FR' | 'RL' | 'RR' | 'S'
+export type FuelType = 'Benzin' | 'Dizel' | 'LPG' | 'Hibrit' | 'Elektrik'
+export type Season = 'summer' | 'winter' | 'all-season'
+export type TirePosition = 'FL' | 'FR' | 'RL' | 'RR' | 'S'
 
 export interface Vehicle {
   id: string
@@ -66,7 +66,7 @@ export interface FuelRecord {
 }
 
 export interface Tire {
-  position: LastikPozisyonu | string
+  position: TirePosition | string
   dot: string
   treadDepth: number
 }
@@ -74,7 +74,7 @@ export interface Tire {
 export interface TireSet {
   id: string
   vehicleId: string
-  season: Sezon
+  season: Season
   brand: string | null
   size: string | null
   tires: Tire[]
@@ -89,8 +89,8 @@ export interface TireChange {
   id: string
   vehicleId: string
   date: string
-  fromSeason: Sezon | null
-  toSeason: Sezon
+  fromSeason: Season | null
+  toSeason: Season
   km: number | null
   cost: number
   notes: string | null
@@ -171,7 +171,7 @@ export interface TireSetRow {
   user_id: string
   garage_id?: string | null
   vehicle_id: string
-  season: Sezon
+  season: Season
   brand: string | null
   size: string | null
   tires: Tire[] | null
@@ -188,8 +188,8 @@ export interface TireChangeRow {
   garage_id?: string | null
   vehicle_id: string
   date: string
-  from_season: Sezon | null
-  to_season: Sezon
+  from_season: Season | null
+  to_season: Season
   km: number | null
   cost: string | number | null
   notes: string | null

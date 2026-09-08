@@ -15,9 +15,9 @@
  */
 
 describe('Komut paleti', () => {
-  const paletiAc = () => cy.get('body').type('{ctrl}k')
+  const openPalette = () => cy.get('body').type('{ctrl}k')
   const paletInput = () => cy.get('input[placeholder*="ara" i]', { timeout: 10000 })
-  const sonuclar = () => cy.get('button[data-index]', { timeout: 8000 })
+  const results = () => cy.get('button[data-index]', { timeout: 8000 })
 
   beforeEach(() => {
     cy.login()
@@ -28,23 +28,23 @@ describe('Komut paleti', () => {
   })
 
   it('Ctrl+K ile açılır', () => {
-    paletiAc()
+    openPalette()
     paletInput().should('be.visible')
   })
 
   it('yazınca sonuçlar süzülür', () => {
-    paletiAc()
+    openPalette()
     // Filtreden önce birden fazla sonuç var
-    sonuclar().should('have.length.greaterThan', 1)
+    results().should('have.length.greaterThan', 1)
 
     paletInput().type('ayarlar')
     // "Ayarlar" sayfası her kurulumda var — veriye bağlı değil
-    sonuclar().should('have.length.greaterThan', 0)
-    sonuclar().first().should('contain.text', 'Ayarlar')
+    results().should('have.length.greaterThan', 0)
+    results().first().should('contain.text', 'Ayarlar')
   })
 
   it('Escape ile kapanır', () => {
-    paletiAc()
+    openPalette()
     paletInput().should('be.visible')
     cy.get('body').type('{esc}')
     cy.get('input[placeholder*="ara" i]').should('not.exist')
@@ -52,20 +52,20 @@ describe('Komut paleti', () => {
 
   it('yeniden açıldığında önceki arama temizlenmiş olur', () => {
     // Asıl korunan davranış bu: kapanıp açılınca input BOŞ gelmeli.
-    paletiAc()
+    openPalette()
     paletInput().type('ayarlar').should('have.value', 'ayarlar')
 
     cy.get('body').type('{esc}')
     cy.get('input[placeholder*="ara" i]').should('not.exist')
 
-    paletiAc()
+    openPalette()
     paletInput().should('have.value', '')
   })
 
   it('sonuç seçilince ilgili sayfaya gidilir', () => {
-    paletiAc()
+    openPalette()
     paletInput().type('ayarlar')
-    sonuclar().first().click()
+    results().first().click()
     cy.url().should('include', '/settings')
   })
 })

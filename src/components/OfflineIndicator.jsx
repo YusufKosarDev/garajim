@@ -9,7 +9,7 @@ export default function OfflineIndicator() {
   const { t } = useTranslation()
 
   const { isOnline } = usePWA()
-  const { bekleyenSayisi } = useVehicles()
+  const { pendingCount } = useVehicles()
   const [showReconnected, setShowReconnected] = useState(false)
   // Uygulama çevrimdışı açıldıysa da bağlantı dönünce rozet görünsün
   const [wasOffline, setWasOffline] = useState(!isOnline)
@@ -17,9 +17,9 @@ export default function OfflineIndicator() {
   // Çevrimiçi/çevrimdışı GEÇİŞİNİ render sırasında yakala. Eskiden bu bir
   // efektin gövdesindeydi ve `wasOffline` kendi bağımlılığıydı — her geçiş
   // fazladan bir render turu tetikliyordu.
-  const [oncekiOnline, setOncekiOnline] = useState(isOnline)
-  if (isOnline !== oncekiOnline) {
-    setOncekiOnline(isOnline)
+  const [prevOnline, setPrevOnline] = useState(isOnline)
+  if (isOnline !== prevOnline) {
+    setPrevOnline(isOnline)
     if (!isOnline) {
       setWasOffline(true)
     } else if (wasOffline) {
@@ -51,10 +51,10 @@ export default function OfflineIndicator() {
           <div className="max-w-6xl mx-auto flex items-center justify-center gap-2 flex-wrap">
             <WifiOff className="w-4 h-4" />
             <span>{t('offlineIndicator.cevrimdisisin_kayitlarin_siraya_alinip_baglanti_')}</span>
-            {bekleyenSayisi > 0 && (
+            {pendingCount > 0 && (
               <span className="inline-flex items-center gap-1 bg-yellow-700/60 px-2 py-0.5 rounded-full text-xs">
                 <Clock className="w-3 h-3" />
-                {bekleyenSayisi} bekliyor
+                {pendingCount} bekliyor
               </span>
             )}
           </div>

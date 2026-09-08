@@ -51,9 +51,9 @@ describe('calculateTireAge', () => {
 
 describe('evaluateTire', () => {
   it('yasal sınır altındaki diş derinliğini kritik sayar', () => {
-    const sonuc = evaluateTire({ treadDepth: 1.5 })
-    expect(sonuc.status).toBe('critical')
-    expect(sonuc.warnings[0].message).toContain('1.5')
+    const result = evaluateTire({ treadDepth: 1.5 })
+    expect(result.status).toBe('critical')
+    expect(result.warnings[0].message).toContain('1.5')
   })
 
   it('kış için yetersiz derinliği danger sayar', () => {
@@ -65,14 +65,14 @@ describe('evaluateTire', () => {
   })
 
   it('sağlıklı lastikte uyarı üretmez', () => {
-    const sonuc = evaluateTire({ treadDepth: 7 })
-    expect(sonuc.status).toBe('ok')
-    expect(sonuc.warnings).toHaveLength(0)
+    const result = evaluateTire({ treadDepth: 7 })
+    expect(result.status).toBe('ok')
+    expect(result.warnings).toHaveLength(0)
   })
 
   it('10 yaş ve üstünü kritik sayar (diş derinliği iyi olsa bile)', () => {
-    const sonuc = evaluateTire({ treadDepth: 8, dot: '0115' }) // 2015 -> ~11 yaş
-    expect(sonuc.status).toBe('critical')
+    const result = evaluateTire({ treadDepth: 8, dot: '0115' }) // 2015 -> ~11 yaş
+    expect(result.status).toBe('critical')
   })
 
   it('6-10 yaş arasını uyarı sayar', () => {
@@ -86,28 +86,28 @@ describe('evaluateTire', () => {
 
   it('en kötü seviye statüyü belirler', () => {
     // Derinlik kritik + yaş uyarı -> kritik
-    const sonuc = evaluateTire({ treadDepth: 1.0, dot: '0119' })
-    expect(sonuc.status).toBe('critical')
-    expect(sonuc.warnings.length).toBe(2)
+    const result = evaluateTire({ treadDepth: 1.0, dot: '0119' })
+    expect(result.status).toBe('critical')
+    expect(result.warnings.length).toBe(2)
   })
 })
 
 describe('evaluateTireSet', () => {
   it('setteki en kötü lastiğe göre statü verir', () => {
     const set = { tires: [{ treadDepth: 8 }, { treadDepth: 1.2 }, { treadDepth: 7 }] }
-    const sonuc = evaluateTireSet(set)
-    expect(sonuc.status).toBe('critical')
-    expect(sonuc.criticalCount).toBe(1)
-    expect(sonuc.issueCount).toBe(1)
+    const result = evaluateTireSet(set)
+    expect(result.status).toBe('critical')
+    expect(result.criticalCount).toBe(1)
+    expect(result.issueCount).toBe(1)
   })
 
   it('sorunlu lastikleri sayar', () => {
     const set = { tires: [{ treadDepth: 1.2 }, { treadDepth: 2.5 }, { treadDepth: 3.5 }, { treadDepth: 8 }] }
-    const sonuc = evaluateTireSet(set)
-    expect(sonuc.criticalCount).toBe(1)
-    expect(sonuc.dangerCount).toBe(1)
-    expect(sonuc.warningCount).toBe(1)
-    expect(sonuc.issueCount).toBe(3)
+    const result = evaluateTireSet(set)
+    expect(result.criticalCount).toBe(1)
+    expect(result.dangerCount).toBe(1)
+    expect(result.warningCount).toBe(1)
+    expect(result.issueCount).toBe(3)
   })
 
   it('sağlıklı sette ok döner', () => {
@@ -152,27 +152,27 @@ describe('getSeasonChangeSuggestion', () => {
 })
 
 describe('getActiveTireSet', () => {
-  const yazlik = { id: 's1', season: 'summer' }
-  const kislik = { id: 's2', season: 'winter' }
+  const summerSet = { id: 's1', season: 'summer' }
+  const winterSet = { id: 's2', season: 'winter' }
 
   it('en son değişimin hedef sezonundaki seti verir', () => {
-    const degisimler = [
+    const changes = [
       { date: '2026-04-01', toSeason: 'summer' },
       { date: '2025-11-01', toSeason: 'winter' },
     ]
-    expect(getActiveTireSet([yazlik, kislik], degisimler)).toEqual(yazlik)
+    expect(getActiveTireSet([summerSet, winterSet], changes)).toEqual(summerSet)
   })
 
   it('değişim sırası karışık gelse de en yenisini bulur', () => {
-    const degisimler = [
+    const changes = [
       { date: '2025-11-01', toSeason: 'winter' },
       { date: '2026-04-01', toSeason: 'summer' },
     ]
-    expect(getActiveTireSet([yazlik, kislik], degisimler)).toEqual(yazlik)
+    expect(getActiveTireSet([summerSet, winterSet], changes)).toEqual(summerSet)
   })
 
   it('hiç değişim yoksa ilk seti verir', () => {
-    expect(getActiveTireSet([kislik, yazlik], [])).toEqual(kislik)
+    expect(getActiveTireSet([winterSet, summerSet], [])).toEqual(winterSet)
   })
 
   it('set yoksa null döner', () => {

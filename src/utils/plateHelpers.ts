@@ -20,34 +20,34 @@ export const formatPlate = (input?: string | null): string => {
   if (cleaned.length === 0) return ''
 
   // İl kodu: ilk 2 karakter (rakam olmalı)
-  const ilKodu = cleaned.slice(0, 2)
+  const provinceCode = cleaned.slice(0, 2)
 
   // Sadece il kodu varsa veya il kodu tamamlanmamışsa
-  if (cleaned.length <= 2) return ilKodu
+  if (cleaned.length <= 2) return provinceCode
 
   // İl kodundan sonra harf kısmı
   const afterIl = cleaned.slice(2)
 
   // Harfleri bul (rakam başlayana kadar)
-  let harfler = ''
+  let letters = ''
   let i = 0
-  while (i < afterIl.length && /[A-Z]/.test(afterIl[i]) && harfler.length < 3) {
-    harfler += afterIl[i]
+  while (i < afterIl.length && /[A-Z]/.test(afterIl[i]) && letters.length < 3) {
+    letters += afterIl[i]
     i++
   }
 
   // Sadece il + harf varsa
   if (i === afterIl.length) {
-    return harfler ? `${ilKodu} ${harfler}` : ilKodu
+    return letters ? `${provinceCode} ${letters}` : provinceCode
   }
 
   // Harften sonraki rakamlar
-  const rakamlar = afterIl.slice(i).replace(/[^0-9]/g, '').slice(0, 4)
+  const digits = afterIl.slice(i).replace(/[^0-9]/g, '').slice(0, 4)
 
-  if (!harfler) return ilKodu
-  if (!rakamlar) return `${ilKodu} ${harfler}`
+  if (!letters) return provinceCode
+  if (!digits) return `${provinceCode} ${letters}`
 
-  return `${ilKodu} ${harfler} ${rakamlar}`
+  return `${provinceCode} ${letters} ${digits}`
 }
 
 // Plaka formatı geçerli mi?

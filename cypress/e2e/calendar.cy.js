@@ -39,15 +39,15 @@ describe('Takvim sayfası', () => {
 
     // Önce sayfanın kaç olay saydığını oku ("N olay gösteriliyor").
     // Sayı sıfırsa etiket iddiası boşa düşer; test kendini ona göre ayarlıyor.
-    cy.contains('olay gösteriliyor').invoke('text').then((sayacMetni) => {
-      const sayi = Number((sayacMetni.match(/(\d+)\s*olay/) || [])[1] ?? 0)
-      cy.log(`Takvimde ${sayi} olay`)
+    cy.contains('olay gösteriliyor').invoke('text').then((counterText) => {
+      const count = Number((counterText.match(/(\d+)\s*olay/) || [])[1] ?? 0)
+      cy.log(`Takvimde ${count} olay`)
 
       cy.get('body').invoke('text').then((text) => {
-        if (sayi > 0) {
+        if (count > 0) {
           // Olay VARSA etiketi de görünmeli. Eski `type` alanı okunsaydı bu
           // etiketler undefined olur ve hiçbiri eşleşmezdi.
-          expect(text, `${sayi} olay var ama hiçbirinin etiketi görünmüyor`)
+          expect(text, `${count} olay var ama hiçbirinin etiketi görünmüyor`)
             .to.match(/Muayene|MTV|Sigorta|Kasko|Yağ|Bakım|Lastik|Filtre|L -/)
         } else {
           expect(text).to.match(/olay yok|henüz|Araç Ekle/i)
@@ -75,9 +75,9 @@ describe('Takvim sayfası', () => {
 
     cy.get('body').then(($body) => {
       const text = $body.text()
-      const tarihVar = /Muayene|MTV|Sigorta|Kasko/.test(text)
+      const hasDate = /Muayene|MTV|Sigorta|Kasko/.test(text)
       const bosDurum = /tarih bilgisi girmedin|60 günden uzakta|Henüz araç/i.test(text)
-      expect(tarihVar || bosDurum, 'yaklaşan tarihler ya etiketli görünür ya da boş durum çıkar').to.be.true
+      expect(hasDate || bosDurum, 'yaklaşan tarihler ya etiketli görünür ya da boş durum çıkar').to.be.true
     })
   })
 })

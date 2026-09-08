@@ -10,7 +10,7 @@
 import { createContext, useContext } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 
-export interface AuthContextDegeri {
+export interface AuthContextValue {
   user: User | null
   session: Session | null
   loading: boolean
@@ -22,7 +22,7 @@ export interface AuthContextDegeri {
   isAuthenticated: boolean
 }
 
-export const AuthContext = createContext<AuthContextDegeri | null>(null)
+export const AuthContext = createContext<AuthContextValue | null>(null)
 
 /**
  * useAuth - Auth Context'i kullanmak için hook.
@@ -30,7 +30,7 @@ export const AuthContext = createContext<AuthContextDegeri | null>(null)
  * Kullanım:
  *   const { user, signIn, signOut } = useAuth()
  */
-export function useAuth(): AuthContextDegeri {
+export function useAuth(): AuthContextValue {
   const context = useContext(AuthContext)
   if (context === null) {
     throw new Error('useAuth, AuthProvider içinde kullanılmalı!')

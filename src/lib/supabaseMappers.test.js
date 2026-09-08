@@ -41,19 +41,19 @@ describe('vehicle mapper', () => {
   })
 
   it('DB e yazarken user_id ekler ve camelCase i snake_case e çevirir', () => {
-    const satir = vehicleToDb({ plate: '34 A 1', brand: 'BMW', model: '320i', fuelType: 'dizel', currentKm: 5 }, USER)
-    expect(satir.user_id).toBe(USER)
-    expect(satir.fuel_type).toBe('dizel')
-    expect(satir.current_km).toBe(5)
-    expect(satir).not.toHaveProperty('fuelType')
+    const row = vehicleToDb({ plate: '34 A 1', brand: 'BMW', model: '320i', fuelType: 'dizel', currentKm: 5 }, USER)
+    expect(row.user_id).toBe(USER)
+    expect(row.fuel_type).toBe('dizel')
+    expect(row.current_km).toBe(5)
+    expect(row).not.toHaveProperty('fuelType')
   })
 
   it('boş tarihleri null a çevirir (Postgres boş string i tarih olarak kabul etmez)', () => {
-    const satir = vehicleToDb({ inspectionDate: '', mtvDate: '', insuranceDate: '', kaskoDate: '' }, USER)
-    expect(satir.inspection_date).toBeNull()
-    expect(satir.mtv_date).toBeNull()
-    expect(satir.insurance_date).toBeNull()
-    expect(satir.kasko_date).toBeNull()
+    const row = vehicleToDb({ inspectionDate: '', mtvDate: '', insuranceDate: '', kaskoDate: '' }, USER)
+    expect(row.inspection_date).toBeNull()
+    expect(row.mtv_date).toBeNull()
+    expect(row.insurance_date).toBeNull()
+    expect(row.kasko_date).toBeNull()
   })
 
   it('km verilmezse 0 a düşer', () => {
@@ -149,8 +149,8 @@ describe('custom interval mapper', () => {
   })
 
   it('tek ayarı DB satırına çevirir', () => {
-    const satir = customIntervalToDb('v1', 'Yağ Değişimi', { kilometers: 7500 }, USER)
-    expect(satir).toEqual({
+    const row = customIntervalToDb('v1', 'Yağ Değişimi', { kilometers: 7500 }, USER)
+    expect(row).toEqual({
       vehicle_id: 'v1', user_id: USER, maintenance_type: 'Yağ Değişimi',
       kilometers: 7500, months: null,
     })

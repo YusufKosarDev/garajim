@@ -32,7 +32,7 @@ export default function FormField({
   // Ortak alan özellikleri: özel kontroller (select, uploader) bunları
   // children render-prop'u üzerinden alır; böylece label bağlantısı ve
   // aria nitelikleri tek yerde kalır.
-  const alanProps = {
+  const fieldProps = {
     id,
     className: controlClass,
     'aria-invalid': error ? 'true' : undefined,
@@ -41,8 +41,8 @@ export default function FormField({
 
   const Control = as
   const control = typeof children === 'function'
-    ? children(alanProps)
-    : (children ?? <Control {...alanProps} {...props} />)
+    ? children(fieldProps)
+    : (children ?? <Control {...fieldProps} {...props} />)
 
   return (
     <div>

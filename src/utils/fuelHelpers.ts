@@ -3,8 +3,8 @@ import type { FuelRecord } from '../types'
 // km, DB'de null olabiliyor (kayıt girilirken boş bırakılabilir).
 // Önceden bu kontrol edilmiyordu; null - null = 0 olduğu için tesadüfen
 // zarar vermiyordu ama sıralamada NaN karşılaştırmasına yol açıyordu.
-const kmDegeri = (kayit: FuelRecord): number | null =>
-  typeof kayit.km === 'number' && !Number.isNaN(kayit.km) ? kayit.km : null
+const kmValue = (record: FuelRecord): number | null =>
+  typeof record.km === 'number' && !Number.isNaN(record.km) ? record.km : null
 
 // İki yakıt kaydı arasındaki tüketim: L/100km
 export const calculateConsumption = (
@@ -13,11 +13,11 @@ export const calculateConsumption = (
 ): number | null => {
   if (!prevRecord || !currentRecord) return null
 
-  const onceki = kmDegeri(prevRecord)
-  const simdiki = kmDegeri(currentRecord)
-  if (onceki === null || simdiki === null) return null
+  const previous = kmValue(prevRecord)
+  const current = kmValue(currentRecord)
+  if (previous === null || current === null) return null
 
-  const kmDiff = simdiki - onceki
+  const kmDiff = current - previous
   if (kmDiff <= 0) return null
   return (currentRecord.liters / kmDiff) * 100
 }
@@ -25,12 +25,12 @@ export const calculateConsumption = (
 // Bir aracın tüm yakıt kayıtlarına göre ortalama tüketim
 export const getAverageConsumption = (fuelRecords: FuelRecord[]): number | null => {
   // km'si olmayan kayıtlar mesafe hesabına giremez
-  const kmliKayitlar = fuelRecords.filter(r => kmDegeri(r) !== null)
-  if (kmliKayitlar.length < 2) return null
+  const recordsWithKm = fuelRecords.filter(r => kmValue(r) !== null)
+  if (recordsWithKm.length < 2) return null
 
-  const sorted = [...kmliKayitlar].sort((a, b) => (kmDegeri(a) ?? 0) - (kmDegeri(b) ?? 0))
-  const ilk = kmDegeri(sorted[0]) ?? 0
-  const son = kmDegeri(sorted[sorted.length - 1]) ?? 0
+  const sorted = [...recordsWithKm].sort((a, b) => (kmValue(a) ?? 0) - (kmValue(b) ?? 0))
+  const ilk = kmValue(sorted[0]) ?? 0
+  const son = kmValue(sorted[sorted.length - 1]) ?? 0
   const totalKm = son - ilk
 
   // İlk kayıt hariç toplam litre (ilk dolumda önceki aralık yok)

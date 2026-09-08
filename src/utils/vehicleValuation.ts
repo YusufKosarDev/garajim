@@ -19,16 +19,16 @@
 import type { Vehicle, MaintenanceRecord } from '../types'
 
 /** Türkiye'de yıllık ortalama kullanım varsayımı */
-export const YILLIK_ORTALAMA_KM = 15_000
+export const AVERAGE_KM_PER_YEAR = 15_000
 
 /**
  * Yaşa göre değer koruma. İlk yıl en sert, sonra yumuşuyor — yeni araç
  * "sıfır" olma primini bir defada kaybeder, eski araç ise zaten dibe yakındır.
  */
-const yasEtkisi = (yas: number): number => {
-  if (yas <= 0) return 1
+const ageImpact = (age: number): number => {
+  if (age <= 0) return 1
   let oran = 0.82 // ilk yıl
-  for (let y = 2; y <= yas; y++) {
+  for (let y = 2; y <= age; y++) {
     if (y <= 5) oran *= 0.88
     else if (y <= 10) oran *= 0.93
     else oran *= 0.96
@@ -45,110 +45,110 @@ const yasEtkisi = (yas: number): number => {
  * Asimetrik: fazla km cezası, az km primi. Çünkü çok düşük km her zaman artı
  * değil — uzun süre kullanılmamış araçta lastik, conta ve akü sorunu beklenir.
  */
-const kmEtkisi = (gercekKm: number, beklenenKm: number): number => {
-  const fark = gercekKm - beklenenKm
-  const onBinlik = fark / 10_000
-  if (fark > 0) return Math.max(-0.20, -0.02 * onBinlik)
-  return Math.min(0.10, -0.015 * onBinlik)
+const kmImpact = (actualKm: number, expectedKm: number): number => {
+  const fark = actualKm - expectedKm
+  const tenThousands = fark / 10_000
+  if (fark > 0) return Math.max(-0.20, -0.02 * tenThousands)
+  return Math.min(0.10, -0.015 * tenThousands)
 }
 
 const GUN_MS = 86_400_000
 
 /** Kayıtlı geçmişi olan araç daha kolay satılır — ama etkisi mütevazı tutuldu */
-const bakimEtkisi = (kayitlar: MaintenanceRecord[], bugun: Date): number => {
-  if (kayitlar.length === 0) return -0.03 // belgesiz geçmiş
+const maintenanceImpact = (records: MaintenanceRecord[], today: Date): number => {
+  if (records.length === 0) return -0.03 // belgesiz geçmiş
 
-  const birYilOnce = bugun.getTime() - 365 * GUN_MS
-  const guncelVar = kayitlar.some(r => {
+  const oneYearAgo = today.getTime() - 365 * GUN_MS
+  const guncelVar = records.some(r => {
     const t = new Date(r.date).getTime()
-    return Number.isFinite(t) && t >= birYilOnce && t <= bugun.getTime()
+    return Number.isFinite(t) && t >= oneYearAgo && t <= today.getTime()
   })
 
   let etki = 0
-  if (kayitlar.length >= 3) etki += 0.02 // düzenli tutulmuş geçmiş
+  if (records.length >= 3) etki += 0.02 // düzenli tutulmuş geçmiş
   if (guncelVar) etki += 0.03            // son bir yılda bakım görmüş
 
   return Math.min(0.05, etki)
 }
 
-export type Guven = 'dusuk' | 'orta' | 'yuksek'
+export type Confidence = 'low' | 'medium' | 'high'
 
-export interface DegerTahmini {
+export interface ValuationResult {
   /** Araç yaşı (yıl) */
-  yas: number
+  age: number
   /** Yaşına göre beklenen toplam km */
-  beklenenKm: number
+  expectedKm: number
   /** Gerçek km - beklenen km. Pozitif = çok kullanılmış */
   kmFarki: number
   /** İlk değerin ne kadarı kaldı, 0-1 arası */
-  kalanOran: number
+  remainingRatio: number
   /** Her etkinin ayrı payı — arayüzde gösteriliyor ki tahmin denetlenebilsin */
-  bilesenler: { yas: number; km: number; bakim: number }
-  guven: Guven
+  components: { age: number; km: number; maintenance: number }
+  confidence: Confidence
   /** Tahmini kısıtlayan bilinen eksikler */
-  uyarilar: string[]
+  warnings: string[]
   /** Alış fiyatı verildiyse ₺ karşılığı, yoksa null */
-  tahminiDeger: number | null
+  estimatedValue: number | null
 }
 
-export interface DegerSecenekleri {
+export interface ValuationOptions {
   /** Kullanıcının girdiği alış fiyatı (₺). Yoksa yalnızca oran döner. */
-  alisFiyati?: number | null
+  purchasePrice?: number | null
   /** Test edilebilirlik için; yoksa gerçek tarih */
-  bugun?: Date
+  today?: Date
 }
 
 export const estimateVehicleValue = (
   vehicle: Vehicle | null | undefined,
   maintenanceRecords: MaintenanceRecord[] = [],
-  { alisFiyati = null, bugun = new Date() }: DegerSecenekleri = {},
-): DegerTahmini | null => {
+  { purchasePrice = null, today = new Date() }: ValuationOptions = {},
+): ValuationResult | null => {
   // Model yılı olmadan yaş bilinmez, yaş olmadan bu hesabın hiçbir dayanağı kalmaz
   if (!vehicle || !vehicle.year) return null
 
-  const yil = Number(vehicle.year)
-  if (!Number.isFinite(yil) || yil < 1900 || yil > bugun.getFullYear() + 1) return null
+  const year = Number(vehicle.year)
+  if (!Number.isFinite(year) || year < 1900 || year > today.getFullYear() + 1) return null
 
-  const uyarilar: string[] = []
-  const yas = Math.max(0, bugun.getFullYear() - yil)
-  const beklenenKm = Math.round(yas * YILLIK_ORTALAMA_KM)
+  const warnings: string[] = []
+  const age = Math.max(0, today.getFullYear() - year)
+  const expectedKm = Math.round(age * AVERAGE_KM_PER_YEAR)
 
-  const gercekKm = Number(vehicle.currentKm) || 0
-  const kmBilinmiyor = gercekKm <= 0
-  if (kmBilinmiyor) uyarilar.push('Aracın güncel kilometresi girilmemiş; km etkisi hesaba katılmadı.')
+  const actualKm = Number(vehicle.currentKm) || 0
+  const kmUnknown = actualKm <= 0
+  if (kmUnknown) warnings.push('Aracın güncel kilometresi girilmemiş; km etkisi hesaba katılmadı.')
 
-  const kendiKayitlari = maintenanceRecords.filter(r => r.vehicleId === vehicle.id)
-  if (kendiKayitlari.length === 0) {
-    uyarilar.push('Bu araç için bakım kaydı yok; belgesiz geçmiş değeri düşürür.')
+  const ownRecords = maintenanceRecords.filter(r => r.vehicleId === vehicle.id)
+  if (ownRecords.length === 0) {
+    warnings.push('Bu araç için bakım kaydı yok; belgesiz geçmiş değeri düşürür.')
   }
 
-  const bYas = yasEtkisi(yas)
-  const bKm = kmBilinmiyor ? 0 : kmEtkisi(gercekKm, beklenenKm)
-  const bBakim = bakimEtkisi(kendiKayitlari, bugun)
+  const bYas = ageImpact(age)
+  const bKm = kmUnknown ? 0 : kmImpact(actualKm, expectedKm)
+  const bMaintenance = maintenanceImpact(ownRecords, today)
 
   // km ve bakım, yaş oranı ÜZERİNDEN çarpan olarak uygulanıyor: 20 yaşındaki bir
   // araçta "+%5 bakım" mutlak değil oransal bir etkidir.
-  const kalanOran = Math.min(1, Math.max(0.05, bYas * (1 + bKm + bBakim)))
+  const remainingRatio = Math.min(1, Math.max(0.05, bYas * (1 + bKm + bMaintenance)))
 
-  let guven: Guven = 'yuksek'
-  if (kmBilinmiyor || kendiKayitlari.length === 0) guven = 'orta'
-  if (kmBilinmiyor && kendiKayitlari.length === 0) guven = 'dusuk'
-  if (yas > 20) {
-    guven = 'dusuk'
-    uyarilar.push('20 yaş üstü araçlarda fiyatı model ve durum belirler; yaşa dayalı tahmin zayıftır.')
+  let confidence: Confidence = 'high'
+  if (kmUnknown || ownRecords.length === 0) confidence = 'medium'
+  if (kmUnknown && ownRecords.length === 0) confidence = 'low'
+  if (age > 20) {
+    confidence = 'low'
+    warnings.push('20 yaş üstü araçlarda fiyatı model ve durum belirler; yaşa dayalı tahmin zayıftır.')
   }
 
-  const fiyat = Number(alisFiyati)
-  const tahminiDeger = Number.isFinite(fiyat) && fiyat > 0 ? Math.round(fiyat * kalanOran) : null
+  const fiyat = Number(purchasePrice)
+  const estimatedValue = Number.isFinite(fiyat) && fiyat > 0 ? Math.round(fiyat * remainingRatio) : null
 
   return {
-    yas,
-    beklenenKm,
-    kmFarki: kmBilinmiyor ? 0 : gercekKm - beklenenKm,
-    kalanOran,
-    bilesenler: { yas: bYas, km: bKm, bakim: bBakim },
-    guven,
-    uyarilar,
-    tahminiDeger,
+    age,
+    expectedKm,
+    kmFarki: kmUnknown ? 0 : actualKm - expectedKm,
+    remainingRatio,
+    components: { age: bYas, km: bKm, maintenance: bMaintenance },
+    confidence,
+    warnings,
+    estimatedValue,
   }
 }

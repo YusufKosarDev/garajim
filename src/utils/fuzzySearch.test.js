@@ -45,30 +45,30 @@ describe('fuzzyMatch', () => {
 })
 
 describe('multiFieldSearch', () => {
-  const arac = { plate: '34 ABC 1234', brand: 'BMW', model: '320i', notes: 'kırmızı' }
-  const alanlar = ['plate', 'brand', 'model', 'notes']
+  const vehicle = { plate: '34 ABC 1234', brand: 'BMW', model: '320i', notes: 'kırmızı' }
+  const fields = ['plate', 'brand', 'model', 'notes']
 
   it('herhangi bir alanda eşleşme bulur', () => {
-    expect(multiFieldSearch(arac, 'bmw', alanlar).match).toBe(true)
-    expect(multiFieldSearch(arac, '320', alanlar).match).toBe(true)
-    expect(multiFieldSearch(arac, 'kirmizi', alanlar).match).toBe(true)
+    expect(multiFieldSearch(vehicle, 'bmw', fields).match).toBe(true)
+    expect(multiFieldSearch(vehicle, '320', fields).match).toBe(true)
+    expect(multiFieldSearch(vehicle, 'kirmizi', fields).match).toBe(true)
   })
 
   it('en yüksek skoru döndürür', () => {
-    const sonuc = multiFieldSearch(arac, 'bmw', alanlar)
-    expect(sonuc.score).toBeGreaterThan(0)
+    const result = multiFieldSearch(vehicle, 'bmw', fields)
+    expect(result.score).toBeGreaterThan(0)
   })
 
   it('hiçbir alan eşleşmezse match false', () => {
-    expect(multiFieldSearch(arac, 'mercedes', alanlar).match).toBe(false)
+    expect(multiFieldSearch(vehicle, 'mercedes', fields).match).toBe(false)
   })
 
   it('eksik alanlarda çökmez', () => {
-    expect(multiFieldSearch({ brand: 'BMW' }, 'bmw', alanlar).match).toBe(true)
-    expect(multiFieldSearch({ brand: null }, 'bmw', alanlar).match).toBe(false)
+    expect(multiFieldSearch({ brand: 'BMW' }, 'bmw', fields).match).toBe(true)
+    expect(multiFieldSearch({ brand: null }, 'bmw', fields).match).toBe(false)
   })
 
   it('boş sorguda match true döner', () => {
-    expect(multiFieldSearch(arac, '', alanlar).match).toBe(true)
+    expect(multiFieldSearch(vehicle, '', fields).match).toBe(true)
   })
 })

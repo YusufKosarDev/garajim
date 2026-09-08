@@ -12,14 +12,14 @@ const ARAC = { id: 'v1', brand: 'BMW', model: '320i', currentKm: 100000 }
 
 const doldur = (input, value) => fireEvent.change(input, { target: { value } })
 
-const alan = {
-  tarih: () => document.querySelector('input[type="date"]'),
+const field = {
+  date: () => document.querySelector('input[type="date"]'),
   km: () => screen.getAllByPlaceholderText('0')[0],
   kaydet: () => screen.getByRole('button', { name: /değişimi kaydet/i }),
 }
 
 const gonder = async () => {
-  fireEvent.click(alan.kaydet())
+  fireEvent.click(field.kaydet())
   await waitFor(() => {})
 }
 
@@ -43,7 +43,7 @@ const ac = (props = {}) =>
 describe('TireChangeForm', () => {
   it('açılışta km yi aracın güncel km si ile doldurur', () => {
     ac()
-    expect(alan.km()).toHaveValue(100000)
+    expect(field.km()).toHaveValue(100000)
   })
 
   it('sezon geçişini doğru kaydeder', async () => {
@@ -62,8 +62,8 @@ describe('TireChangeForm', () => {
 
   it('km sıfır veya boşsa kaydetmez', async () => {
     ac()
-    doldur(alan.km(), '0')
-    fireEvent.click(alan.kaydet())
+    doldur(field.km(), '0')
+    fireEvent.click(field.kaydet())
 
     expect(await screen.findByText('Geçerli KM gir')).toBeInTheDocument()
     expect(addTireChange).not.toHaveBeenCalled()
@@ -71,15 +71,15 @@ describe('TireChangeForm', () => {
 
   it('tarih alanı bugünle sınırlı (max attribute)', () => {
     ac()
-    const bugun = new Date()
-    const beklenen = `${bugun.getFullYear()}-${String(bugun.getMonth() + 1).padStart(2, '0')}-${String(bugun.getDate()).padStart(2, '0')}`
-    expect(alan.tarih()).toHaveAttribute('max', beklenen)
+    const today = new Date()
+    const expected = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+    expect(field.date()).toHaveAttribute('max', expected)
   })
 
   it('aracın km si değişince açık formdaki girdiler KORUNUR', () => {
     const { rerender } = ac()
 
-    doldur(alan.km(), '123456')
+    doldur(field.km(), '123456')
 
     // Realtime senkron aracın km'sini güncellerse form sıfırlanmamalı
     mockCtx = { ...mockCtx, vehicles: [{ ...ARAC, currentKm: 111111 }] }
@@ -87,6 +87,6 @@ describe('TireChangeForm', () => {
       <TireChangeForm isOpen onClose={vi.fn()} vehicleId="v1" currentSeason="summer" targetSeason="winter" />
     )
 
-    expect(alan.km()).toHaveValue(123456)
+    expect(field.km()).toHaveValue(123456)
   })
 })

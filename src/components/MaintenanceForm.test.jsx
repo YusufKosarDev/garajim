@@ -13,9 +13,9 @@ const ARAC = { id: 'v1', brand: 'BMW', model: '320i', plate: '34 ABC 1234', curr
 
 const doldur = (input, value) => fireEvent.change(input, { target: { value } })
 
-const alan = {
+const field = {
   tur: () => document.querySelector('select'),
-  tarih: () => document.querySelector('input[type="date"]'),
+  date: () => document.querySelector('input[type="date"]'),
   // km ve maliyet alanlarının ikisi de placeholder="0" — ilki km
   km: () => screen.getAllByPlaceholderText('0')[0],
   kaydet: () => screen.getByRole('button', { name: /bakım ekle|güncelle/i }),
@@ -23,7 +23,7 @@ const alan = {
 
 // react-hook-form'un handleSubmit'i asenkron
 const gonder = async () => {
-  fireEvent.click(alan.kaydet())
+  fireEvent.click(field.kaydet())
   await waitFor(() => {})
 }
 
@@ -42,7 +42,7 @@ const ac = (props = {}) =>
 describe('MaintenanceForm — geçmişe dönük km onayı', () => {
   it('km tutarlıysa onay sormadan kaydeder', async () => {
     ac()
-    doldur(alan.tur(), 'Yağ Değişimi')
+    doldur(field.tur(), 'Yağ Değişimi')
     await gonder()
 
     await waitFor(() => expect(addMaintenance).toHaveBeenCalledTimes(1))
@@ -52,9 +52,9 @@ describe('MaintenanceForm — geçmişe dönük km onayı', () => {
   it('kayıtlardaki en yüksek km den düşük girilirse onay diyaloğu açar ve HENÜZ kaydetmez', async () => {
     mockCtx.fuelRecords = [{ id: 'f1', vehicleId: 'v1', km: 150000, liters: 40, totalCost: 1800 }]
     ac()
-    doldur(alan.tur(), 'Yağ Değişimi')
-    doldur(alan.km(), '120000')
-    fireEvent.click(alan.kaydet())
+    doldur(field.tur(), 'Yağ Değişimi')
+    doldur(field.km(), '120000')
+    fireEvent.click(field.kaydet())
 
     // Önceden bu window.confirm ile soruluyordu — artık erişilebilir bir diyalog
     expect(await screen.findByRole('dialog', { name: 'Geçmişe dönük kayıt mı?' })).toBeInTheDocument()
@@ -65,9 +65,9 @@ describe('MaintenanceForm — geçmişe dönük km onayı', () => {
   it('onaylanınca kaydeder', async () => {
     mockCtx.fuelRecords = [{ id: 'f1', vehicleId: 'v1', km: 150000, liters: 40, totalCost: 1800 }]
     ac()
-    doldur(alan.tur(), 'Yağ Değişimi')
-    doldur(alan.km(), '120000')
-    fireEvent.click(alan.kaydet())
+    doldur(field.tur(), 'Yağ Değişimi')
+    doldur(field.km(), '120000')
+    fireEvent.click(field.kaydet())
 
     fireEvent.click(await screen.findByRole('button', { name: 'Evet, kaydet' }))
 
@@ -78,9 +78,9 @@ describe('MaintenanceForm — geçmişe dönük km onayı', () => {
   it('vazgeçilirse kaydetmez ve form açık kalır', async () => {
     mockCtx.fuelRecords = [{ id: 'f1', vehicleId: 'v1', km: 150000, liters: 40, totalCost: 1800 }]
     ac()
-    doldur(alan.tur(), 'Yağ Değişimi')
-    doldur(alan.km(), '120000')
-    fireEvent.click(alan.kaydet())
+    doldur(field.tur(), 'Yağ Değişimi')
+    doldur(field.km(), '120000')
+    fireEvent.click(field.kaydet())
 
     fireEvent.click(await screen.findByRole('button', { name: 'Vazgeç' }))
 
@@ -91,7 +91,7 @@ describe('MaintenanceForm — geçmişe dönük km onayı', () => {
 
   it('zorunlu alan boşken kaydetmez', async () => {
     ac()
-    fireEvent.click(alan.kaydet())
+    fireEvent.click(field.kaydet())
 
     expect(await screen.findByText('Bakım türü seç veya yaz')).toBeInTheDocument()
     expect(addMaintenance).not.toHaveBeenCalled()
@@ -102,16 +102,16 @@ describe('MaintenanceForm — kullanıcı yazarken sıfırlanma', () => {
   it('aracın km si değişince açık formdaki girdiler KORUNMALI', () => {
     const { rerender } = ac()
 
-    doldur(alan.tur(), 'Balata')
-    doldur(alan.km(), '123456')
-    expect(alan.km()).toHaveValue(123456)
+    doldur(field.tur(), 'Balata')
+    doldur(field.km(), '123456')
+    expect(field.km()).toHaveValue(123456)
 
     // Başka bir yerden (realtime senkron, yakıt kaydı ekleme vs.) aracın
     // currentKm'si güncellenirse form açıkken sıfırlanmamalı.
     mockCtx = { ...mockCtx, vehicles: [{ ...ARAC, currentKm: 111111 }] }
     rerender(<MaintenanceForm isOpen onClose={vi.fn()} vehicleId="v1" />)
 
-    expect(alan.km()).toHaveValue(123456)
-    expect(alan.tur()).toHaveValue('Balata')
+    expect(field.km()).toHaveValue(123456)
+    expect(field.tur()).toHaveValue('Balata')
   })
 })

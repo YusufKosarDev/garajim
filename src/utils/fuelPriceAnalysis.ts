@@ -16,7 +16,7 @@ import type { FuelRecord } from '../types'
 const GUN_MS = 86_400_000
 
 /** İstasyon sapması için pencere: bir ayda ulusal fiyat seviyesi kabaca sabit sayılır */
-const SAPMA_PENCERE_GUN = 30
+const DEVIATION_WINDOW_DAYS = 30
 
 /**
  * Tasarruf için daha dar pencere. "O gün öbür istasyon daha ucuzdu" demek için
@@ -25,60 +25,60 @@ const SAPMA_PENCERE_GUN = 30
  */
 const TASARRUF_PENCERE_GUN = 7
 
-export interface IstasyonSapmasi {
+export interface StationDeviation {
   station: string
   /** Karşılaştırılabilir alım sayısı (aynı dönemde başka istasyon da varken yapılan) */
   count: number
   /** Piyasaya göre ortalama fark, ₺/L. Negatif = ucuz */
-  ortSapma: number
-  ortYuzdeSapma: number
+  avgDeviation: number
+  avgPercentDeviation: number
 }
 
-export interface AylikFiyat {
+export interface MonthlyPrice {
   /** YYYY-MM */
-  ay: string
+  month: string
   ortFiyat: number
   litre: number
 }
 
 export interface Tasarruf {
   /** Her alımda o dönemde gözlemlenen en ucuz istasyonu seçseydin fark, ₺ */
-  toplam: number
+  total: number
   /** Bu hesaba giren alım sayısı — kaç alımda gerçekten daha ucuz bir alternatif vardı */
-  karsilastirilanAlim: number
+  comparedFillUps: number
   /** Hesaba giren alımların toplam tutarı; oran verirken payda budur */
-  karsilastirilanTutar: number
+  comparedAmount: number
 }
 
-export interface FiyatAnalizi {
-  istasyonlar: IstasyonSapmasi[]
-  aylikFiyatlar: AylikFiyat[]
-  tasarruf: Tasarruf | null
+export interface FuelPriceAnalysis {
+  stations: StationDeviation[]
+  monthlyPrices: MonthlyPrice[]
+  savings: Tasarruf | null
   /** Analiz yapılamadıysa sebebi — kullanıcıya boş kutu göstermemek için */
-  yetersizVeri: string | null
+  insufficientData: string | null
 }
 
-interface Alim {
+interface FillUp {
   zaman: number
   fiyat: number
   litre: number
-  istasyon: string
-  ay: string
+  station: string
+  month: string
 }
 
-const ortanca = (sayilar: number[]): number => {
-  if (sayilar.length === 0) return 0
-  const s = [...sayilar].sort((a, b) => a - b)
-  const orta = Math.floor(s.length / 2)
-  return s.length % 2 ? s[orta] : (s[orta - 1] + s[orta]) / 2
+const ortanca = (numbers: number[]): number => {
+  if (numbers.length === 0) return 0
+  const s = [...numbers].sort((a, b) => a - b)
+  const medium = Math.floor(s.length / 2)
+  return s.length % 2 ? s[medium] : (s[medium - 1] + s[medium]) / 2
 }
 
 /**
  * Piyasa seviyesi için ORTALAMA değil ORTANCA kullanılıyor: tek bir hatalı
  * kayıt (yanlış girilen fiyat) ortalamayı kaydırır, ortancayı kaydırmaz.
  */
-const normalize = (kayitlar: FuelRecord[]): Alim[] =>
-  kayitlar
+const normalize = (records: FuelRecord[]): FillUp[] =>
+  records
     .map(r => {
       const litre = Number(r.liters) || 0
       // pricePerLiter boşsa toplam tutardan türet — eski kayıtlarda bu alan boş olabiliyor
@@ -90,116 +90,116 @@ const normalize = (kayitlar: FuelRecord[]): Alim[] =>
         zaman,
         fiyat,
         litre,
-        istasyon: r.station?.trim() || 'Belirtilmemiş',
-        ay: typeof r.date === 'string' ? r.date.slice(0, 7) : '',
+        station: r.station?.trim() || 'Belirtilmemiş',
+        month: typeof r.date === 'string' ? r.date.slice(0, 7) : '',
       }
     })
-    .filter(a => Number.isFinite(a.zaman) && a.fiyat > 0 && a.litre > 0 && a.ay.length === 7)
+    .filter(a => Number.isFinite(a.zaman) && a.fiyat > 0 && a.litre > 0 && a.month.length === 7)
     .sort((a, b) => a.zaman - b.zaman)
 
-const pencere = (alimlar: Alim[], merkez: Alim, gun: number): Alim[] => {
-  const yaricap = gun * GUN_MS
-  return alimlar.filter(a => Math.abs(a.zaman - merkez.zaman) <= yaricap)
+const windowOf = (fillUps: FillUp[], center: FillUp, days: number): FillUp[] => {
+  const yaricap = days * GUN_MS
+  return fillUps.filter(a => Math.abs(a.zaman - center.zaman) <= yaricap)
 }
 
-export const analyzeFuelPrices = (kayitlar: FuelRecord[] = []): FiyatAnalizi => {
-  const bos: FiyatAnalizi = { istasyonlar: [], aylikFiyatlar: [], tasarruf: null, yetersizVeri: null }
+export const analyzeFuelPrices = (records: FuelRecord[] = []): FuelPriceAnalysis => {
+  const bos: FuelPriceAnalysis = { stations: [], monthlyPrices: [], savings: null, insufficientData: null }
 
-  const alimlar = normalize(kayitlar)
-  if (alimlar.length < 2) {
-    return { ...bos, yetersizVeri: 'Fiyat karşılaştırması için en az iki yakıt kaydı gerekiyor.' }
+  const fillUps = normalize(records)
+  if (fillUps.length < 2) {
+    return { ...bos, insufficientData: 'Fiyat karşılaştırması için en az iki yakıt kaydı gerekiyor.' }
   }
 
   // ---- Aylık fiyat seyri (kendi verinden enflasyon eğrisi) ----
-  const aylik = new Map<string, { tutar: number; litre: number }>()
-  for (const a of alimlar) {
-    const m = aylik.get(a.ay) ?? { tutar: 0, litre: 0 }
+  const monthly = new Map<string, { tutar: number; litre: number }>()
+  for (const a of fillUps) {
+    const m = monthly.get(a.month) ?? { tutar: 0, litre: 0 }
     m.tutar += a.fiyat * a.litre
     m.litre += a.litre
-    aylik.set(a.ay, m)
+    monthly.set(a.month, m)
   }
-  const aylikFiyatlar: AylikFiyat[] = [...aylik.entries()]
-    .map(([ay, m]) => ({ ay, ortFiyat: m.tutar / m.litre, litre: m.litre }))
-    .sort((a, b) => a.ay.localeCompare(b.ay))
+  const monthlyPrices: MonthlyPrice[] = [...monthly.entries()]
+    .map(([month, m]) => ({ month, ortFiyat: m.tutar / m.litre, litre: m.litre }))
+    .sort((a, b) => a.month.localeCompare(b.month))
 
-  const istasyonSayisi = new Set(alimlar.map(a => a.istasyon)).size
-  if (istasyonSayisi < 2) {
+  const stationCount = new Set(fillUps.map(a => a.station)).size
+  if (stationCount < 2) {
     return {
       ...bos,
-      aylikFiyatlar,
-      yetersizVeri: 'İstasyon karşılaştırması için en az iki farklı istasyonda alım gerekiyor.',
+      monthlyPrices,
+      insufficientData: 'İstasyon karşılaştırması için en az iki farklı istasyonda alım gerekiyor.',
     }
   }
 
   // ---- İstasyon sapması ----
-  const sapmalar = new Map<string, { farklar: number[]; yuzdeler: number[] }>()
+  const deviations = new Map<string, { differences: number[]; percentages: number[] }>()
 
-  for (const alim of alimlar) {
-    const komsular = pencere(alimlar, alim, SAPMA_PENCERE_GUN)
+  for (const alim of fillUps) {
+    const neighbours = windowOf(fillUps, alim, DEVIATION_WINDOW_DAYS)
     // Aynı dönemde başka istasyon yoksa karşılaştırma yapılamaz — bu alım atlanır.
     // Kendisiyle kıyaslanan bir alım "piyasa ortalamasında" görünürdü; bu bir bilgi değil.
-    if (new Set(komsular.map(k => k.istasyon)).size < 2) continue
+    if (new Set(neighbours.map(k => k.station)).size < 2) continue
 
-    const piyasa = ortanca(komsular.map(k => k.fiyat))
+    const piyasa = ortanca(neighbours.map(k => k.fiyat))
     if (piyasa <= 0) continue
 
     const fark = alim.fiyat - piyasa
-    const kayit = sapmalar.get(alim.istasyon) ?? { farklar: [], yuzdeler: [] }
-    kayit.farklar.push(fark)
-    kayit.yuzdeler.push((fark / piyasa) * 100)
-    sapmalar.set(alim.istasyon, kayit)
+    const record = deviations.get(alim.station) ?? { differences: [], percentages: [] }
+    record.differences.push(fark)
+    record.percentages.push((fark / piyasa) * 100)
+    deviations.set(alim.station, record)
   }
 
-  const ortalama = (d: number[]) => d.reduce((t, n) => t + n, 0) / d.length
+  const average = (d: number[]) => d.reduce((t, n) => t + n, 0) / d.length
 
-  const istasyonlar: IstasyonSapmasi[] = [...sapmalar.entries()]
-    .map(([station, { farklar, yuzdeler }]) => ({
+  const stations: StationDeviation[] = [...deviations.entries()]
+    .map(([station, { differences, percentages }]) => ({
       station,
-      count: farklar.length,
-      ortSapma: ortalama(farklar),
-      ortYuzdeSapma: ortalama(yuzdeler),
+      count: differences.length,
+      avgDeviation: average(differences),
+      avgPercentDeviation: average(percentages),
     }))
-    .sort((a, b) => a.ortSapma - b.ortSapma)
+    .sort((a, b) => a.avgDeviation - b.avgDeviation)
 
   // ---- Gerçekten gözlemlenebilir tasarruf ----
   // Kural: yalnızca AYNI DÖNEMDE BAŞKA BİR İSTASYONDA daha ucuz bir alım
   // yapılmışsa fark sayılır. Yani "o sırada gerçekten daha ucuzu vardı ve bunu
   // biliyordun" durumu. Varsayımsal fiyat üretmiyoruz.
-  let toplamTasarruf = 0
-  let karsilastirilanAlim = 0
-  let karsilastirilanTutar = 0
+  let totalSavings = 0
+  let comparedFillUps = 0
+  let comparedAmount = 0
 
-  for (const alim of alimlar) {
-    const alternatifler = pencere(alimlar, alim, TASARRUF_PENCERE_GUN)
-      .filter(k => k.istasyon !== alim.istasyon)
-    if (alternatifler.length === 0) continue
+  for (const alim of fillUps) {
+    const alternatives = windowOf(fillUps, alim, TASARRUF_PENCERE_GUN)
+      .filter(k => k.station !== alim.station)
+    if (alternatives.length === 0) continue
 
-    const enUcuz = Math.min(...alternatifler.map(k => k.fiyat))
-    karsilastirilanAlim += 1
-    karsilastirilanTutar += alim.fiyat * alim.litre
-    if (enUcuz < alim.fiyat) toplamTasarruf += (alim.fiyat - enUcuz) * alim.litre
+    const enUcuz = Math.min(...alternatives.map(k => k.fiyat))
+    comparedFillUps += 1
+    comparedAmount += alim.fiyat * alim.litre
+    if (enUcuz < alim.fiyat) totalSavings += (alim.fiyat - enUcuz) * alim.litre
   }
 
-  if (istasyonlar.length === 0) {
+  if (stations.length === 0) {
     return {
-      istasyonlar: [],
-      aylikFiyatlar,
-      tasarruf: null,
-      yetersizVeri:
+      stations: [],
+      monthlyPrices,
+      savings: null,
+      insufficientData:
         'Alımlar zaman içinde birbirinden uzak; aynı dönemde karşılaştırılabilir başka istasyon yok.',
     }
   }
 
   return {
-    istasyonlar,
-    aylikFiyatlar,
-    tasarruf: karsilastirilanAlim > 0
+    stations,
+    monthlyPrices,
+    savings: comparedFillUps > 0
       ? {
-          toplam: toplamTasarruf,
-          karsilastirilanAlim,
-          karsilastirilanTutar,
+          total: totalSavings,
+          comparedFillUps,
+          comparedAmount,
         }
       : null,
-    yetersizVeri: null,
+    insufficientData: null,
   }
 }

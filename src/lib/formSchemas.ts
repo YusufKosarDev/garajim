@@ -3,7 +3,7 @@ import { validatePastDate, validateExpiryDate, validateVehicleYear } from '../ut
 import { formatPlate, isValidPlate, platesMatch } from '../utils/plateHelpers'
 import { checkFuelKm } from '../utils/kmHelpers'
 import { SEASONS } from '../utils/tireHelpers'
-import type { Vehicle, FuelRecord, TireSet, Sezon } from '../types'
+import type { Vehicle, FuelRecord, TireSet, Season } from '../types'
 
 
 /**
@@ -24,13 +24,13 @@ interface RefinementCtx {
   addIssue: (issue: { code: 'custom'; path: (string | number)[]; message: string }) => void
 }
 
-const uygula = (ctx: RefinementCtx, path: string, sonuc: { isValid: boolean; message?: string }) => {
-  if (!sonuc.isValid) {
-    ctx.addIssue({ code: 'custom', path: [path], message: sonuc.message ?? 'Geçersiz değer' })
+const uygula = (ctx: RefinementCtx, path: string, result: { isValid: boolean; message?: string }) => {
+  if (!result.isValid) {
+    ctx.addIssue({ code: 'custom', path: [path], message: result.message ?? 'Geçersiz değer' })
   }
 }
 
-const zorunluMetin = (mesaj: string) => z.string().trim().min(1, mesaj)
+const requiredText = (message: string) => z.string().trim().min(1, message)
 
 // Sayı alanları formda string olarak tutulur (input value her zaman string)
 const sayi = () => z.string().trim()
@@ -40,11 +40,11 @@ const sayi = () => z.string().trim()
 // ============================================================
 export const makeFuelSchema = ({ vehicleFuelRecords = [], editId = null }: { vehicleFuelRecords?: FuelRecord[]; editId?: string | null } = {}) =>
   z.object({
-    date: zorunluMetin('Tarih zorunlu'),
-    km: zorunluMetin('Kilometre zorunlu'),
-    liters: zorunluMetin('Litre zorunlu'),
+    date: requiredText('Tarih zorunlu'),
+    km: requiredText('Kilometre zorunlu'),
+    liters: requiredText('Litre zorunlu'),
     pricePerLiter: sayi(),
-    totalCost: zorunluMetin('Toplam tutar zorunlu'),
+    totalCost: requiredText('Toplam tutar zorunlu'),
     fullTank: z.boolean(),
     station: z.string(),
     notes: z.string(),
@@ -59,8 +59,8 @@ export const makeFuelSchema = ({ vehicleFuelRecords = [], editId = null }: { veh
 export const maintenanceSchema = z.object({
   type: z.string(),
   customType: z.string(),
-  date: zorunluMetin('Tarih zorunlu'),
-  km: zorunluMetin('KM zorunlu'),
+  date: requiredText('Tarih zorunlu'),
+  km: requiredText('KM zorunlu'),
   cost: sayi(),
   notes: z.string(),
   photo: z.any().nullable(),
@@ -90,9 +90,9 @@ export const maintenanceSchema = z.object({
 // ============================================================
 export const makeVehicleSchema = ({ vehicles = [], editId = null }: { vehicles?: Vehicle[]; editId?: string | null } = {}) =>
   z.object({
-    plate: zorunluMetin('Plaka zorunlu'),
-    brand: zorunluMetin('Marka zorunlu'),
-    model: zorunluMetin('Model zorunlu'),
+    plate: requiredText('Plaka zorunlu'),
+    brand: requiredText('Marka zorunlu'),
+    model: requiredText('Model zorunlu'),
     year: z.string(),
     fuelType: z.string(),
     currentKm: z.string(),
@@ -105,15 +105,15 @@ export const makeVehicleSchema = ({ vehicles = [], editId = null }: { vehicles?:
   }).superRefine((val, ctx) => {
     // Plaka: mevcut yardımcılar aynen kullanılıyor
     if (val.plate) {
-      const bicimli = formatPlate(val.plate)
-      if (!isValidPlate(bicimli)) {
+      const formatted = formatPlate(val.plate)
+      if (!isValidPlate(formatted)) {
         // Mesaj mevcut davranışla birebir aynı tutuldu — kullanıcıya görünen
         // metni migrasyon sırasında değiştirmemek için.
         ctx.addIssue({
           code: 'custom', path: ['plate'],
           message: 'Geçerli bir plaka formatı gir (örn: 34 ABC 123)',
         })
-      } else if (vehicles.some(v => v.id !== editId && platesMatch(v.plate, bicimli))) {
+      } else if (vehicles.some(v => v.id !== editId && platesMatch(v.plate, formatted))) {
         ctx.addIssue({ code: 'custom', path: ['plate'], message: 'Bu plaka zaten kayıtlı' })
       }
     }
@@ -127,14 +127,14 @@ export const makeVehicleSchema = ({ vehicles = [], editId = null }: { vehicles?:
       }
     }
 
-    for (const [alan, etiket] of [
+    for (const [field, label] of [
       ['inspectionDate', 'Muayene tarihi'],
       ['mtvDate', 'MTV tarihi'],
       ['insuranceDate', 'Sigorta tarihi'],
       ['kaskoDate', 'Kasko tarihi'],
     ]) {
-      const deger = val[alan as keyof typeof val] as string
-      if (deger) uygula(ctx, alan, validateExpiryDate(deger, etiket))
+      const value = val[field as keyof typeof val] as string
+      if (value) uygula(ctx, field, validateExpiryDate(value, label))
     }
   })
 
@@ -142,7 +142,7 @@ export const makeVehicleSchema = ({ vehicles = [], editId = null }: { vehicles?:
 // LASTİK MEVSİM DEĞİŞİMİ
 // ============================================================
 export const tireChangeSchema = z.object({
-  date: zorunluMetin('Tarih zorunlu'),
+  date: requiredText('Tarih zorunlu'),
   km: z.string(),
   cost: sayi(),
   notes: z.string(),
@@ -153,9 +153,9 @@ export const tireChangeSchema = z.object({
   // Mesaj mevcut davranışla aynı tutuldu
   if (val.date) {
     const secilen = new Date(val.date)
-    const bugun = new Date()
-    bugun.setHours(23, 59, 59, 999)
-    if (secilen > bugun) {
+    const today = new Date()
+    today.setHours(23, 59, 59, 999)
+    if (secilen > today) {
       ctx.addIssue({ code: 'custom', path: ['date'], message: 'Gelecek tarih olamaz' })
     }
   }
@@ -167,8 +167,8 @@ export const tireChangeSchema = z.object({
 export const makeTireSetSchema = ({ tireSets = [], vehicleId = null, isEdit = false }: { tireSets?: TireSet[]; vehicleId?: string | null; isEdit?: boolean } = {}) =>
   z.object({
     season: z.string(),
-    brand: zorunluMetin('Marka zorunlu'),
-    size: zorunluMetin('Ebat zorunlu'),
+    brand: requiredText('Marka zorunlu'),
+    size: requiredText('Ebat zorunlu'),
     purchaseDate: z.string(),
     purchasePrice: sayi(),
     hasSpare: z.boolean(),
@@ -181,11 +181,11 @@ export const makeTireSetSchema = ({ tireSets = [], vehicleId = null, isEdit = fa
   }).superRefine((val, ctx) => {
     // Aynı sezondan ikinci set eklenemez (düzenlemede sezon zaten kilitli)
     if (!isEdit) {
-      const mevcut = tireSets.find(t => t.vehicleId === vehicleId && t.season === val.season)
-      if (mevcut) {
+      const existing = tireSets.find(t => t.vehicleId === vehicleId && t.season === val.season)
+      if (existing) {
         ctx.addIssue({
           code: 'custom', path: ['season'],
-          message: `Bu araç için zaten ${SEASONS[val.season as Sezon].label} set tanımlı — düzenlemek için onu aç`,
+          message: `Bu araç için zaten ${SEASONS[val.season as Season].label} set tanımlı — düzenlemek için onu aç`,
         })
       }
     }
@@ -198,8 +198,8 @@ export const makeTireSetSchema = ({ tireSets = [], vehicleId = null, isEdit = fa
         ctx.addIssue({ code: 'custom', path: ['tires', i, 'dot'], message: 'DOT 4 haneli olmalı' })
       }
 
-      const derinlik = Number(tire.treadDepth)
-      if (tire.treadDepth && (Number.isNaN(derinlik) || derinlik < 0 || derinlik > 15)) {
+      const treadDepth = Number(tire.treadDepth)
+      if (tire.treadDepth && (Number.isNaN(treadDepth) || treadDepth < 0 || treadDepth > 15)) {
         ctx.addIssue({ code: 'custom', path: ['tires', i, 'treadDepth'], message: '0-15 mm arası' })
       }
     })

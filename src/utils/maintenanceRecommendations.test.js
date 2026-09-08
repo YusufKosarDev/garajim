@@ -14,8 +14,8 @@ import {
 const UUID = '550e8400-e29b-41d4-a716-446655440000'
 const UUID2 = '6ba7b810-9dad-11d1-80b4-00c04fd430c8'
 
-const arac = (id = UUID, currentKm = 100000) => ({ id, currentKm, brand: 'BMW', model: '320i', plate: '34 ABC 1234' })
-const bakim = (vehicleId, type, km) => ({ id: `${type}-${km}`, vehicleId, type, km })
+const vehicle = (id = UUID, currentKm = 100000) => ({ id, currentKm, brand: 'BMW', model: '320i', plate: '34 ABC 1234' })
+const maintenance = (vehicleId, type, km) => ({ id: `${type}-${km}`, vehicleId, type, km })
 
 // ============================================================
 // ANAHTAR SÖZLEŞMESİ — Faz 1'de düzeltilen asıl bug buradaydı
@@ -80,8 +80,8 @@ describe('resolveInterval', () => {
   })
 
   it('eski yedeklerdeki düz sayı biçimini de kabul eder', () => {
-    const eski = { [buildIntervalKey(UUID, 'Buji')]: 22000 }
-    expect(resolveInterval(eski, UUID, 'Buji')).toBe(22000)
+    const older = { [buildIntervalKey(UUID, 'Buji')]: 22000 }
+    expect(resolveInterval(older, UUID, 'Buji')).toBe(22000)
   })
 
   it('customIntervals verilmezse çökmez', () => {
@@ -113,9 +113,9 @@ describe('getRecommendationStatus', () => {
 
 describe('getMaintenanceRecommendation', () => {
   it('son bakımdan itibaren sonraki bakım km sini hesaplar', () => {
-    const v = arac(UUID, 100000)
-    const kayitlar = [bakim(UUID, 'Yağ Değişimi', 95000)]
-    const rec = getMaintenanceRecommendation(v, 'Yağ Değişimi', kayitlar)
+    const v = vehicle(UUID, 100000)
+    const records = [maintenance(UUID, 'Yağ Değişimi', 95000)]
+    const rec = getMaintenanceRecommendation(v, 'Yağ Değişimi', records)
 
     expect(rec.lastKm).toBe(95000)
     expect(rec.interval).toBe(10000)
@@ -126,103 +126,103 @@ describe('getMaintenanceRecommendation', () => {
   })
 
   it('özel periyot uygulanır (Faz 1 öncesi bu HİÇ çalışmıyordu)', () => {
-    const v = arac(UUID, 100000)
-    const kayitlar = [bakim(UUID, 'Yağ Değişimi', 95000)]
+    const v = vehicle(UUID, 100000)
+    const records = [maintenance(UUID, 'Yağ Değişimi', 95000)]
     const ozel = { [buildIntervalKey(UUID, 'Yağ Değişimi')]: { kilometers: 7500 } }
 
-    const rec = getMaintenanceRecommendation(v, 'Yağ Değişimi', kayitlar, ozel)
+    const rec = getMaintenanceRecommendation(v, 'Yağ Değişimi', records, ozel)
     expect(rec.interval).toBe(7500)
     expect(rec.nextDueKm).toBe(102500)
     expect(rec.kmRemaining).toBe(2500)
   })
 
   it('gecikmiş bakımı işaretler', () => {
-    const v = arac(UUID, 120000)
-    const rec = getMaintenanceRecommendation(v, 'Yağ Değişimi', [bakim(UUID, 'Yağ Değişimi', 95000)])
+    const v = vehicle(UUID, 120000)
+    const rec = getMaintenanceRecommendation(v, 'Yağ Değişimi', [maintenance(UUID, 'Yağ Değişimi', 95000)])
     expect(rec.status).toBe('overdue')
     expect(rec.kmRemaining).toBeLessThan(0)
   })
 
   it('başka aracın bakım kaydını karıştırmaz', () => {
-    const v = arac(UUID, 100000)
-    const baskaAracinKaydi = [bakim(UUID2, 'Yağ Değişimi', 95000)]
-    const rec = getMaintenanceRecommendation(v, 'Yağ Değişimi', baskaAracinKaydi)
+    const v = vehicle(UUID, 100000)
+    const otherVehicleRecord = [maintenance(UUID2, 'Yağ Değişimi', 95000)]
+    const rec = getMaintenanceRecommendation(v, 'Yağ Değişimi', otherVehicleRecord)
     expect(rec.hasHistory).toBe(false)
   })
 
   it('periyodu olmayan tür için null döner', () => {
-    expect(getMaintenanceRecommendation(arac(), 'Genel Bakım', [])).toBeNull()
+    expect(getMaintenanceRecommendation(vehicle(), 'Genel Bakım', [])).toBeNull()
   })
 
   it('km bilgisi olmayan araç için öneri üretmez', () => {
-    expect(getMaintenanceRecommendation(arac(UUID, 0), 'Yağ Değişimi', [])).toBeNull()
+    expect(getMaintenanceRecommendation(vehicle(UUID, 0), 'Yağ Değişimi', [])).toBeNull()
   })
 
   it('birden fazla kayıt varsa en yüksek km lisini baz alır', () => {
-    const kayitlar = [
-      bakim(UUID, 'Yağ Değişimi', 80000),
-      bakim(UUID, 'Yağ Değişimi', 95000),
-      bakim(UUID, 'Yağ Değişimi', 88000),
+    const records = [
+      maintenance(UUID, 'Yağ Değişimi', 80000),
+      maintenance(UUID, 'Yağ Değişimi', 95000),
+      maintenance(UUID, 'Yağ Değişimi', 88000),
     ]
-    expect(getMaintenanceRecommendation(arac(UUID, 100000), 'Yağ Değişimi', kayitlar).lastKm).toBe(95000)
+    expect(getMaintenanceRecommendation(vehicle(UUID, 100000), 'Yağ Değişimi', records).lastKm).toBe(95000)
   })
 })
 
 describe('getAllRecommendations', () => {
   it('sadece geçmişi olan bakım türlerini döner', () => {
-    const v = arac(UUID, 100000)
-    const kayitlar = [bakim(UUID, 'Yağ Değişimi', 95000), bakim(UUID, 'Buji', 90000)]
-    const hepsi = getAllRecommendations([v], kayitlar)
+    const v = vehicle(UUID, 100000)
+    const records = [maintenance(UUID, 'Yağ Değişimi', 95000), maintenance(UUID, 'Buji', 90000)]
+    const all = getAllRecommendations([v], records)
 
-    expect(hepsi).toHaveLength(2)
-    expect(hepsi.map(r => r.type).sort()).toEqual(['Buji', 'Yağ Değişimi'])
+    expect(all).toHaveLength(2)
+    expect(all.map(r => r.type).sort()).toEqual(['Buji', 'Yağ Değişimi'])
   })
 
   it('birden fazla aracı birlikte işler', () => {
-    const kayitlar = [bakim(UUID, 'Buji', 90000), bakim(UUID2, 'Buji', 90000)]
-    const hepsi = getAllRecommendations([arac(UUID), arac(UUID2)], kayitlar)
-    expect(hepsi).toHaveLength(2)
+    const records = [maintenance(UUID, 'Buji', 90000), maintenance(UUID2, 'Buji', 90000)]
+    const all = getAllRecommendations([vehicle(UUID), vehicle(UUID2)], records)
+    expect(all).toHaveLength(2)
   })
 
   it('hiç kayıt yoksa boş döner', () => {
-    expect(getAllRecommendations([arac()], [])).toEqual([])
+    expect(getAllRecommendations([vehicle()], [])).toEqual([])
   })
 })
 
 describe('getCriticalRecommendations', () => {
   it('sorunsuzları eler ve aciliyete göre sıralar', () => {
-    const v = arac(UUID, 120000)
-    const kayitlar = [
-      bakim(UUID, 'Yağ Değişimi', 95000),  // 120k > 105k -> overdue
-      bakim(UUID, 'Buji', 119000),         // 119k+30k = 149k -> ok, elenir
-      bakim(UUID, 'Polen Filtresi', 106000), // 121k, 1000 kaldı -> urgent
+    const v = vehicle(UUID, 120000)
+    const records = [
+      maintenance(UUID, 'Yağ Değişimi', 95000),  // 120k > 105k -> overdue
+      maintenance(UUID, 'Buji', 119000),         // 119k+30k = 149k -> ok, elenir
+      maintenance(UUID, 'Polen Filtresi', 106000), // 121k, 1000 kaldı -> urgent
     ]
 
-    const kritik = getCriticalRecommendations([v], kayitlar)
+    const kritik = getCriticalRecommendations([v], records)
     expect(kritik.map(r => r.type)).toEqual(['Yağ Değişimi', 'Polen Filtresi'])
     expect(kritik[0].status).toBe('overdue')
     expect(kritik[1].status).toBe('urgent')
   })
 
   it('aynı statüde en az km kalan öne gelir', () => {
-    const v = arac(UUID, 120000)
-    const kayitlar = [
-      bakim(UUID, 'Yağ Değişimi', 90000),   // 100k -> 20k gecikmiş
-      bakim(UUID, 'Yağ Filtresi', 105000),  // 115k -> 5k gecikmiş
+    const v = vehicle(UUID, 120000)
+    const records = [
+      maintenance(UUID, 'Yağ Değişimi', 90000),   // 100k -> 20k gecikmiş
+      maintenance(UUID, 'Yağ Filtresi', 105000),  // 115k -> 5k gecikmiş
     ]
-    const kritik = getCriticalRecommendations([v], kayitlar)
+    const kritik = getCriticalRecommendations([v], records)
     expect(kritik[0].type).toBe('Yağ Değişimi') // daha çok gecikmiş, kmRemaining daha küçük
   })
 })
 
 describe('getVehicleRecommendations', () => {
   it('tek araç için km kalanına göre sıralar', () => {
-    const v = arac(UUID, 100000)
-    const kayitlar = [
-      bakim(UUID, 'Buji', 99000),          // 30k periyot -> 29k kaldı
-      bakim(UUID, 'Yağ Değişimi', 95000),  // 10k periyot -> 5k kaldı
+    const v = vehicle(UUID, 100000)
+    const records = [
+      maintenance(UUID, 'Buji', 99000),          // 30k periyot -> 29k kaldı
+      maintenance(UUID, 'Yağ Değişimi', 95000),  // 10k periyot -> 5k kaldı
     ]
-    const sonuc = getVehicleRecommendations(v, kayitlar)
-    expect(sonuc.map(r => r.type)).toEqual(['Yağ Değişimi', 'Buji'])
+    const result = getVehicleRecommendations(v, records)
+    expect(result.map(r => r.type)).toEqual(['Yağ Değişimi', 'Buji'])
   })
 })

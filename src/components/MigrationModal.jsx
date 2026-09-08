@@ -22,9 +22,9 @@ export default function MigrationModal({
   // Modal her açıldığında sıfırla. Efekt yerine render sırasında ayarlama
   // (React'in belgelediği desen): efektle yapıldığında modal bir kare boyunca
   // önceki taşımanın "tamamlandı" ekranını gösteriyordu.
-  const [oncekiAcik, setOncekiAcik] = useState(isOpen)
-  if (isOpen !== oncekiAcik) {
-    setOncekiAcik(isOpen)
+  const [prevOpen, setPrevOpen] = useState(isOpen)
+  if (isOpen !== prevOpen) {
+    setPrevOpen(isOpen)
     if (isOpen) {
       setPhase('confirm')
       setProgress({})
@@ -264,7 +264,7 @@ export default function MigrationModal({
                     <li key={i}>{err}</li>
                   ))}
                   {result.errors.length > 5 && (
-                    <li className="text-slate-500">+{result.errors.length - 5} hata daha</li>
+                    <li className="text-slate-500">+{result.errors.length - 5} error daha</li>
                   )}
                 </ul>
               </div>

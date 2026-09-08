@@ -13,7 +13,7 @@ describe('Dil değiştirme', () => {
   // Yeni kullanıcıya açılan tanıtım modalı tam ekran bir katman koyuyor ve
   // dil düğmesini örtüyor. Escape her zaman kapatmıyor, o yüzden tıklamalar
   // force ile yapılıyor — diğer spec'lerdeki desenin aynısı.
-  const dil = (ad) => cy.contains('button', ad).click({ force: true })
+  const selectLanguage = (ad) => cy.contains('button', ad).click({ force: true })
 
   beforeEach(() => {
     cy.login()
@@ -32,7 +32,7 @@ describe('Dil değiştirme', () => {
     // Türkçe başlangıç
     cy.contains('h1', 'Ayarlar', { timeout: 10000 }).should('be.visible')
 
-    dil('English')
+    selectLanguage('English')
 
     // Aynı başlık artık İngilizce — çeviri gerçekten uygulanıyor
     cy.contains('h1', 'Settings', { timeout: 10000 }).should('be.visible')
@@ -46,7 +46,7 @@ describe('Dil değiştirme', () => {
   })
 
   it('seçim cihazda saklanır ve sayfa yenilenince korunur', () => {
-    dil('English')
+    selectLanguage('English')
     cy.contains('h1', 'Settings', { timeout: 10000 }).should('be.visible')
 
     cy.reload()
@@ -55,22 +55,22 @@ describe('Dil değiştirme', () => {
   })
 
   it('Türkçeye geri dönülebilir', () => {
-    dil('English')
+    selectLanguage('English')
     cy.contains('h1', 'Settings', { timeout: 10000 }).should('be.visible')
 
-    dil('Türkçe')
+    selectLanguage('Türkçe')
     cy.contains('h1', 'Ayarlar', { timeout: 10000 }).should('be.visible')
   })
 
   it('İngilizcede çevrilmemiş metin ham anahtar değil Türkçe görünür', () => {
     // fallbackLng: 'tr' — kısmi çeviride kabul edilebilir tek davranış.
     // Kırılsaydı ekranda "settings.foo" gibi anahtarlar görünürdü.
-    dil('English')
+    selectLanguage('English')
     cy.contains('h1', 'Settings', { timeout: 10000 }).should('be.visible')
 
-    cy.get('body').invoke('text').then((metin) => {
-      const hamAnahtar = metin.match(/\b[a-z][a-zA-Z]+\.[a-z][a-z0-9_]{4,}\b/)
-      expect(hamAnahtar, `ekranda ham çeviri anahtarı görünüyor: ${hamAnahtar?.[0]}`).to.be.null
+    cy.get('body').invoke('text').then((text) => {
+      const rawKey = text.match(/\b[a-z][a-zA-Z]+\.[a-z][a-z0-9_]{4,}\b/)
+      expect(rawKey, `ekranda ham çeviri anahtarı görünüyor: ${rawKey?.[0]}`).to.be.null
     })
   })
 })

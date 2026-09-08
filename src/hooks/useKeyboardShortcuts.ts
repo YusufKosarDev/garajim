@@ -18,7 +18,7 @@ const isModalOpen = () => {
   return document.body.style.overflow === 'hidden'
 }
 
-export interface KisayolSecenekleri {
+export interface ShortcutOptions {
   onShowHelp?: () => void
   onShowCommandPalette?: () => void
   onNewVehicle?: () => void
@@ -35,7 +35,7 @@ export const useKeyboardShortcuts = ({
   onNewMaintenance,
   onNewFuel,
   onFocusSearch,
-}: KisayolSecenekleri) => {
+}: ShortcutOptions) => {
   const navigate = useNavigate()
   const sequenceRef = useRef<{ key: string | null; timestamp: number }>({ key: null, timestamp: 0 })
 

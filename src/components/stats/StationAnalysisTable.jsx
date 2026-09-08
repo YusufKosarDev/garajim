@@ -4,12 +4,12 @@ import { MapPin, Trophy, TrendingDown, TrendingUp, Sparkles, Info, LineChart } f
 import { getStationAnalysis } from '../../utils/statisticsHelpers'
 import { analyzeFuelPrices } from '../../utils/fuelPriceAnalysis'
 
-const AYLAR = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara']
+const MONTH_NAMES = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara']
 
 /** "2026-01" -> "Oca 2026" */
-const ayEtiketi = (ay) => {
-  const [yil, no] = ay.split('-')
-  return `${AYLAR[Number(no) - 1] ?? ay} ${yil}`
+const monthLabel = (month) => {
+  const [year, no] = month.split('-')
+  return `${MONTH_NAMES[Number(no) - 1] ?? month} ${year}`
 }
 
 export default function StationAnalysisTable({ fuelRecords = [] }) {
@@ -26,22 +26,22 @@ export default function StationAnalysisTable({ fuelRecords = [] }) {
   const fiyat = useMemo(() => analyzeFuelPrices(fuelRecords), [fuelRecords])
 
   const { cheapest, mostExpensive } = useMemo(() => {
-    const s = fiyat.istasyonlar
+    const s = fiyat.stations
     if (s.length < 2) return { cheapest: null, mostExpensive: null }
     return { cheapest: s[0], mostExpensive: s[s.length - 1] }
   }, [fiyat])
 
   // Kendi verinden fiyat seyri: ilk aydan son aya değişim
-  const seyir = useMemo(() => {
-    const a = fiyat.aylikFiyatlar
+  const trend = useMemo(() => {
+    const a = fiyat.monthlyPrices
     if (a.length < 2) return null
-    const ilk = a[0]
+    const first = a[0]
     const sonAy = a[a.length - 1]
-    if (ilk.ortFiyat <= 0) return null
+    if (first.ortFiyat <= 0) return null
     return {
-      ilk,
-      son: sonAy,
-      yuzde: ((sonAy.ortFiyat - ilk.ortFiyat) / ilk.ortFiyat) * 100,
+      first,
+      last: sonAy,
+      yuzde: ((sonAy.ortFiyat - first.ortFiyat) / first.ortFiyat) * 100,
     }
   }, [fiyat])
 
@@ -60,7 +60,7 @@ export default function StationAnalysisTable({ fuelRecords = [] }) {
       {/* Tasarruf: yalnızca GERÇEKTEN gözlemlenebilir fark.
           "O dönemde başka bir istasyonda daha ucuzu vardı" durumu sayılıyor;
           varsayımsal fiyat üretilmiyor. */}
-      {fiyat.tasarruf && fiyat.tasarruf.toplam > 0 && (
+      {fiyat.savings && fiyat.savings.total > 0 && (
         <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/30 rounded-lg p-3 mb-4">
           <div className="flex items-start gap-2">
             <Sparkles className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" aria-hidden="true" />
@@ -69,16 +69,16 @@ export default function StationAnalysisTable({ fuelRecords = [] }) {
               <p className="text-slate-300 leading-relaxed">
                 Her alımda o günlerde açık ara en ucuz olan istasyonu seçseydin yaklaşık{' '}
                 <strong className="text-green-400">
-                  {Math.round(fiyat.tasarruf.toplam).toLocaleString('tr-TR')} ₺
+                  {Math.round(fiyat.savings.total).toLocaleString('tr-TR')} ₺
                 </strong>
-                {fiyat.tasarruf.karsilastirilanTutar > 0 && (
-                  <> (%{((fiyat.tasarruf.toplam / fiyat.tasarruf.karsilastirilanTutar) * 100).toFixed(1)})</>
+                {fiyat.savings.comparedAmount > 0 && (
+                  <> (%{((fiyat.savings.total / fiyat.savings.comparedAmount) * 100).toFixed(1)})</>
                 )}
                 {' '}daha az öderdin.
               </p>
               {/* Yöntem açıkça yazılıyor: kullanıcı sayının nereden geldiğini bilmeli */}
               <p className="text-[11px] text-slate-500 mt-1">
-                {fiyat.tasarruf.karsilastirilanAlim} alım, aynı haftadaki diğer istasyon
+                {fiyat.savings.comparedFillUps} alım, aynı haftadaki diğer istasyon
                 fiyatlarıyla karşılaştırıldı. Yol farkı ve marka tercihi hesaba katılmadı.
               </p>
             </div>
@@ -87,10 +87,10 @@ export default function StationAnalysisTable({ fuelRecords = [] }) {
       )}
 
       {/* Yeterli veri yoksa uydurma içgörü yerine sebebini söyle */}
-      {fiyat.yetersizVeri && (
+      {fiyat.insufficientData && (
         <div className="flex items-start gap-2 text-xs text-slate-400 bg-slate-800/40 border border-slate-700 rounded-lg p-3 mb-4">
           <Info className="w-4 h-4 shrink-0 mt-px text-slate-500" aria-hidden="true" />
-          <p>{fiyat.yetersizVeri}</p>
+          <p>{fiyat.insufficientData}</p>
         </div>
       )}
 
@@ -103,7 +103,7 @@ export default function StationAnalysisTable({ fuelRecords = [] }) {
             <div className="text-xs min-w-0">
               <div className="text-green-400 font-semibold">{t('stats.stationAnalysisTable.donemin_piyasasina_gore_en_ucuz')}</div>
               <div className="text-slate-300 truncate">
-                {cheapest.station} — <strong>{Math.abs(cheapest.ortSapma).toFixed(2)} ₺/L altında</strong>
+                {cheapest.station} — <strong>{Math.abs(cheapest.avgDeviation).toFixed(2)} ₺/L altında</strong>
                 <span className="text-slate-500"> ({cheapest.count} alım)</span>
               </div>
             </div>
@@ -113,7 +113,7 @@ export default function StationAnalysisTable({ fuelRecords = [] }) {
             <div className="text-xs min-w-0">
               <div className="text-red-400 font-semibold">{t('stats.stationAnalysisTable.donemin_piyasasina_gore_en_pahali')}</div>
               <div className="text-slate-300 truncate">
-                {mostExpensive.station} — <strong>{mostExpensive.ortSapma.toFixed(2)} ₺/L üstünde</strong>
+                {mostExpensive.station} — <strong>{mostExpensive.avgDeviation.toFixed(2)} ₺/L üstünde</strong>
                 <span className="text-slate-500"> ({mostExpensive.count} alım)</span>
               </div>
             </div>
@@ -122,18 +122,18 @@ export default function StationAnalysisTable({ fuelRecords = [] }) {
       )}
 
       {/* Fiyat seyri — dış API yok, tamamen kullanıcının kendi alımlarından */}
-      {seyir && (
+      {trend && (
         <div className="flex items-center gap-2 p-2.5 mb-4 bg-slate-800/40 border border-slate-700 rounded-lg text-xs">
           <LineChart className="w-4 h-4 text-slate-400 shrink-0" aria-hidden="true" />
           <div className="min-w-0">
             <span className="text-slate-400">{t('stats.stationAnalysisTable.senin_odedigin_fiyat')} </span>
-            <strong className="text-white">{ayEtiketi(seyir.ilk.ay)}</strong>
-            {' '}{seyir.ilk.ortFiyat.toFixed(2)} ₺/L
+            <strong className="text-white">{monthLabel(trend.first.month)}</strong>
+            {' '}{trend.first.ortFiyat.toFixed(2)} ₺/L
             {' → '}
-            <strong className="text-white">{ayEtiketi(seyir.son.ay)}</strong>
-            {' '}{seyir.son.ortFiyat.toFixed(2)} ₺/L
-            <span className={seyir.yuzde >= 0 ? ' text-red-400' : ' text-green-400'}>
-              {' '}({seyir.yuzde >= 0 ? '+' : ''}%{seyir.yuzde.toFixed(1)})
+            <strong className="text-white">{monthLabel(trend.last.month)}</strong>
+            {' '}{trend.last.ortFiyat.toFixed(2)} ₺/L
+            <span className={trend.yuzde >= 0 ? ' text-red-400' : ' text-green-400'}>
+              {' '}({trend.yuzde >= 0 ? '+' : ''}%{trend.yuzde.toFixed(1)})
             </span>
           </div>
         </div>

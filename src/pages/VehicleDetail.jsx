@@ -97,15 +97,15 @@ export default function VehicleDetail({ globalActionsRef }) {
 
     // Ref'in .current'ı temizlik fonksiyonu çalışana kadar değişebilir;
     // efekt kurulurken yakalanan nesneyi temizlemek doğru olan.
-    const eylemler = globalActionsRef.current
-    eylemler.newVehicle = () => navigate('/vehicles')
-    eylemler.newMaintenance = () => setIsMaintenanceOpen(true)
-    eylemler.newFuel = () => setIsFuelOpen(true)
+    const actions = globalActionsRef.current
+    actions.newVehicle = () => navigate('/vehicles')
+    actions.newMaintenance = () => setIsMaintenanceOpen(true)
+    actions.newFuel = () => setIsFuelOpen(true)
 
     return () => {
-      eylemler.newVehicle = null
-      eylemler.newMaintenance = null
-      eylemler.newFuel = null
+      actions.newVehicle = null
+      actions.newMaintenance = null
+      actions.newFuel = null
     }
   }, [globalActionsRef, navigate])
 
@@ -147,9 +147,9 @@ export default function VehicleDetail({ globalActionsRef }) {
   // sırasında ayarlama (React'in belgelediği desen). Efektle yapıldığında,
   // 3. sayfadayken arama yazınca liste bir kare boyunca "3. sayfa" dilimini
   // yeni sonuçlardan kesiyordu; çoğu zaman bu boş bir liste demekti.
-  const [oncekiFiltre, setOncekiFiltre] = useState({ searchQuery, sortBy })
-  if (oncekiFiltre.searchQuery !== searchQuery || oncekiFiltre.sortBy !== sortBy) {
-    setOncekiFiltre({ searchQuery, sortBy })
+  const [prevFilter, setPrevFilter] = useState({ searchQuery, sortBy })
+  if (prevFilter.searchQuery !== searchQuery || prevFilter.sortBy !== sortBy) {
+    setPrevFilter({ searchQuery, sortBy })
     setMaintenancePage(1)
   }
 

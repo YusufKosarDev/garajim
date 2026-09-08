@@ -24,8 +24,8 @@ const ARAC = { id: 'v1', brand: 'BMW', model: '320i', plate: '34 ABC 1234', curr
 // (setSelectionRange desteklenmiyor), o yüzden doğrudan change event'i veriyoruz.
 const doldur = (input, value) => fireEvent.change(input, { target: { value } })
 
-const alan = {
-  tarih: () => document.querySelector('input[type="date"]'),
+const field = {
+  date: () => document.querySelector('input[type="date"]'),
   km: () => screen.getByPlaceholderText('125000'),
   litre: () => screen.getByPlaceholderText('45.50'),
   fiyat: () => screen.getByPlaceholderText('42.50'),
@@ -36,7 +36,7 @@ const alan = {
 // react-hook-form'un handleSubmit'i asenkron: doğrulama ve gönderim bir
 // mikrotask içinde tamamlanıyor. Bu yüzden submit sonrası iddialar beklenmeli.
 const gonder = async () => {
-  fireEvent.click(alan.kaydet())
+  fireEvent.click(field.kaydet())
   await waitFor(() => {})
 }
 
@@ -53,12 +53,12 @@ const ac = (props = {}) =>
 describe('FuelForm', () => {
   it('açıldığında km alanını aracın güncel km si ile doldurur', () => {
     ac()
-    expect(alan.km()).toHaveValue(100000)
+    expect(field.km()).toHaveValue(100000)
   })
 
   it('zorunlu alanlar boşken kaydetmez ve hataları gösterir', async () => {
     ac()
-    fireEvent.click(alan.kaydet())
+    fireEvent.click(field.kaydet())
 
     expect(await screen.findByText('Litre zorunlu')).toBeInTheDocument()
     expect(screen.getByText('Toplam tutar zorunlu')).toBeInTheDocument()
@@ -67,15 +67,15 @@ describe('FuelForm', () => {
 
   it('litre x fiyat girilince toplam tutarı otomatik hesaplar', () => {
     ac()
-    doldur(alan.litre(), '40')
-    doldur(alan.fiyat(), '45')
-    expect(alan.tutar()).toHaveValue(1800)
+    doldur(field.litre(), '40')
+    doldur(field.fiyat(), '45')
+    expect(field.tutar()).toHaveValue(1800)
   })
 
   it('geçerli veriyle addFuel i doğru payload ile çağırır', async () => {
     ac()
-    doldur(alan.litre(), '40')
-    doldur(alan.fiyat(), '45')
+    doldur(field.litre(), '40')
+    doldur(field.fiyat(), '45')
     await gonder()
 
     await waitFor(() => expect(addFuel).toHaveBeenCalledTimes(1))
@@ -92,10 +92,10 @@ describe('FuelForm', () => {
     mockCtx.fuelRecords = [{ id: 'f1', vehicleId: 'v1', km: 105000, liters: 40, totalCost: 1800 }]
     ac()
 
-    doldur(alan.km(), '104000')
-    doldur(alan.litre(), '40')
-    doldur(alan.fiyat(), '45')
-    fireEvent.click(alan.kaydet())
+    doldur(field.km(), '104000')
+    doldur(field.litre(), '40')
+    doldur(field.fiyat(), '45')
+    fireEvent.click(field.kaydet())
 
     expect(await screen.findByText(/105\.000/)).toBeInTheDocument()
     expect(addFuel).not.toHaveBeenCalled()
@@ -105,8 +105,8 @@ describe('FuelForm', () => {
     mockCtx.fuelRecords = [{ id: 'f1', vehicleId: 'v1', km: 100000, liters: 40, totalCost: 1800 }]
     ac()
 
-    doldur(alan.litre(), '40')
-    doldur(alan.fiyat(), '45')
+    doldur(field.litre(), '40')
+    doldur(field.fiyat(), '45')
     await gonder()
 
     expect(addFuel).not.toHaveBeenCalled()
@@ -114,18 +114,18 @@ describe('FuelForm', () => {
 
   it('tarih alanı bugünden ileriye izin vermez (max attribute)', () => {
     ac()
-    const bugun = new Date()
-    const beklenen = `${bugun.getFullYear()}-${String(bugun.getMonth() + 1).padStart(2, '0')}-${String(bugun.getDate()).padStart(2, '0')}`
-    expect(alan.tarih()).toHaveAttribute('max', beklenen)
+    const today = new Date()
+    const expected = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+    expect(field.date()).toHaveAttribute('max', expected)
   })
 
   it('gelecek tarihle submit hiç başlamaz — tarayıcı kısıtı devrede', async () => {
     // max attribute'u ihlal eden bir değerde HTML5 doğrulaması submit'i engelliyor.
     // validatePastDate'in kendi mantığı dateValidation testlerinde ayrıca sınanıyor.
     ac()
-    doldur(alan.tarih(), '2099-12-31')
-    doldur(alan.litre(), '40')
-    doldur(alan.fiyat(), '45')
+    doldur(field.date(), '2099-12-31')
+    doldur(field.litre(), '40')
+    doldur(field.fiyat(), '45')
     await gonder()
 
     expect(addFuel).not.toHaveBeenCalled()
@@ -135,22 +135,22 @@ describe('FuelForm', () => {
     mockCtx.fuelRecords = [{ id: 'f1', vehicleId: 'BASKA', km: 900000, liters: 40, totalCost: 1800 }]
     ac()
 
-    doldur(alan.litre(), '40')
-    doldur(alan.fiyat(), '45')
+    doldur(field.litre(), '40')
+    doldur(field.fiyat(), '45')
     await gonder()
 
     await waitFor(() => expect(addFuel).toHaveBeenCalledTimes(1))
   })
 
   it('düzenleme modunda mevcut kaydı forma doldurur ve updateFuel çağırır', async () => {
-    const kayit = {
+    const record = {
       id: 'f9', vehicleId: 'v1', date: '2026-06-01', km: 99000,
       liters: 35, pricePerLiter: 50, totalCost: 1750, fullTank: true, station: 'Shell', notes: '',
     }
-    ac({ editRecord: kayit })
+    ac({ editRecord: record })
 
-    expect(alan.km()).toHaveValue(99000)
-    expect(alan.litre()).toHaveValue(35)
+    expect(field.km()).toHaveValue(99000)
+    expect(field.litre()).toHaveValue(35)
 
     await gonder()
 
@@ -160,12 +160,12 @@ describe('FuelForm', () => {
   })
 
   it('düzenlemede kaydın kendi km si çakışma sayılmaz', async () => {
-    const kayit = {
+    const record = {
       id: 'f9', vehicleId: 'v1', date: '2026-06-01', km: 105000,
       liters: 35, pricePerLiter: 50, totalCost: 1750, fullTank: true, station: '', notes: '',
     }
-    mockCtx.fuelRecords = [{ ...kayit }]
-    ac({ editRecord: kayit })
+    mockCtx.fuelRecords = [{ ...record }]
+    ac({ editRecord: record })
 
     await gonder()
     await waitFor(() => expect(updateFuel).toHaveBeenCalledTimes(1))
@@ -174,14 +174,14 @@ describe('FuelForm', () => {
   it('araç km si değişince açık formdaki girdiler KORUNUR', () => {
     const { rerender } = ac()
 
-    doldur(alan.km(), '123456')
-    doldur(alan.litre(), '42')
+    doldur(field.km(), '123456')
+    doldur(field.litre(), '42')
 
     // Realtime senkron veya başka bir kayıt aracın km'sini güncellerse
     mockCtx = { ...mockCtx, vehicles: [{ ...ARAC, currentKm: 111111 }] }
     rerender(<FuelForm isOpen onClose={vi.fn()} vehicleId="v1" />)
 
-    expect(alan.km()).toHaveValue(123456)
-    expect(alan.litre()).toHaveValue(42)
+    expect(field.km()).toHaveValue(123456)
+    expect(field.litre()).toHaveValue(42)
   })
 })

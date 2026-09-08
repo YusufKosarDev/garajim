@@ -38,10 +38,10 @@ describe('validatePastDate', () => {
   })
 
   it('gelecek tarihi reddeder ve alan adını mesaja koyar', () => {
-    const sonuc = validatePastDate('2026-06-16', 'Bakım tarihi')
-    expect(sonuc.isValid).toBe(false)
-    expect(sonuc.message).toContain('Bakım tarihi')
-    expect(sonuc.message).toContain('gelecek')
+    const result = validatePastDate('2026-06-16', 'Bakım tarihi')
+    expect(result.isValid).toBe(false)
+    expect(result.message).toContain('Bakım tarihi')
+    expect(result.message).toContain('gelecek')
   })
 
   it('50 yıldan eski tarihi reddeder', () => {
@@ -64,10 +64,10 @@ describe('validateExpiryDate', () => {
   })
 
   it('varsayılan 5 yıldan uzak geleceği reddeder', () => {
-    const sonuc = validateExpiryDate('2035-01-01', 'Muayene')
-    expect(sonuc.isValid).toBe(false)
-    expect(sonuc.message).toContain('Muayene')
-    expect(sonuc.message).toContain('5 yıl')
+    const result = validateExpiryDate('2035-01-01', 'Muayene')
+    expect(result.isValid).toBe(false)
+    expect(result.message).toContain('Muayene')
+    expect(result.message).toContain('5 yıl')
   })
 
   it('maxYearsAhead parametresine uyar', () => {

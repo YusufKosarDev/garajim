@@ -17,60 +17,60 @@
  * 3. Kalıcılık — kuyruk IndexedDB'de tutulur, sekme kapansa da kaybolmaz.
  */
 
-export type KuyrukIslemi = 'insert' | 'update' | 'delete'
+export type QueueOperation = 'insert' | 'update' | 'delete'
 
-export interface KuyrukGirdisi {
+export interface QueueEntry {
   /** Kuyruk içi sıra numarası */
-  sira: number
+  seq: number
   tablo: string
-  islem: KuyrukIslemi
+  operation: QueueOperation
   /** insert için gövde, update için değişiklikler */
   payload?: Record<string, unknown>
   /** update/delete hedefi (geçici id olabilir) */
-  hedefId?: string
+  targetId?: string
   /** insert ise bu kayda verilen geçici id */
-  geciciId?: string
+  tempId?: string
   /** payload içinde geçici id taşıyabilecek alanlar (örn. vehicle_id) */
-  referansAlanlari?: string[]
-  olusturma: number
+  referenceFields?: string[]
+  createdAt: number
 }
 
 /** Depolama soyutlaması — testlerde bellek içi, tarayıcıda IndexedDB */
-export interface KuyrukDeposu {
-  hepsi: () => Promise<KuyrukGirdisi[]>
-  ekle: (girdi: KuyrukGirdisi) => Promise<void>
-  sil: (sira: number) => Promise<void>
-  guncelle: (girdi: KuyrukGirdisi) => Promise<void>
-  temizle: () => Promise<void>
+export interface QueueStore {
+  all: () => Promise<QueueEntry[]>
+  ekle: (entry: QueueEntry) => Promise<void>
+  remove: (seq: number) => Promise<void>
+  update: (entry: QueueEntry) => Promise<void>
+  clear: () => Promise<void>
 }
 
 // ---------------------------------------------------------------------------
 // Bellek içi depo (testler ve IndexedDB yoksa)
 // ---------------------------------------------------------------------------
-export function createMemoryStore(): KuyrukDeposu {
-  let girdiler: KuyrukGirdisi[] = []
+export function createMemoryStore(): QueueStore {
+  let entries: QueueEntry[] = []
   return {
-    hepsi: async () => [...girdiler].sort((a, b) => a.sira - b.sira),
-    ekle: async (g) => { girdiler.push(g) },
-    sil: async (sira) => { girdiler = girdiler.filter(g => g.sira !== sira) },
-    guncelle: async (g) => { girdiler = girdiler.map(x => (x.sira === g.sira ? g : x)) },
-    temizle: async () => { girdiler = [] },
+    all: async () => [...entries].sort((a, b) => a.seq - b.seq),
+    ekle: async (g) => { entries.push(g) },
+    remove: async (seq) => { entries = entries.filter(g => g.seq !== seq) },
+    update: async (g) => { entries = entries.map(x => (x.seq === g.seq ? g : x)) },
+    clear: async () => { entries = [] },
   }
 }
 
 // ---------------------------------------------------------------------------
 // IndexedDB deposu
 // ---------------------------------------------------------------------------
-const DB_ADI = 'garajim-offline'
-const STORE_ADI = 'kuyruk'
+const DB_NAME = 'garajim-offline'
+const STORE_NAME = 'kuyruk'
 
 function dbAc(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
-    const istek = indexedDB.open(DB_ADI, 1)
+    const istek = indexedDB.open(DB_NAME, 1)
     istek.onupgradeneeded = () => {
       const db = istek.result
-      if (!db.objectStoreNames.contains(STORE_ADI)) {
-        db.createObjectStore(STORE_ADI, { keyPath: 'sira' })
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: 'sira' })
       }
     }
     istek.onsuccess = () => resolve(istek.result)
@@ -78,24 +78,24 @@ function dbAc(): Promise<IDBDatabase> {
   })
 }
 
-const islem = <T>(mod: IDBTransactionMode, fn: (store: IDBObjectStore) => IDBRequest<T>): Promise<T> =>
+const operation = <T>(mod: IDBTransactionMode, fn: (store: IDBObjectStore) => IDBRequest<T>): Promise<T> =>
   dbAc().then(db => new Promise<T>((resolve, reject) => {
-    const tx = db.transaction(STORE_ADI, mod)
-    const istek = fn(tx.objectStore(STORE_ADI))
+    const tx = db.transaction(STORE_NAME, mod)
+    const istek = fn(tx.objectStore(STORE_NAME))
     istek.onsuccess = () => resolve(istek.result)
     istek.onerror = () => reject(istek.error)
   }))
 
-export function createIndexedDbStore(): KuyrukDeposu {
+export function createIndexedDbStore(): QueueStore {
   return {
-    hepsi: async () => {
-      const hepsi = await islem<KuyrukGirdisi[]>('readonly', s => s.getAll() as IDBRequest<KuyrukGirdisi[]>)
-      return hepsi.sort((a, b) => a.sira - b.sira)
+    all: async () => {
+      const all = await operation<QueueEntry[]>('readonly', s => s.getAll() as IDBRequest<QueueEntry[]>)
+      return all.sort((a, b) => a.seq - b.seq)
     },
-    ekle: async (g) => { await islem('readwrite', s => s.put(g)) },
-    guncelle: async (g) => { await islem('readwrite', s => s.put(g)) },
-    sil: async (sira) => { await islem('readwrite', s => s.delete(sira)) },
-    temizle: async () => { await islem('readwrite', s => s.clear()) },
+    ekle: async (g) => { await operation('readwrite', s => s.put(g)) },
+    update: async (g) => { await operation('readwrite', s => s.put(g)) },
+    remove: async (seq) => { await operation('readwrite', s => s.delete(seq)) },
+    clear: async () => { await operation('readwrite', s => s.clear()) },
   }
 }
 
@@ -104,48 +104,48 @@ export function createIndexedDbStore(): KuyrukDeposu {
 // ---------------------------------------------------------------------------
 
 /** Kuyruktaki bir girdiyi sunucuya gönderen fonksiyon. Insert ise gerçek id döner. */
-export type Gonderici = (girdi: KuyrukGirdisi) => Promise<{ gercekId?: string } | void>
+export type Sender = (entry: QueueEntry) => Promise<{ gercekId?: string } | void>
 
-export interface ReplaySonucu {
-  gonderilen: number
-  kalan: number
+export interface ReplayResult {
+  sent: number
+  remaining: number
   /** geçici id -> gerçek id */
   idEslesmeleri: Record<string, string>
-  hata?: unknown
+  error?: unknown
 }
 
 export class OfflineQueue {
-  private depo: KuyrukDeposu
-  private sonrakiSira = 0
+  private store: QueueStore
+  private nextSeq = 0
 
-  constructor(depo: KuyrukDeposu = createMemoryStore()) {
-    this.depo = depo
+  constructor(store: QueueStore = createMemoryStore()) {
+    this.store = store
   }
 
   async uzunluk(): Promise<number> {
-    return (await this.depo.hepsi()).length
+    return (await this.store.all()).length
   }
 
-  async listele(): Promise<KuyrukGirdisi[]> {
-    return this.depo.hepsi()
+  async listele(): Promise<QueueEntry[]> {
+    return this.store.all()
   }
 
-  async temizle(): Promise<void> {
-    await this.depo.temizle()
+  async clear(): Promise<void> {
+    await this.store.clear()
   }
 
   /** Kuyruğa yeni bir mutasyon ekler; sıra numarası mevcut en büyükten sonradır */
-  async kuyrugaAl(girdi: Omit<KuyrukGirdisi, 'sira' | 'olusturma'>): Promise<KuyrukGirdisi> {
-    const mevcut = await this.depo.hepsi()
-    const enBuyuk = mevcut.reduce((m, g) => Math.max(m, g.sira), -1)
-    this.sonrakiSira = Math.max(this.sonrakiSira, enBuyuk + 1)
+  async enqueue(entry: Omit<QueueEntry, 'seq' | 'createdAt'>): Promise<QueueEntry> {
+    const existing = await this.store.all()
+    const maxSeq = existing.reduce((m, g) => Math.max(m, g.seq), -1)
+    this.nextSeq = Math.max(this.nextSeq, maxSeq + 1)
 
-    const tam: KuyrukGirdisi = {
-      ...girdi,
-      sira: this.sonrakiSira++,
-      olusturma: Date.now(),
+    const tam: QueueEntry = {
+      ...entry,
+      seq: this.nextSeq++,
+      createdAt: Date.now(),
     }
-    await this.depo.ekle(tam)
+    await this.store.ekle(tam)
     return tam
   }
 
@@ -155,35 +155,35 @@ export class OfflineQueue {
    * Bir girdi başarısız olursa DURUR — arkasındaki girdiler ona bağımlı
    * olabilir (çevrimdışı eklenen araca eklenen bakım kaydı gibi).
    */
-  async replay(gonder: Gonderici): Promise<ReplaySonucu> {
+  async replay(gonder: Sender): Promise<ReplayResult> {
     const idEslesmeleri: Record<string, string> = {}
-    let gonderilen = 0
+    let sent = 0
 
-    const girdiler = await this.depo.hepsi()
+    const entries = await this.store.all()
 
-    for (const girdi of girdiler) {
+    for (const entry of entries) {
       // Bu girdi, daha önce gönderilmiş geçici bir id'ye referans veriyorsa
       // referansı gerçek id ile değiştir.
-      const cozulmus = uygulaEslesmeler(girdi, idEslesmeleri)
+      const cozulmus = applyIdMappings(entry, idEslesmeleri)
 
       try {
-        const sonuc = await gonder(cozulmus)
-        if (cozulmus.geciciId && sonuc && sonuc.gercekId) {
-          idEslesmeleri[cozulmus.geciciId] = sonuc.gercekId
+        const result = await gonder(cozulmus)
+        if (cozulmus.tempId && result && result.gercekId) {
+          idEslesmeleri[cozulmus.tempId] = result.gercekId
         }
-        await this.depo.sil(girdi.sira)
-        gonderilen++
-      } catch (hata) {
+        await this.store.remove(entry.seq)
+        sent++
+      } catch (error) {
         return {
-          gonderilen,
-          kalan: girdiler.length - gonderilen,
+          sent,
+          remaining: entries.length - sent,
           idEslesmeleri,
-          hata,
+          error,
         }
       }
     }
 
-    return { gonderilen, kalan: 0, idEslesmeleri }
+    return { sent, remaining: 0, idEslesmeleri }
   }
 }
 
@@ -191,38 +191,38 @@ export class OfflineQueue {
  * Girdideki geçici id referanslarını gerçek id'lerle değiştirir.
  * Hem hedefId'yi hem payload içindeki referans alanlarını kapsar.
  */
-export function uygulaEslesmeler(
-  girdi: KuyrukGirdisi,
-  eslesmeler: Record<string, string>
-): KuyrukGirdisi {
-  if (Object.keys(eslesmeler).length === 0) return girdi
+export function applyIdMappings(
+  entry: QueueEntry,
+  idMappings: Record<string, string>
+): QueueEntry {
+  if (Object.keys(idMappings).length === 0) return entry
 
-  const yeni: KuyrukGirdisi = { ...girdi }
+  const updated: QueueEntry = { ...entry }
 
-  if (yeni.hedefId && eslesmeler[yeni.hedefId]) {
-    yeni.hedefId = eslesmeler[yeni.hedefId]
+  if (updated.targetId && idMappings[updated.targetId]) {
+    updated.targetId = idMappings[updated.targetId]
   }
 
-  if (yeni.payload && yeni.referansAlanlari?.length) {
-    const payload = { ...yeni.payload }
-    for (const alan of yeni.referansAlanlari) {
-      const deger = payload[alan]
-      if (typeof deger === 'string' && eslesmeler[deger]) {
-        payload[alan] = eslesmeler[deger]
+  if (updated.payload && updated.referenceFields?.length) {
+    const payload = { ...updated.payload }
+    for (const field of updated.referenceFields) {
+      const value = payload[field]
+      if (typeof value === 'string' && idMappings[value]) {
+        payload[field] = idMappings[value]
       }
     }
-    yeni.payload = payload
+    updated.payload = payload
   }
 
-  return yeni
+  return updated
 }
 
 /** Çevrimdışı mı? Ağ hatası mı? */
-export const cevrimdisiMi = (): boolean =>
+export const isOffline = (): boolean =>
   typeof navigator !== 'undefined' && navigator.onLine === false
 
-export const agHatasiMi = (hata: unknown): boolean => {
-  if (!hata) return false
-  const mesaj = (hata as { message?: string })?.message ?? String(hata)
-  return /network|fetch|failed to fetch|load failed|timeout/i.test(mesaj)
+export const isNetworkError = (error: unknown): boolean => {
+  if (!error) return false
+  const message = (error as { message?: string })?.message ?? String(error)
+  return /network|fetch|failed to fetch|load failed|timeout/i.test(message)
 }

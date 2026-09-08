@@ -3,7 +3,7 @@ import {
   vehicleToDb, maintenanceToDb, fuelToDb, tireSetToDb, tireChangeToDb,
 } from './supabaseMappers'
 import { uploadPhotoFromBase64, uploadPhotosBatch, isBase64, BUCKETS } from './storageHelpers'
-import type { KuyrukGirdisi } from './offlineQueue'
+import type { QueueEntry } from './offlineQueue'
 import type { Vehicle, MaintenanceRecord, FuelRecord, TireSet, TireChange } from '../types'
 
 /**
@@ -44,34 +44,34 @@ export function createDispatcher(userId: string) {
     }
   }
 
-  return async (girdi: KuyrukGirdisi): Promise<{ gercekId?: string } | void> => {
-    const { tablo, islem, payload, hedefId } = girdi
+  return async (entry: QueueEntry): Promise<{ gercekId?: string } | void> => {
+    const { tablo, operation, payload, targetId } = entry
 
-    if (islem === 'delete') {
-      if (!hedefId) throw new Error('Silme için hedef id yok')
-      const { error } = await supabase.from(tablo).delete().eq('id', hedefId)
+    if (operation === 'delete') {
+      if (!targetId) throw new Error('Silme için hedef id yok')
+      const { error } = await supabase.from(tablo).delete().eq('id', targetId)
       if (error) throw error
       return
     }
 
     const dbRow = await tabloyaCevir(tablo, payload ?? {})
 
-    if (islem === 'insert') {
+    if (operation === 'insert') {
       const { data, error } = await supabase.from(tablo).insert([dbRow]).select().single()
       if (error) throw error
       return { gercekId: (data as { id: string })?.id }
     }
 
     // update
-    if (!hedefId) throw new Error('Güncelleme için hedef id yok')
+    if (!targetId) throw new Error('Güncelleme için hedef id yok')
     delete (dbRow as { user_id?: string }).user_id
-    const { error } = await supabase.from(tablo).update(dbRow).eq('id', hedefId)
+    const { error } = await supabase.from(tablo).update(dbRow).eq('id', targetId)
     if (error) throw error
   }
 }
 
 /** Bir tablo için, payload içinde geçici id taşıyabilecek alanlar */
-export const REFERANS_ALANLARI: Record<string, string[]> = {
+export const REFERENCE_FIELDS: Record<string, string[]> = {
   vehicles: [],
   maintenance_records: ['vehicleId'],
   fuel_records: ['vehicleId'],

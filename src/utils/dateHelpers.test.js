@@ -34,12 +34,12 @@ describe('toDateKey', () => {
 
   it('UTC+ saat diliminde günü geriye KAYDIRMAZ (asıl bug buydu)', () => {
     // Yerel gece yarısı: toISOString() bunu UTC'ye çevirip bir önceki güne düşürürdü
-    const yerelGeceYarisi = new Date(2026, 0, 1, 0, 0, 0)
-    expect(toDateKey(yerelGeceYarisi)).toBe('2026-01-01')
+    const localMidnight = new Date(2026, 0, 1, 0, 0, 0)
+    expect(toDateKey(localMidnight)).toBe('2026-01-01')
 
     // Eski davranışın gerçekten farklı olduğunu, ancak UTC'nin doğusundaysak doğrula
-    if (yerelGeceYarisi.getTimezoneOffset() < 0) {
-      expect(yerelGeceYarisi.toISOString().split('T')[0]).not.toBe('2026-01-01')
+    if (localMidnight.getTimezoneOffset() < 0) {
+      expect(localMidnight.toISOString().split('T')[0]).not.toBe('2026-01-01')
     }
   })
 
@@ -118,9 +118,9 @@ describe('formatRelative', () => {
   })
 
   it('30 günü aşınca kısa tarihe düşer', () => {
-    const sonuc = formatRelative('2026-09-01')
-    expect(sonuc).not.toMatch(/gün/)
-    expect(sonuc).toContain('2026')
+    const result = formatRelative('2026-09-01')
+    expect(result).not.toMatch(/gün/)
+    expect(result).toContain('2026')
   })
 
   it('boş girdide tire döner', () => {

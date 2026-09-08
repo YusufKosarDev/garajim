@@ -66,10 +66,10 @@ export const compressImage = (file: File): Promise<string> => {
 }
 
 // Birden çok dosyayı işle
-export interface CompressSonuc { success: boolean; data?: string; error?: string; fileName?: string }
+export interface CompressResult { success: boolean; data?: string; error?: string; fileName?: string }
 
-export const compressMultipleImages = async (files: File[]): Promise<CompressSonuc[]> => {
-  const results: CompressSonuc[] = []
+export const compressMultipleImages = async (files: File[]): Promise<CompressResult[]> => {
+  const results: CompressResult[] = []
   for (const file of files) {
     try {
       const compressed = await compressImage(file)

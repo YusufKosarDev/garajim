@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Languages } from 'lucide-react'
-import { DILLER } from '../i18n'
+import { LANGUAGES } from '../i18n'
 
 /**
  * Dil seçici (madde 29).
@@ -26,7 +26,7 @@ export default function LanguageSwitcher() {
       </p>
 
       <div role="group" aria-label={t('languageSwitcher.dil')} className="flex gap-2 flex-wrap">
-        {DILLER.map(({ kod, ad }) => {
+        {LANGUAGES.map(({ kod, ad }) => {
           const secili = aktif === kod
           return (
             <button

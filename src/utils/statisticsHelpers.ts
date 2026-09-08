@@ -1,6 +1,6 @@
 import type { Vehicle, MaintenanceRecord, FuelRecord } from '../types'
 
-interface AylikOzet { maintenance: number; fuel: number; total: number }
+interface MonthlySummary { maintenance: number; fuel: number; total: number }
 
 // Bir tarihin ay-yıl anahtarı döndürür: "2026-04" gibi
 const getMonthKey = (dateString: string): string => {
@@ -33,7 +33,7 @@ export const getAverageMonthlySpending = (
 }
 
 // Bu ayki harcama
-export const getCurrentMonthSpending = (records: MaintenanceRecord[], fuelRecords: FuelRecord[]): AylikOzet => {
+export const getCurrentMonthSpending = (records: MaintenanceRecord[], fuelRecords: FuelRecord[]): MonthlySummary => {
   const now = new Date()
   const thisMonth = getMonthKey(now.toISOString())
 
@@ -83,11 +83,11 @@ export const getMonthlyBreakdown = (
   records: MaintenanceRecord[],
   fuelRecords: FuelRecord[],
   yearsBack = 2
-): Record<string, AylikOzet> => {
+): Record<string, MonthlySummary> => {
   const now = new Date()
   const cutoff = new Date(now.getFullYear() - yearsBack, 0, 1)
 
-  const byMonth: Record<string, AylikOzet> = {}
+  const byMonth: Record<string, MonthlySummary> = {}
 
   records.filter(r => new Date(r.date) >= cutoff).forEach(r => {
     const key = getMonthKey(r.date)

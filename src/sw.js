@@ -19,19 +19,19 @@ precacheAndRoute(self.__WB_MANIFEST)
 cleanupOutdatedCaches()
 
 // Google Fonts — generateSW modundaki runtimeCaching'in karşılığı
-const BIR_YIL = 60 * 60 * 24 * 365
+const ONE_YEAR = 60 * 60 * 24 * 365
 registerRoute(
   ({ url }) => url.origin === 'https://fonts.googleapis.com',
   new CacheFirst({
     cacheName: 'google-fonts-cache',
-    plugins: [new ExpirationPlugin({ maxEntries: 10, maxAgeSeconds: BIR_YIL })],
+    plugins: [new ExpirationPlugin({ maxEntries: 10, maxAgeSeconds: ONE_YEAR })],
   })
 )
 registerRoute(
   ({ url }) => url.origin === 'https://fonts.gstatic.com',
   new CacheFirst({
     cacheName: 'gstatic-fonts-cache',
-    plugins: [new ExpirationPlugin({ maxEntries: 10, maxAgeSeconds: BIR_YIL })],
+    plugins: [new ExpirationPlugin({ maxEntries: 10, maxAgeSeconds: ONE_YEAR })],
   })
 )
 
@@ -47,26 +47,26 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('push', (event) => {
   if (!event.data) return
 
-  let veri
+  let data
   try {
-    veri = event.data.json()
+    data = event.data.json()
   } catch {
-    veri = { title: 'Garajım', body: event.data.text() }
+    data = { title: 'Garajım', body: event.data.text() }
   }
 
-  const baslik = veri.title || 'Garajım'
-  const secenekler = {
-    body: veri.body || veri.message || '',
+  const title = data.title || 'Garajım'
+  const options = {
+    body: data.body || data.message || '',
     icon: '/icons/icon-192.png',
     badge: '/icons/icon-192.png',
     // Aynı tag'li bildirim üst üste yığılmaz, güncellenir
-    tag: veri.tag || veri.id,
-    data: { url: veri.url || veri.actionUrl || '/' },
+    tag: data.tag || data.id,
+    data: { url: data.url || data.actionUrl || '/' },
     dir: 'auto',
     lang: 'tr',
   }
 
-  event.waitUntil(self.registration.showNotification(baslik, secenekler))
+  event.waitUntil(self.registration.showNotification(title, options))
 })
 
 // ---------------------------------------------------------------------------
@@ -74,20 +74,20 @@ self.addEventListener('push', (event) => {
 // ---------------------------------------------------------------------------
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  const hedef = event.notification.data?.url || '/'
+  const target = event.notification.data?.url || '/'
 
   event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((pencereler) => {
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
       // Uygulama zaten açıksa oraya odaklan ve yönlendir
-      for (const pencere of pencereler) {
-        if ('focus' in pencere) {
-          pencere.focus()
-          if ('navigate' in pencere) pencere.navigate(hedef)
+      for (const windowOf of windowClients) {
+        if ('focus' in windowOf) {
+          windowOf.focus()
+          if ('navigate' in windowOf) windowOf.navigate(target)
           return
         }
       }
       // Açık pencere yoksa yeni sekme aç
-      if (self.clients.openWindow) return self.clients.openWindow(hedef)
+      if (self.clients.openWindow) return self.clients.openWindow(target)
     })
   )
 })

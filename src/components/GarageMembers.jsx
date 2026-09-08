@@ -41,9 +41,9 @@ export default function GarageMembers() {
   // Query ile birlikte yeniden deneme, pencere odaklanınca tazeleme ve
   // isteklerin birleştirilmesi de bedavaya geliyor.
   const {
-    data: garajVerisi,
+    data: garageData,
     isPending: loading,
-    error: yuklemeHatasi,
+    error: loadError,
     refetch: loadData,
   } = useQuery({
     queryKey: ['garaj-uyeleri', user?.id],
@@ -93,9 +93,9 @@ export default function GarageMembers() {
     },
   })
 
-  const garage = garajVerisi?.garage ?? null
-  const members = garajVerisi?.members ?? []
-  const invitations = garajVerisi?.invitations ?? []
+  const garage = garageData?.garage ?? null
+  const members = garageData?.members ?? []
+  const invitations = garageData?.invitations ?? []
 
   // Owner mu kullanıcı?
   const isOwner = garage && garage.owner_id === user?.id
@@ -103,10 +103,10 @@ export default function GarageMembers() {
   // Yükleme hatasını kullanıcıya bildir. Efekt içinde setState YOK — sadece
   // toast, yani gerçek bir yan etki.
   useEffect(() => {
-    if (!yuklemeHatasi) return
-    console.error('Load garage data error:', yuklemeHatasi)
+    if (!loadError) return
+    console.error('Load garage data error:', loadError)
     toast.error(t('garageMembers.uye_bilgileri_yuklenemedi'))
-  }, [yuklemeHatasi, t])
+  }, [loadError, t])
 
   // Davet gönder
   const handleInvite = async (e) => {

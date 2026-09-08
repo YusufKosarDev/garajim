@@ -18,25 +18,25 @@ const MEVCUT = {
 
 const doldur = (input, value) => fireEvent.change(input, { target: { value } })
 
-const alan = {
+const field = {
   plaka: () => screen.getByPlaceholderText('34 ABC 123'),
   marka: () => screen.getByPlaceholderText('BMW'),
   model: () => screen.getByPlaceholderText('320i'),
-  yil: () => screen.getByPlaceholderText('2020'),
+  year: () => screen.getByPlaceholderText('2020'),
   km: () => screen.getByPlaceholderText('0'),
-  tarihler: () => document.querySelectorAll('input[type="date"]'),
+  dates: () => document.querySelectorAll('input[type="date"]'),
   kaydet: () => screen.getByRole('button', { name: /araç ekle|güncelle/i }),
 }
 
-const gecerliDoldur = () => {
-  doldur(alan.plaka(), '34ABC1234')
-  doldur(alan.marka(), 'BMW')
-  doldur(alan.model(), '320i')
-  doldur(alan.yil(), '2020')
+const fillValid = () => {
+  doldur(field.plaka(), '34ABC1234')
+  doldur(field.marka(), 'BMW')
+  doldur(field.model(), '320i')
+  doldur(field.year(), '2020')
 }
 
 const gonder = async () => {
-  fireEvent.click(alan.kaydet())
+  fireEvent.click(field.kaydet())
   await waitFor(() => {})
 }
 
@@ -51,7 +51,7 @@ const ac = (props = {}) => render(<VehicleForm isOpen onClose={vi.fn()} {...prop
 describe('VehicleForm', () => {
   it('geçerli veriyle addVehicle i çağırır ve plakayı biçimlendirir', async () => {
     ac()
-    gecerliDoldur()
+    fillValid()
     await gonder()
 
     await waitFor(() => expect(addVehicle).toHaveBeenCalledTimes(1))
@@ -66,7 +66,7 @@ describe('VehicleForm', () => {
 
   it('zorunlu alanlar boşken kaydetmez', async () => {
     ac()
-    fireEvent.click(alan.kaydet())
+    fireEvent.click(field.kaydet())
 
     expect(await screen.findByText('Plaka zorunlu')).toBeInTheDocument()
     expect(screen.getByText('Marka zorunlu')).toBeInTheDocument()
@@ -76,9 +76,9 @@ describe('VehicleForm', () => {
 
   it('geçersiz plaka formatını reddeder', async () => {
     ac()
-    gecerliDoldur()
-    doldur(alan.plaka(), 'ABC')
-    fireEvent.click(alan.kaydet())
+    fillValid()
+    doldur(field.plaka(), 'ABC')
+    fireEvent.click(field.kaydet())
 
     expect(await screen.findByText(/geçerli bir plaka formatı/i)).toBeInTheDocument()
     expect(addVehicle).not.toHaveBeenCalled()
@@ -87,8 +87,8 @@ describe('VehicleForm', () => {
   it('aynı plaka zaten kayıtlıysa reddeder', async () => {
     mockCtx.vehicles = [MEVCUT]
     ac()
-    gecerliDoldur()
-    fireEvent.click(alan.kaydet())
+    fillValid()
+    fireEvent.click(field.kaydet())
 
     expect(await screen.findByText('Bu plaka zaten kayıtlı')).toBeInTheDocument()
     expect(addVehicle).not.toHaveBeenCalled()
@@ -105,19 +105,19 @@ describe('VehicleForm', () => {
   })
 
   it('yıl alanı gelecek model yılıyla sınırlı (max attribute)', () => {
-    const buYil = new Date().getFullYear()
+    const thisYear = new Date().getFullYear()
     ac()
-    expect(alan.yil()).toHaveAttribute('max', String(buYil + 1))
-    expect(alan.yil()).toHaveAttribute('min', '1950')
+    expect(field.year()).toHaveAttribute('max', String(thisYear + 1))
+    expect(field.year()).toHaveAttribute('min', '1950')
   })
 
   it('sınırın ötesindeki yılda submit hiç başlamaz — tarayıcı kısıtı devrede', async () => {
     // max attribute'unu ihlal eden değerde HTML5 doğrulaması submit'i engelliyor;
     // validateVehicleYear'ın kendi mantığı dateValidation testlerinde sınanıyor.
-    const buYil = new Date().getFullYear()
+    const thisYear = new Date().getFullYear()
     ac()
-    gecerliDoldur()
-    doldur(alan.yil(), String(buYil + 2))
+    fillValid()
+    doldur(field.year(), String(thisYear + 2))
     await gonder()
 
     expect(addVehicle).not.toHaveBeenCalled()
@@ -125,9 +125,9 @@ describe('VehicleForm', () => {
 
   it('çok uzak gelecekteki muayene tarihini reddeder', async () => {
     ac()
-    gecerliDoldur()
-    doldur(alan.tarihler()[0], '2099-01-01')
-    fireEvent.click(alan.kaydet())
+    fillValid()
+    doldur(field.dates()[0], '2099-01-01')
+    fireEvent.click(field.kaydet())
 
     expect(await screen.findByText(/muayene tarihi/i)).toBeInTheDocument()
     expect(addVehicle).not.toHaveBeenCalled()
@@ -135,23 +135,23 @@ describe('VehicleForm', () => {
 
   it('düzenleme modunda mevcut aracı forma doldurur', () => {
     ac({ editVehicle: MEVCUT })
-    expect(alan.plaka()).toHaveValue('34 ABC 1234')
-    expect(alan.marka()).toHaveValue('BMW')
-    expect(alan.yil()).toHaveValue(2020)
-    expect(alan.km()).toHaveValue(100000)
+    expect(field.plaka()).toHaveValue('34 ABC 1234')
+    expect(field.marka()).toHaveValue('BMW')
+    expect(field.year()).toHaveValue(2020)
+    expect(field.km()).toHaveValue(100000)
   })
 
   it('araç listesi değişince açık formdaki girdiler KORUNUR', () => {
     const { rerender } = ac()
 
-    doldur(alan.marka(), 'Audi')
-    doldur(alan.model(), 'A4')
+    doldur(field.marka(), 'Audi')
+    doldur(field.model(), 'A4')
 
     // Realtime senkron başka bir araç eklerse form sıfırlanmamalı
     mockCtx = { ...mockCtx, vehicles: [MEVCUT] }
     rerender(<VehicleForm isOpen onClose={vi.fn()} />)
 
-    expect(alan.marka()).toHaveValue('Audi')
-    expect(alan.model()).toHaveValue('A4')
+    expect(field.marka()).toHaveValue('Audi')
+    expect(field.model()).toHaveValue('A4')
   })
 })

@@ -13,11 +13,11 @@
 import { daysUntil, getDateStatus } from './dateHelpers'
 import type { Vehicle, MaintenanceRecord, FuelRecord, DateStatus } from '../types'
 
-export type EtkinlikTipi = 'inspection' | 'mtv' | 'insurance' | 'kasko' | 'maintenance' | 'fuel'
+export type CalendarEventType = 'inspection' | 'mtv' | 'insurance' | 'kasko' | 'maintenance' | 'fuel'
 
 export interface TakvimEtkinligi {
   /** Makine anahtarı — filtre, ikon ve renk eşlemesi bununla yapılır */
-  type: EtkinlikTipi
+  type: CalendarEventType
   /** Kullanıcıya gösterilen metin */
   label: string
   /** YYYY-MM-DD */
@@ -34,31 +34,31 @@ export interface TakvimEtkinligi {
  * Araca ait yasal tarihler. Sıra Dashboard'daki eski listeyle aynı tutuldu ki
  * kullanıcı alıştığı sıralamayı kaybetmesin.
  */
-const ARAC_TARIHLERI: Array<{ alan: keyof Vehicle; type: EtkinlikTipi; label: string }> = [
-  { alan: 'inspectionDate', type: 'inspection', label: 'Muayene' },
-  { alan: 'mtvDate', type: 'mtv', label: 'MTV' },
-  { alan: 'insuranceDate', type: 'insurance', label: 'Sigorta' },
-  { alan: 'kaskoDate', type: 'kasko', label: 'Kasko' },
+const ARAC_TARIHLERI: Array<{ field: keyof Vehicle; type: CalendarEventType; label: string }> = [
+  { field: 'inspectionDate', type: 'inspection', label: 'Muayene' },
+  { field: 'mtvDate', type: 'mtv', label: 'MTV' },
+  { field: 'insuranceDate', type: 'insurance', label: 'Sigorta' },
+  { field: 'kaskoDate', type: 'kasko', label: 'Kasko' },
 ]
 
-export interface EtkinlikSecenekleri {
+export interface CalendarEventOptions {
   /** Bakım kayıtlarını da etkinliğe çevir (Takvim sayfası için) */
   bakimlar?: MaintenanceRecord[]
   /** Yakıt kayıtlarını da etkinliğe çevir (Takvim sayfası için) */
-  yakitlar?: FuelRecord[]
+  fuels?: FuelRecord[]
 }
 
 export const buildVehicleEvents = (
   vehicles: Vehicle[] = [],
-  { bakimlar, yakitlar }: EtkinlikSecenekleri = {},
+  { bakimlar, fuels }: CalendarEventOptions = {},
 ): TakvimEtkinligi[] => {
-  const etkinlikler: TakvimEtkinligi[] = []
+  const events: TakvimEtkinligi[] = []
 
   for (const vehicle of vehicles) {
-    for (const { alan, type, label } of ARAC_TARIHLERI) {
-      const date = vehicle[alan]
+    for (const { field, type, label } of ARAC_TARIHLERI) {
+      const date = vehicle[field]
       if (typeof date !== 'string' || !date) continue
-      etkinlikler.push({
+      events.push({
         type, label, date, vehicle,
         days: daysUntil(date),
         status: getDateStatus(date),
@@ -66,24 +66,24 @@ export const buildVehicleEvents = (
     }
   }
 
-  if (bakimlar?.length || yakitlar?.length) {
+  if (bakimlar?.length || fuels?.length) {
     // Her kayıt için vehicles.find() O(A×K) olurdu; Map ile O(1)
-    const araclar = new Map(vehicles.map(v => [v.id, v]))
+    const vehicleById = new Map(vehicles.map(v => [v.id, v]))
 
     for (const r of bakimlar ?? []) {
-      const vehicle = araclar.get(r.vehicleId)
+      const vehicle = vehicleById.get(r.vehicleId)
       if (!vehicle || !r.date) continue
-      etkinlikler.push({
+      events.push({
         type: 'maintenance', label: r.type, date: r.date, vehicle,
         days: daysUntil(r.date), status: getDateStatus(r.date), record: r,
       })
     }
 
-    for (const r of yakitlar ?? []) {
-      const vehicle = araclar.get(r.vehicleId)
+    for (const r of fuels ?? []) {
+      const vehicle = vehicleById.get(r.vehicleId)
       if (!vehicle || !r.date) continue
       const tutar = Number(r.totalCost) || 0
-      etkinlikler.push({
+      events.push({
         type: 'fuel',
         label: `${r.liters} L - ${tutar.toLocaleString('tr-TR')} ₺`,
         date: r.date, vehicle,
@@ -92,5 +92,5 @@ export const buildVehicleEvents = (
     }
   }
 
-  return etkinlikler
+  return events
 }

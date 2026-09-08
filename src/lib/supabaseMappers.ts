@@ -20,9 +20,9 @@ import type {
  * (ör. cost: '1234.56'). Mapper'lar bunu dağınık parseFloat çağrılarıyla
  * çeviriyordu; tek yerde topluyoruz. null/undefined/boş/NaN -> 0.
  */
-const sayiya = (deger: string | number | null | undefined): number => {
-  if (deger === null || deger === undefined || deger === '') return 0
-  const n = typeof deger === 'number' ? deger : parseFloat(deger)
+const sayiya = (value: string | number | null | undefined): number => {
+  if (value === null || value === undefined || value === '') return 0
+  const n = typeof value === 'number' ? value : parseFloat(value)
   return Number.isNaN(n) ? 0 : n
 }
 

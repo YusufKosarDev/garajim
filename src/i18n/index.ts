@@ -25,12 +25,12 @@ import LanguageDetector from 'i18next-browser-languagedetector'
 import tr from './locales/tr.json'
 import en from './locales/en.json'
 
-export const DILLER = [
+export const LANGUAGES = [
   { kod: 'tr', ad: 'Türkçe' },
   { kod: 'en', ad: 'English' },
 ] as const
 
-export const DEPOLAMA_ANAHTARI = 'garajim_dil'
+export const STORAGE_KEY = 'garajim_dil'
 
 i18n
   .use(LanguageDetector)
@@ -41,13 +41,13 @@ i18n
       en: { translation: en },
     },
     fallbackLng: 'tr',
-    supportedLngs: DILLER.map(d => d.kod),
+    supportedLngs: LANGUAGES.map(d => d.kod),
     // Desteklenmeyen bir tarayıcı dili (ör. "de") Türkçeye düşsün
     nonExplicitSupportedLngs: true,
     load: 'languageOnly', // "en-US" -> "en"
     detection: {
       order: ['localStorage', 'navigator'],
-      lookupLocalStorage: DEPOLAMA_ANAHTARI,
+      lookupLocalStorage: STORAGE_KEY,
       caches: ['localStorage'],
     },
     interpolation: {

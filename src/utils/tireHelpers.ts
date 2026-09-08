@@ -1,4 +1,4 @@
-import type { Tire, TireSet, TireChange, Sezon, TireStatus } from '../types'
+import type { Tire, TireSet, TireChange, Season, TireStatus } from '../types'
 
 // Pozisyon etiketleri
 export const TIRE_POSITIONS = [
@@ -107,9 +107,9 @@ export const evaluateTireSet = (tireSet?: Pick<TireSet, 'tires'> | null) => {
 }
 
 // Mevsim değişim uyarısı — Türkiye'deki tarihler
-export interface SeasonSuggestion { type: 'recommend' | 'warning'; target: Sezon; message: string; urgent: boolean }
+export interface SeasonSuggestion { type: 'recommend' | 'warning'; target: Season; message: string; urgent: boolean }
 
-export const getSeasonChangeSuggestion = (currentSeason: Sezon | string): SeasonSuggestion | null => {
+export const getSeasonChangeSuggestion = (currentSeason: Season | string): SeasonSuggestion | null => {
   const now = new Date()
   const month = now.getMonth() // 0-11
   const day = now.getDate()

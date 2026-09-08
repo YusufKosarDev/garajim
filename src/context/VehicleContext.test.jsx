@@ -34,7 +34,7 @@ vi.mock('../lib/storageHelpers', () => h.storage)
 // Refresh'in çalışması için bileşen olmayan export'lar dışarı taşındı.
 const { VehicleProvider } = await import('./VehicleContext')
 const { useVehicles } = await import('./vehicle-context')
-const { vehicleQueue: kuyruk } = await import('../lib/vehicleQueue')
+const { vehicleQueue: queue } = await import('../lib/vehicleQueue')
 
 // ---------------------------------------------------------------------------
 // Yardımcılar
@@ -50,14 +50,14 @@ function Probe() {
   )
 }
 
-const aracSatiri = (over = {}) => ({
+const vehicleRow = (over = {}) => ({
   id: 'v1', user_id: 'user-1', plate: '34 ABC 1234', brand: 'BMW', model: '320i',
   year: 2020, fuel_type: 'benzin', current_km: 100000,
   inspection_date: null, mtv_date: null, insurance_date: null, kasko_date: null,
   notes: null, photos: [], created_at: 'x', updated_at: 'y', ...over,
 })
 
-const bakimSatiri = (over = {}) => ({
+const maintenanceRow = (over = {}) => ({
   id: 'm1', user_id: 'user-1', vehicle_id: 'v1', type: 'Yağ Değişimi',
   date: '2026-01-01', km: 95000, cost: '1000', notes: null, photo_url: null, ...over,
 })
@@ -66,12 +66,12 @@ let queryClient
 
 // Testte retry KAPALI olmalı: hata senaryolarında varsayılan 2 retry
 // testleri saniyelerce bekletir ve hata state'ine geçişi geciktirir.
-function Sarmalayici({ children }) {
+function Wrapper({ children }) {
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
 }
 
 async function kur() {
-  render(<Sarmalayici><VehicleProvider><Probe /></VehicleProvider></Sarmalayici>)
+  render(<Wrapper><VehicleProvider><Probe /></VehicleProvider></Wrapper>)
   await screen.findByText(/hazir/)
 }
 
@@ -87,7 +87,7 @@ beforeEach(async () => {
     defaultOptions: { queries: { retry: false } },
   })
   // Kuyruk modül seviyesinde tekil; testler arasında sızmasın
-  await kuyruk.temizle()
+  await queue.clear()
   h.sb = createSupabaseMock()
   h.auth = { user: { id: 'user-1' }, isAuthenticated: true }
   Object.values(h.toast).forEach(f => f.mockClear?.())
@@ -100,8 +100,8 @@ beforeEach(async () => {
 // ===========================================================================
 describe('ilk yükleme', () => {
   it('DB satırlarını camelCase state e çevirir', async () => {
-    h.sb.setResponse('vehicles', 'select', { data: [aracSatiri()], error: null })
-    h.sb.setResponse('maintenance_records', 'select', { data: [bakimSatiri()], error: null })
+    h.sb.setResponse('vehicles', 'select', { data: [vehicleRow()], error: null })
+    h.sb.setResponse('maintenance_records', 'select', { data: [maintenanceRow()], error: null })
     await kur()
 
     expect(ctx.vehicles[0]).toMatchObject({ id: 'v1', plate: '34 ABC 1234', currentKm: 100000, fuelType: 'benzin' })
@@ -119,7 +119,7 @@ describe('ilk yükleme', () => {
 
   it('oturum yoksa state boşalır ve sorgu yapılmaz', async () => {
     h.auth = { user: null, isAuthenticated: false }
-    render(<Sarmalayici><VehicleProvider><Probe /></VehicleProvider></Sarmalayici>)
+    render(<Wrapper><VehicleProvider><Probe /></VehicleProvider></Wrapper>)
     await screen.findByText(/hazir/)
 
     expect(ctx.vehicles).toEqual([])
@@ -131,7 +131,7 @@ describe('ilk yükleme', () => {
 describe('addVehicle', () => {
   it('base64 fotoğrafları Storage a yükler ve DB ye URL yazar', async () => {
     await kur()
-    h.sb.setResponse('vehicles', 'insert', { data: aracSatiri({ photos: ['https://cdn/yeni-0.jpg'] }), error: null })
+    h.sb.setResponse('vehicles', 'insert', { data: vehicleRow({ photos: ['https://cdn/yeni-0.jpg'] }), error: null })
 
     await act(async () => {
       await ctx.addVehicle({ plate: '34 ABC 1234', brand: 'BMW', model: '320i', photos: ['data:image/jpeg;base64,AAA'] })
@@ -147,7 +147,7 @@ describe('addVehicle', () => {
 
   it('fotoğraf yoksa Storage a hiç gitmez', async () => {
     await kur()
-    h.sb.setResponse('vehicles', 'insert', { data: aracSatiri(), error: null })
+    h.sb.setResponse('vehicles', 'insert', { data: vehicleRow(), error: null })
 
     await act(async () => { await ctx.addVehicle({ plate: '34 A 1', brand: 'BMW', model: '3' }) })
 
@@ -158,10 +158,10 @@ describe('addVehicle', () => {
     await kur()
     h.sb.setResponse('vehicles', 'insert', { data: null, error: { message: 'duplicate key value' } })
 
-    let sonuc
-    await act(async () => { sonuc = await ctx.addVehicle({ plate: '34 A 1', brand: 'BMW', model: '3' }) })
+    let result
+    await act(async () => { result = await ctx.addVehicle({ plate: '34 A 1', brand: 'BMW', model: '3' }) })
 
-    expect(sonuc).toBeNull()
+    expect(result).toBeNull()
     expect(ctx.vehicles).toHaveLength(0)
     expect(h.toast.error).toHaveBeenCalledWith(expect.stringContaining('Bu kayıt zaten var'))
   })
@@ -171,10 +171,10 @@ describe('addVehicle', () => {
 describe('updateVehicle', () => {
   it('listeden çıkarılan fotoğrafları Storage dan siler', async () => {
     h.sb.setResponse('vehicles', 'select', {
-      data: [aracSatiri({ photos: ['https://cdn/a.jpg', 'https://cdn/b.jpg'] })], error: null,
+      data: [vehicleRow({ photos: ['https://cdn/a.jpg', 'https://cdn/b.jpg'] })], error: null,
     })
     await kur()
-    h.sb.setResponse('vehicles', 'update', { data: aracSatiri({ photos: ['https://cdn/a.jpg'] }), error: null })
+    h.sb.setResponse('vehicles', 'update', { data: vehicleRow({ photos: ['https://cdn/a.jpg'] }), error: null })
 
     await act(async () => {
       await ctx.updateVehicle('v1', { plate: '34 ABC 1234', photos: ['https://cdn/a.jpg'] })
@@ -184,9 +184,9 @@ describe('updateVehicle', () => {
   })
 
   it('DB ye user_id göndermez (RLS sahipliği değiştirilemez)', async () => {
-    h.sb.setResponse('vehicles', 'select', { data: [aracSatiri()], error: null })
+    h.sb.setResponse('vehicles', 'select', { data: [vehicleRow()], error: null })
     await kur()
-    h.sb.setResponse('vehicles', 'update', { data: aracSatiri(), error: null })
+    h.sb.setResponse('vehicles', 'update', { data: vehicleRow(), error: null })
 
     await act(async () => { await ctx.updateVehicle('v1', { plate: '34 ABC 1234' }) })
 
@@ -197,9 +197,9 @@ describe('updateVehicle', () => {
 // ===========================================================================
 describe('deleteVehicle', () => {
   it('aracın ve ilgili bakımların fotoğraflarını Storage dan siler, bağlı state i temizler', async () => {
-    h.sb.setResponse('vehicles', 'select', { data: [aracSatiri({ photos: ['https://cdn/a.jpg'] })], error: null })
+    h.sb.setResponse('vehicles', 'select', { data: [vehicleRow({ photos: ['https://cdn/a.jpg'] })], error: null })
     h.sb.setResponse('maintenance_records', 'select', {
-      data: [bakimSatiri({ photo_url: 'https://cdn/fatura.jpg' })], error: null,
+      data: [maintenanceRow({ photo_url: 'https://cdn/fatura.jpg' })], error: null,
     })
     h.sb.setResponse('fuel_records', 'select', {
       data: [{ id: 'f1', vehicle_id: 'v1', date: '2026-01-01', km: 1, liters: '10', total_cost: '100' }], error: null,
@@ -222,11 +222,11 @@ describe('deleteVehicle', () => {
 describe('bakım fotoğrafı yaşam döngüsü', () => {
   it('fotoğraf değişince eskisini Storage dan siler', async () => {
     h.sb.setResponse('maintenance_records', 'select', {
-      data: [bakimSatiri({ photo_url: 'https://cdn/eski.jpg' })], error: null,
+      data: [maintenanceRow({ photo_url: 'https://cdn/eski.jpg' })], error: null,
     })
     await kur()
     h.sb.setResponse('maintenance_records', 'update', {
-      data: bakimSatiri({ photo_url: 'https://cdn/AAA.jpg' }), error: null,
+      data: maintenanceRow({ photo_url: 'https://cdn/AAA.jpg' }), error: null,
     })
 
     await act(async () => {
@@ -239,7 +239,7 @@ describe('bakım fotoğrafı yaşam döngüsü', () => {
 
   it('bakım silinince fotoğrafı da silinir', async () => {
     h.sb.setResponse('maintenance_records', 'select', {
-      data: [bakimSatiri({ photo_url: 'https://cdn/fis.jpg' })], error: null,
+      data: [maintenanceRow({ photo_url: 'https://cdn/fis.jpg' })], error: null,
     })
     await kur()
 
@@ -270,29 +270,29 @@ describe('realtime', () => {
     await waitFor(() => expect(h.sb.filterFor('vehicles')).toBeDefined())
 
     act(() => {
-      h.sb.emit('vehicles', { eventType: 'INSERT', new: aracSatiri({ id: 'v-uzak' }) })
+      h.sb.emit('vehicles', { eventType: 'INSERT', new: vehicleRow({ id: 'v-uzak' }) })
     })
 
     expect(ctx.vehicles.map(v => v.id)).toContain('v-uzak')
   })
 
   it('kendi eklediğimiz kaydın echo su tekrar eklenmez', async () => {
-    h.sb.setResponse('vehicles', 'select', { data: [aracSatiri()], error: null })
+    h.sb.setResponse('vehicles', 'select', { data: [vehicleRow()], error: null })
     await kur()
     await waitFor(() => expect(h.sb.filterFor('vehicles')).toBeDefined())
     expect(ctx.vehicles).toHaveLength(1)
 
-    act(() => { h.sb.emit('vehicles', { eventType: 'INSERT', new: aracSatiri() }) })
+    act(() => { h.sb.emit('vehicles', { eventType: 'INSERT', new: vehicleRow() }) })
 
     expect(ctx.vehicles).toHaveLength(1)
   })
 
   it('UPDATE ve DELETE olayları state e uygulanır', async () => {
-    h.sb.setResponse('vehicles', 'select', { data: [aracSatiri()], error: null })
+    h.sb.setResponse('vehicles', 'select', { data: [vehicleRow()], error: null })
     await kur()
     await waitFor(() => expect(h.sb.filterFor('vehicles')).toBeDefined())
 
-    act(() => { h.sb.emit('vehicles', { eventType: 'UPDATE', new: aracSatiri({ plate: '06 XYZ 99' }) }) })
+    act(() => { h.sb.emit('vehicles', { eventType: 'UPDATE', new: vehicleRow({ plate: '06 XYZ 99' }) }) })
     expect(ctx.vehicles[0].plate).toBe('06 XYZ 99')
 
     act(() => { h.sb.emit('vehicles', { eventType: 'DELETE', old: { id: 'v1' } }) })
@@ -369,9 +369,9 @@ describe('çevrimdışı kuyruk', () => {
     vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false)
     await kur()
 
-    let sonuc
+    let result
     await act(async () => {
-      sonuc = await ctx.addMaintenance({ vehicleId: 'v1', type: 'Yağ Değişimi', date: '2026-01-01', km: 1000 })
+      result = await ctx.addMaintenance({ vehicleId: 'v1', type: 'Yağ Değişimi', date: '2026-01-01', km: 1000 })
     })
 
     // Sunucuya insert gitmemeli
@@ -379,14 +379,14 @@ describe('çevrimdışı kuyruk', () => {
     // Ama kullanıcı kaydını listede görmeli
     expect(ctx.maintenanceRecords).toHaveLength(1)
     expect(ctx.maintenanceRecords[0].type).toBe('Yağ Değişimi')
-    expect(sonuc.id).toMatch(/^gecici-/)
+    expect(result.id).toMatch(/^gecici-/)
 
     vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true)
   })
 
   it('çevrimiçiyken normal yoldan gider, kuyruğa alınmaz', async () => {
     await kur()
-    h.sb.setResponse('maintenance_records', 'insert', { data: bakimSatiri(), error: null })
+    h.sb.setResponse('maintenance_records', 'insert', { data: maintenanceRow(), error: null })
 
     await act(async () => {
       await ctx.addMaintenance({ vehicleId: 'v1', type: 'Yağ Değişimi', date: '2026-01-01', km: 1000 })

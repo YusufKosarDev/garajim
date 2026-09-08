@@ -13,14 +13,14 @@
  *    önbelleklendiği için yalnızca ilk kullanımda iniyor.
  */
 
-let workerSozu: Promise<TesseractWorkerBenzeri> | null = null
+let workerPromise: Promise<TesseractWorkerBenzeri> | null = null
 
-interface TanimaSonucu {
+interface RecognizeResult {
   data: { text: string; confidence: number }
 }
 
 interface TesseractWorkerBenzeri {
-  recognize: (image: unknown) => Promise<TanimaSonucu>
+  recognize: (image: unknown) => Promise<RecognizeResult>
   terminate: () => Promise<unknown>
 }
 
@@ -30,41 +30,41 @@ interface TesseractWorkerBenzeri {
  * tarayabilir. Kapatma `ocrKapat` ile açıkça yapılıyor.
  */
 const workerAl = async (): Promise<TesseractWorkerBenzeri> => {
-  if (!workerSozu) {
-    workerSozu = import('tesseract.js')
+  if (!workerPromise) {
+    workerPromise = import('tesseract.js')
       .then(({ createWorker }) => createWorker('tur') as unknown as Promise<TesseractWorkerBenzeri>)
-      .catch(hata => {
+      .catch(error => {
         // Başarısız sözü saklı tutmuyoruz; ağ döndüğünde tekrar denenebilsin
-        workerSozu = null
-        throw hata
+        workerPromise = null
+        throw error
       })
   }
-  return workerSozu
+  return workerPromise
 }
 
-export interface OcrSonucu {
-  metin: string
+export interface OcrResult {
+  text: string
   /** Tesseract'ın 0-100 arası güven skoru — düşükse kullanıcı uyarılıyor */
-  guven: number
+  confidence: number
 }
 
 /**
  * @param gorsel base64 data URL, Blob, File ya da <img> — Tesseract hepsini kabul eder
  */
-export const fistenMetinOku = async (gorsel: string | Blob): Promise<OcrSonucu> => {
+export const readTextFromReceipt = async (image: string | Blob): Promise<OcrResult> => {
   const worker = await workerAl()
-  const sonuc = await worker.recognize(gorsel)
+  const result = await worker.recognize(image)
   return {
-    metin: sonuc?.data?.text ?? '',
-    guven: sonuc?.data?.confidence ?? 0,
+    text: result?.data?.text ?? '',
+    confidence: result?.data?.confidence ?? 0,
   }
 }
 
 /** Worker'ı ve WASM belleğini serbest bırakır (modal kapanınca çağrılıyor) */
-export const ocrKapat = async (): Promise<void> => {
-  if (!workerSozu) return
-  const soz = workerSozu
-  workerSozu = null
+export const closeOcrWorker = async (): Promise<void> => {
+  if (!workerPromise) return
+  const soz = workerPromise
+  workerPromise = null
   try {
     const worker = await soz
     await worker.terminate()

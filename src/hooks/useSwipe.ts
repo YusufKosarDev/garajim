@@ -4,13 +4,13 @@ const SWIPE_THRESHOLD = 80 // Tetikleme eşiği (px)
 const MAX_SWIPE = 160 // Maksimum kaydırma (px)
 const VERTICAL_THRESHOLD = 15 // Bu kadar dikey hareket varsa swipe iptal (scroll niyetlidir)
 
-export interface SwipeSecenekleri {
+export interface SwipeOptions {
   onSwipeLeft?: () => void
   onSwipeRight?: () => void
   enabled?: boolean
 }
 
-export function useSwipe({ onSwipeLeft, onSwipeRight, enabled = true }: SwipeSecenekleri = {}) {
+export function useSwipe({ onSwipeLeft, onSwipeRight, enabled = true }: SwipeOptions = {}) {
   const [translateX, setTranslateX] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [isOpen, setIsOpen] = useState(false)

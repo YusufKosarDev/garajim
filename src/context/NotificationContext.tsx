@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import type { ReactNode } from 'react'
-import type { Bildirim, BildirimAyarlari, TurAyari } from '../utils/notificationManager'
+import type { AppNotification, NotificationSettings, KindSettings } from '../utils/notificationManager'
 import { NotificationContext } from './notification-context'
 import { useVehicles } from './vehicle-context'
 import {
@@ -14,21 +14,21 @@ const STORAGE_KEY = 'garajim_notifications'
 const SETTINGS_KEY = 'garajim_notification_settings'
 
 /** localStorage okuma — bozuk JSON ya da erişilemeyen depolama sessizce yedeğe düşer */
-function depodanOku<T>(anahtar: string, yedek: T): T {
+function readStored<T>(key: string, fallback: T): T {
   try {
-    const ham = localStorage.getItem(anahtar)
-    return ham ? (JSON.parse(ham) as T) : yedek
+    const raw = localStorage.getItem(key)
+    return raw ? (JSON.parse(raw) as T) : fallback
   } catch (err) {
-    console.error(`${anahtar} okunamadı:`, err)
-    return yedek
+    console.error(`${key} okunamadı:`, err)
+    return fallback
   }
 }
 
-function depoyaYaz(anahtar: string, deger: unknown): void {
+function writeStored(key: string, value: unknown): void {
   try {
-    localStorage.setItem(anahtar, JSON.stringify(deger))
+    localStorage.setItem(key, JSON.stringify(value))
   } catch (err) {
-    console.error(`${anahtar} kaydedilemedi:`, err)
+    console.error(`${key} kaydedilemedi:`, err)
   }
 }
 
@@ -46,27 +46,27 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   // setState yapıyordu; bu, uygulamanın ilk karede "hiç bildirim yok" diye
   // render olup hemen ardından tekrar render olması demekti ve `isInitialized`
   // adında, sadece bu yarışı yönetmek için var olan üçüncü bir state gerekiyordu.
-  const kayitliBildirimler = useMemo(() => depodanOku<Bildirim[]>(STORAGE_KEY, []), [])
-  const [notifications, setNotifications] = useState<Bildirim[]>(kayitliBildirimler)
-  const [settings, setSettings] = useState<BildirimAyarlari>(() => ({
+  const storedNotifications = useMemo(() => readStored<AppNotification[]>(STORAGE_KEY, []), [])
+  const [notifications, setNotifications] = useState<AppNotification[]>(storedNotifications)
+  const [settings, setSettings] = useState<NotificationSettings>(() => ({
     ...DEFAULT_NOTIFICATION_SETTINGS,
-    ...depodanOku<Partial<BildirimAyarlari>>(SETTINGS_KEY, {}),
+    ...readStored<Partial<NotificationSettings>>(SETTINGS_KEY, {}),
   }))
 
   // Tarayıcı bildirimi GÖSTERİLMİŞ id'ler. Başlangıçta depodan gelenlerle
   // dolduruluyor: sayfa her açıldığında eski bildirimler yeniden "yeni" sayılıp
   // bildirim yağmuruna dönmesin. useState lazy initializer'ı sayesinde küme
   // bir kez kuruluyor ve referansı kararlı kalıyor.
-  const [bildirilenIdler] = useState(() => new Set(kayitliBildirimler.map(n => n.id)))
+  const [notifiedIds] = useState(() => new Set(storedNotifications.map(n => n.id)))
 
   // Bildirimleri kaydet
   useEffect(() => {
-    depoyaYaz(STORAGE_KEY, notifications)
+    writeStored(STORAGE_KEY, notifications)
   }, [notifications])
 
   // Ayarları kaydet
   useEffect(() => {
-    depoyaYaz(SETTINGS_KEY, settings)
+    writeStored(SETTINGS_KEY, settings)
   }, [settings])
 
   // Üretilen bildirimler girdilerin saf bir fonksiyonu — state değil, türetilmiş değer
@@ -89,9 +89,9 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   // bayraklarını koruduğu için saf bir türetme değil, gerçek bir state
   // güncellemesi — ama efekt yerine render sırasında ayarlama deseniyle
   // yapılıyor (React'in belgelediği yöntem), böylece fazladan render turu yok.
-  const [oncekiFresh, setOncekiFresh] = useState(fresh)
-  if (fresh !== null && fresh !== oncekiFresh) {
-    setOncekiFresh(fresh)
+  const [prevFresh, setPrevFresh] = useState(fresh)
+  if (fresh !== null && fresh !== prevFresh) {
+    setPrevFresh(fresh)
     setNotifications(prev => mergeNotifications(prev, fresh))
   }
 
@@ -103,11 +103,11 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     for (const n of notifications) {
       if (n.read || n.dismissed) continue
       if (n.priority !== 'critical' && n.priority !== 'high') continue
-      if (bildirilenIdler.has(n.id)) continue
-      bildirilenIdler.add(n.id)
+      if (notifiedIds.has(n.id)) continue
+      notifiedIds.add(n.id)
       void sendBrowserNotification(n)
     }
-  }, [notifications, settings.browserNotifications, bildirilenIdler])
+  }, [notifications, settings.browserNotifications, notifiedIds])
 
   // Hesaplamalar
   const unreadCount = useMemo(
@@ -147,11 +147,11 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     setNotifications([])
   }, [])
 
-  const updateSettings = useCallback((updates: Partial<BildirimAyarlari>) => {
+  const updateSettings = useCallback((updates: Partial<NotificationSettings>) => {
     setSettings(prev => ({ ...prev, ...updates }))
   }, [])
 
-  const updateTypeSettings = useCallback((type: string, typeUpdates: Partial<TurAyari>) => {
+  const updateTypeSettings = useCallback((type: string, typeUpdates: Partial<KindSettings>) => {
     setSettings(prev => ({
       ...prev,
       [type]: { ...(prev[type] as object), ...typeUpdates },

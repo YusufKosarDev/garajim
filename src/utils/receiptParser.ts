@@ -10,21 +10,21 @@
  * alanı elle dolduracaktı.
  */
 
-export interface AlanOnerisi<T> {
-  deger: T
+export interface FieldSuggestion<T> {
+  value: T
   /** Öneriyi üreten ham satır — kullanıcıya gösteriliyor ki neye onay verdiğini görsün */
-  kaynak: string
+  sourceLine: string
 }
 
-export interface FisOnerileri {
-  tutar: AlanOnerisi<number> | null
-  tarih: AlanOnerisi<string> | null
-  km: AlanOnerisi<number> | null
+export interface ReceiptSuggestions {
+  amount: FieldSuggestion<number> | null
+  date: FieldSuggestion<string> | null
+  km: FieldSuggestion<number> | null
 }
 
 /** Türkçe harfleri ASCII'ye indirger — "ÖDENECEK" ve OCR'ın ürettiği "ODENECEK" aynı anahtara düşsün diye */
-const sadelestir = (metin: string): string =>
-  metin
+const normalizeText = (text: string): string =>
+  text
     .toUpperCase()
     .replace(/[İI]/g, 'I')
     .replace(/Ş/g, 'S')
@@ -40,31 +40,31 @@ const sadelestir = (metin: string): string =>
  * basamak sayısıyla çözülüyor: 3 basamak binlik, 1-2 basamak ondalık. Türk
  * fişlerinde "1.500" her zaman bin beş yüz demek.
  */
-export const parseTurkishNumber = (ham: string): number | null => {
-  if (typeof ham !== 'string') return null
+export const parseTurkishNumber = (raw: string): number | null => {
+  if (typeof raw !== 'string') return null
 
   // OCR sayı bağlamında O/l/S karıştırır ("1.5OO,OO"). Düzeltmeden önceki tek
   // şart: parçada EN AZ BİR gerçek rakam bulunmalı. Bu şart olmasa "TOPLAM"
   // kelimesi 0'a, "OSOS" 505'e dönüşür ve bir kelime tutar sanılırdı.
-  let s = ham.trim().replace(/[^\dOoIlSs.,]/g, '')
+  let s = raw.trim().replace(/[^\dOoIlSs.,]/g, '')
   if (!/\d/.test(s)) return null
   s = s.replace(/[Oo]/g, '0').replace(/[Il]/g, '1').replace(/[Ss]/g, '5')
 
   if (!/^\d[\d.,]*$/.test(s)) return null
 
   const sonNokta = s.lastIndexOf('.')
-  const sonVirgul = s.lastIndexOf(',')
-  const sonAyirici = Math.max(sonNokta, sonVirgul)
+  const lastComma = s.lastIndexOf(',')
+  const lastSeparator = Math.max(sonNokta, lastComma)
 
   let tamKisim = s
-  let ondalik = ''
-  if (sonAyirici !== -1) {
-    const kuyruk = s.slice(sonAyirici + 1)
+  let decimalPart = ''
+  if (lastSeparator !== -1) {
+    const queue = s.slice(lastSeparator + 1)
     // 3 basamak = binlik ayırıcı; 1-2 basamak = ondalık; başka bir şey = anlamsız
-    if (/^\d{1,2}$/.test(kuyruk)) {
-      tamKisim = s.slice(0, sonAyirici)
-      ondalik = kuyruk
-    } else if (!/^\d{3}$/.test(kuyruk)) {
+    if (/^\d{1,2}$/.test(queue)) {
+      tamKisim = s.slice(0, lastSeparator)
+      decimalPart = queue
+    } else if (!/^\d{3}$/.test(queue)) {
       return null
     }
   }
@@ -72,16 +72,16 @@ export const parseTurkishNumber = (ham: string): number | null => {
   const tam = tamKisim.replace(/[.,]/g, '')
   if (!/^\d+$/.test(tam)) return null
 
-  const sonuc = Number(`${tam}.${ondalik || '0'}`)
-  return Number.isFinite(sonuc) ? sonuc : null
+  const result = Number(`${tam}.${decimalPart || '0'}`)
+  return Number.isFinite(result) ? result : null
 }
 
 // Satırdaki son sayıyı bulur — fişlerde tutar sağda, etiket solda durur
-const satirdakiSonSayi = (satir: string): number | null => {
-  const adaylar = satir.match(/[\d][\d.,OoIlSs]*/g)
-  if (!adaylar) return null
-  for (let i = adaylar.length - 1; i >= 0; i--) {
-    const n = parseTurkishNumber(adaylar[i])
+const lastNumberInLine = (line: string): number | null => {
+  const candidates = line.match(/[\d][\d.,OoIlSs]*/g)
+  if (!candidates) return null
+  for (let i = candidates.length - 1; i >= 0; i--) {
+    const n = parseTurkishNumber(candidates[i])
     if (n !== null) return n
   }
   return null
@@ -100,58 +100,58 @@ const TUTAR_DISLAYICILARI = [
   'TOPKDV', 'KDV TOPLAM',
 ]
 
-const tutarBul = (satirlar: string[]): AlanOnerisi<number> | null => {
-  for (const anahtarlar of TUTAR_ONCELIKLERI) {
-    for (let i = 0; i < satirlar.length; i++) {
-      const sade = sadelestir(satirlar[i])
-      if (TUTAR_DISLAYICILARI.some(d => sade.includes(d))) continue
-      if (!anahtarlar.some(a => sade.includes(a))) continue
+const findAmount = (lines: string[]): FieldSuggestion<number> | null => {
+  for (const keywords of TUTAR_ONCELIKLERI) {
+    for (let i = 0; i < lines.length; i++) {
+      const normalized = normalizeText(lines[i])
+      if (TUTAR_DISLAYICILARI.some(d => normalized.includes(d))) continue
+      if (!keywords.some(a => normalized.includes(a))) continue
 
       // Sayı genelde aynı satırda; sütunlu fişlerde OCR alt satıra atabiliyor
-      let deger = satirdakiSonSayi(satirlar[i])
-      if (deger === null && i + 1 < satirlar.length) deger = satirdakiSonSayi(satirlar[i + 1])
-      if (deger !== null && deger > 0) return { deger, kaynak: satirlar[i].trim() }
+      let value = lastNumberInLine(lines[i])
+      if (value === null && i + 1 < lines.length) value = lastNumberInLine(lines[i + 1])
+      if (value !== null && value > 0) return { value, sourceLine: lines[i].trim() }
     }
   }
   return null
 }
 
-const ikiHane = (n: number): string => String(n).padStart(2, '0')
+const twoDigits = (n: number): string => String(n).padStart(2, '0')
 
 /**
  * Tarih: Türkiye'de GG/AA/YYYY. "12/03/2025" 12 Mart'tır, 3 Aralık değil.
  * Gelecek tarih reddedilir — fiş gelecekten gelemez, o OCR hatasıdır.
  */
-const tarihBul = (satirlar: string[], bugun: Date): AlanOnerisi<string> | null => {
-  const desen = /\b(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})\b/
-  const bulunanlar: Array<{ oneri: AlanOnerisi<string>; etiketli: boolean }> = []
+const findDate = (lines: string[], today: Date): FieldSuggestion<string> | null => {
+  const pattern = /\b(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})\b/
+  const matches: Array<{ suggestion: FieldSuggestion<string>; labeled: boolean }> = []
 
-  for (const satir of satirlar) {
-    const m = satir.match(desen)
+  for (const line of lines) {
+    const m = line.match(pattern)
     if (!m) continue
 
     const gun = Number(m[1])
     const ay = Number(m[2])
-    let yil = Number(m[3])
-    if (m[3].length === 2) yil += 2000
+    let year = Number(m[3])
+    if (m[3].length === 2) year += 2000
 
     if (ay < 1 || ay > 12 || gun < 1 || gun > 31) continue
-    if (yil < 2000 || yil > bugun.getFullYear()) continue
+    if (year < 2000 || year > today.getFullYear()) continue
 
-    const d = new Date(yil, ay - 1, gun)
+    const d = new Date(year, ay - 1, gun)
     // Taşma kontrolü: 31/02 -> Date sessizce 03 Mart yapar
-    if (d.getFullYear() !== yil || d.getMonth() !== ay - 1 || d.getDate() !== gun) continue
-    if (d.getTime() > bugun.getTime()) continue
+    if (d.getFullYear() !== year || d.getMonth() !== ay - 1 || d.getDate() !== gun) continue
+    if (d.getTime() > today.getTime()) continue
 
-    bulunanlar.push({
-      oneri: { deger: `${yil}-${ikiHane(ay)}-${ikiHane(gun)}`, kaynak: satir.trim() },
-      etiketli: /TARIH|TARIHI|DUZENLEME/.test(sadelestir(satir)),
+    matches.push({
+      suggestion: { value: `${year}-${twoDigits(ay)}-${twoDigits(gun)}`, sourceLine: line.trim() },
+      labeled: /TARIH|TARIHI|DUZENLEME/.test(normalizeText(line)),
     })
   }
 
-  if (bulunanlar.length === 0) return null
+  if (matches.length === 0) return null
   // "TARİH:" etiketli satır, fişin altındaki rastgele bir tarihten daha güvenilir
-  return (bulunanlar.find(b => b.etiketli) ?? bulunanlar[0]).oneri
+  return (matches.find(b => b.labeled) ?? matches[0]).suggestion
 }
 
 /**
@@ -160,18 +160,18 @@ const tarihBul = (satirlar: string[], bugun: Date): AlanOnerisi<string> | null =
  */
 const KM_UST_SINIR = 2_000_000
 
-const kmBul = (satirlar: string[]): AlanOnerisi<number> | null => {
-  for (const satir of satirlar) {
-    const sade = sadelestir(satir)
-    const m = sade.match(/\b(?:KM|K\.M\.?|KILOMETRE)\b\s*[:.-]?\s*([\d][\d.,]*)/)
+const findKm = (lines: string[]): FieldSuggestion<number> | null => {
+  for (const line of lines) {
+    const normalized = normalizeText(line)
+    const m = normalized.match(/\b(?:KM|K\.M\.?|KILOMETRE)\b\s*[:.-]?\s*([\d][\d.,]*)/)
     if (!m) continue
 
-    const deger = parseTurkishNumber(m[1])
+    const value = parseTurkishNumber(m[1])
     // Kilometre tam sayıdır; "12,50" gibi bir eşleşme fiyattır, km değil
-    if (deger === null || deger <= 0 || deger > KM_UST_SINIR) continue
-    if (!Number.isInteger(deger)) continue
+    if (value === null || value <= 0 || value > KM_UST_SINIR) continue
+    if (!Number.isInteger(value)) continue
 
-    return { deger: Math.round(deger), kaynak: satir.trim() }
+    return { value: Math.round(value), sourceLine: line.trim() }
   }
   return null
 }
@@ -181,16 +181,16 @@ const kmBul = (satirlar: string[]): AlanOnerisi<number> | null => {
  * @param bugun Test edilebilirlik için enjekte ediliyor — "gelecek tarihi reddet"
  *              kuralı yoksa gerçek takvime bağlı kalır ve testler zamanla kırılır.
  */
-export const parseFisMetni = (metin: string, bugun: Date = new Date()): FisOnerileri => {
-  if (typeof metin !== 'string' || !metin.trim()) {
-    return { tutar: null, tarih: null, km: null }
+export const parseReceiptText = (text: string, today: Date = new Date()): ReceiptSuggestions => {
+  if (typeof text !== 'string' || !text.trim()) {
+    return { amount: null, date: null, km: null }
   }
 
-  const satirlar = metin.split(/\r?\n/).filter(s => s.trim())
+  const lines = text.split(/\r?\n/).filter(s => s.trim())
 
   return {
-    tutar: tutarBul(satirlar),
-    tarih: tarihBul(satirlar, bugun),
-    km: kmBul(satirlar),
+    amount: findAmount(lines),
+    date: findDate(lines, today),
+    km: findKm(lines),
   }
 }

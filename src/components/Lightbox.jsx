@@ -14,9 +14,9 @@ export default function Lightbox({ isOpen, onClose, photos = [], initialIndex = 
   // Modal açılınca initial index'e git. Efekt yerine render sırasında ayarlama
   // (React'in belgelediği desen): efektle yapıldığında lightbox bir kare
   // boyunca ÖNCEKİ fotoğrafı gösterip sonra doğru olana atlıyordu.
-  const [oncekiAcik, setOncekiAcik] = useState(isOpen)
-  if (isOpen !== oncekiAcik) {
-    setOncekiAcik(isOpen)
+  const [prevOpen, setPrevOpen] = useState(isOpen)
+  if (isOpen !== prevOpen) {
+    setPrevOpen(isOpen)
     if (isOpen) setCurrentIndex(initialIndex)
   }
 

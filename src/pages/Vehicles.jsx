@@ -42,10 +42,10 @@ export default function Vehicles({ globalActionsRef }) {
     if (!globalActionsRef) return
     // Ref'in .current'ı temizlik fonksiyonu çalışana kadar değişebilir;
     // efekt kurulurken yakalanan nesneyi temizlemek doğru olan.
-    const eylemler = globalActionsRef.current
-    eylemler.newVehicle = () => setIsFormOpen(true)
+    const actions = globalActionsRef.current
+    actions.newVehicle = () => setIsFormOpen(true)
     return () => {
-      eylemler.newVehicle = null
+      actions.newVehicle = null
     }
   }, [globalActionsRef])
 

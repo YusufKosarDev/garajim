@@ -8,9 +8,9 @@
  * Kurulum: .env dosyasına VITE_SENTRY_DSN=... ekle.
  */
 
-type SentryModulu = typeof import('@sentry/react')
-let sentry: SentryModulu | null = null
-let baslatildi = false
+type SentryModule = typeof import('@sentry/react')
+let sentry: SentryModule | null = null
+let initialized = false
 
 const dsn = import.meta.env.VITE_SENTRY_DSN
 
@@ -20,8 +20,8 @@ export const isErrorTrackingEnabled = () => Boolean(dsn)
  * Uygulama açılışında bir kez çağrılır.
  */
 export async function initErrorTracking() {
-  if (baslatildi || !dsn) return
-  baslatildi = true
+  if (initialized || !dsn) return
+  initialized = true
 
   try {
     const Sentry = await import('@sentry/react')
@@ -37,7 +37,7 @@ export async function initErrorTracking() {
     sentry = Sentry
   } catch (err) {
     // İzleme kurulamazsa uygulama çalışmaya devam etmeli
-    baslatildi = false
+    initialized = false
     console.error('Hata izleme başlatılamadı:', err)
   }
 }

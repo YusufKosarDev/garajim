@@ -7,7 +7,7 @@ const ARAC = (over = {}) => ({
   year: 2020, currentKm: 90_000, photos: [], ...over,
 })
 
-const fiyatAlani = () => screen.getByLabelText(/alış fiyatı/i)
+const priceField = () => screen.getByLabelText(/alış fiyatı/i)
 
 beforeEach(() => localStorage.clear())
 
@@ -28,7 +28,7 @@ describe('VehicleValueCard', () => {
 
   it('fiyat girilince ₺ karşılığını gösterir ve cihaza yazar', () => {
     render(<VehicleValueCard vehicle={ARAC()} maintenanceRecords={[]} />)
-    fireEvent.change(fiyatAlani(), { target: { value: '1000000' } })
+    fireEvent.change(priceField(), { target: { value: '1000000' } })
 
     expect(screen.getByText(/₺/)).toBeInTheDocument()
     expect(localStorage.getItem('garajim_alis_fiyati_v1')).toBe('1000000')
@@ -41,25 +41,25 @@ describe('VehicleValueCard', () => {
     localStorage.setItem('garajim_alis_fiyati_v2', '500000')
 
     const { rerender } = render(<VehicleValueCard vehicle={ARAC()} maintenanceRecords={[]} />)
-    expect(fiyatAlani()).toHaveValue(1000000)
+    expect(priceField()).toHaveValue(1000000)
 
     rerender(<VehicleValueCard vehicle={ARAC({ id: 'v2' })} maintenanceRecords={[]} />)
-    expect(fiyatAlani()).toHaveValue(500000)
+    expect(priceField()).toHaveValue(500000)
   })
 
   it('araç değişince önceki araca yazılan değer taşınmaz', () => {
     const { rerender } = render(<VehicleValueCard vehicle={ARAC()} maintenanceRecords={[]} />)
-    fireEvent.change(fiyatAlani(), { target: { value: '1000000' } })
+    fireEvent.change(priceField(), { target: { value: '1000000' } })
 
     rerender(<VehicleValueCard vehicle={ARAC({ id: 'v2' })} maintenanceRecords={[]} />)
-    expect(fiyatAlani()).toHaveValue(null) // v2'nin kayıtlı fiyatı yok
+    expect(priceField()).toHaveValue(null) // v2'nin kayıtlı fiyatı yok
   })
 
   it('fiyat silinince cihazdan da siler', () => {
     localStorage.setItem('garajim_alis_fiyati_v1', '1000000')
     render(<VehicleValueCard vehicle={ARAC()} maintenanceRecords={[]} />)
 
-    fireEvent.change(fiyatAlani(), { target: { value: '' } })
+    fireEvent.change(priceField(), { target: { value: '' } })
     expect(localStorage.getItem('garajim_alis_fiyati_v1')).toBeNull()
   })
 

@@ -63,8 +63,8 @@ describe('isValidPlate', () => {
   })
 
   it('formatPlate çıktısı isValidPlate tarafından kabul edilir', () => {
-    for (const ham of ['34abc1234', '06A123', '35 ab 12']) {
-      expect(isValidPlate(formatPlate(ham))).toBe(true)
+    for (const raw of ['34abc1234', '06A123', '35 ab 12']) {
+      expect(isValidPlate(formatPlate(raw))).toBe(true)
     }
   })
 })

@@ -31,23 +31,23 @@ import {
 import { parseIntervalKey } from '../utils/maintenanceRecommendations'
 import { fetchAllRows } from '../lib/fetchAllRows'
 import { captureError } from '../lib/errorTracking'
-import { cevrimdisiMi, agHatasiMi } from '../lib/offlineQueue'
-import { vehicleQueue as kuyruk } from '../lib/vehicleQueue'
-import { createDispatcher, REFERANS_ALANLARI } from '../lib/offlineDispatcher'
+import { isOffline, isNetworkError } from '../lib/offlineQueue'
+import { vehicleQueue as queue } from '../lib/vehicleQueue'
+import { createDispatcher, REFERENCE_FIELDS } from '../lib/offlineDispatcher'
 import type { ReactNode } from 'react'
 import type {
   Vehicle, MaintenanceRecord, FuelRecord, TireSet, TireChange,
   CustomIntervals, CustomInterval, CustomIntervalRow,
 } from '../types'
 
-type Kayit = Vehicle | MaintenanceRecord | FuelRecord | TireSet | TireChange
+type GarageRecord = Vehicle | MaintenanceRecord | FuelRecord | TireSet | TireChange
 
 /** useState setter'larıyla aynı imza: doğrudan değer ya da önceki değeri alan fonksiyon */
-type Guncelleyici<T> = T | ((prev: T) => T)
+type Updater<T> = T | ((prev: T) => T)
 
 // Modül seviyesinde sabit boş referanslar (bkz. aşağıdaki `?? BOS_DIZI` kullanımı)
-const BOS_DIZI: never[] = []
-const BOS_NESNE: CustomIntervals = {}
+const EMPTY_ARRAY: never[] = []
+const EMPTY_OBJECT: CustomIntervals = {}
 
 // Liste tabloları: hepsi aynı şekilde çekiliyor, tek yerde tarif edildi
 const LIST_QUERIES = [
@@ -75,7 +75,7 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
         queryFn: async () => {
           const rows = await fetchAllRows(supabase, table, orderBy, ascending)
           // Tablo -> mapper eşlemesi LIST_QUERIES'de kurulu; burada tekil tip bilinmiyor
-          return rows.map(satir => (map as (r: unknown) => Kayit | null)(satir))
+          return rows.map(row => (map as (r: unknown) => GarageRecord | null)(row))
         },
       })),
       {
@@ -96,12 +96,12 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
   // provider useMemo'sunu (madde 14) her render'da geçersiz kılardı.
   // useQueries dizi üzerinden map edildiği için tekil sorgu tipleri kayboluyor;
   // dönüşümü LIST_QUERIES'teki mapper garanti ediyor.
-  const vehicles = (vehiclesQ.data ?? BOS_DIZI) as Vehicle[]
-  const maintenanceRecords = (maintenanceQ.data ?? BOS_DIZI) as MaintenanceRecord[]
-  const fuelRecords = (fuelQ.data ?? BOS_DIZI) as FuelRecord[]
-  const tireSets = (tireSetsQ.data ?? BOS_DIZI) as TireSet[]
-  const tireChanges = (tireChangesQ.data ?? BOS_DIZI) as TireChange[]
-  const customIntervals = (intervalsQ.data ?? BOS_NESNE) as CustomIntervals
+  const vehicles = (vehiclesQ.data ?? EMPTY_ARRAY) as Vehicle[]
+  const maintenanceRecords = (maintenanceQ.data ?? EMPTY_ARRAY) as MaintenanceRecord[]
+  const fuelRecords = (fuelQ.data ?? EMPTY_ARRAY) as FuelRecord[]
+  const tireSets = (tireSetsQ.data ?? EMPTY_ARRAY) as TireSet[]
+  const tireChanges = (tireChangesQ.data ?? EMPTY_ARRAY) as TireChange[]
+  const customIntervals = (intervalsQ.data ?? EMPTY_OBJECT) as CustomIntervals
 
   // Oturum yoksa sorgular hiç çalışmaz (enabled: false) ve sonsuza kadar "pending"
   // kalırlar — bu durumu yüklenmiş saymalıyız, yoksa uygulama iskelet ekranda takılır.
@@ -128,44 +128,44 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
   }, [queryClient, userId])
 
   // ============ ÇEVRİMDIŞI KUYRUK ============
-  const [bekleyenSayisi, setBekleyenSayisi] = useState(0)
+  const [pendingCount, setBekleyenSayisi] = useState(0)
 
   const sayiyiTazele = useCallback(async () => {
-    setBekleyenSayisi(await kuyruk.uzunluk())
+    setBekleyenSayisi(await queue.uzunluk())
   }, [])
 
   /**
    * Mutasyonu çalıştırır; ağ yoksa kuyruğa alır.
    * Kuyruğa alınırsa `null` döner ve çağıran iyimser güncellemeyi yapar.
    */
-  const kuyruklaCalistir = useCallback(async <T,>(
+  const runQueued = useCallback(async <T,>(
     tanim: {
       tablo: string
-      islem: 'insert' | 'update' | 'delete'
+      operation: 'insert' | 'update' | 'delete'
       payload?: Record<string, unknown>
-      hedefId?: string
-      geciciId?: string
+      targetId?: string
+      tempId?: string
     },
     calistir: () => Promise<T>
-  ): Promise<{ kuyrukta: true } | { kuyrukta: false; sonuc: T }> => {
-    const kuyrugaAl = async () => {
-      await kuyruk.kuyrugaAl({
+  ): Promise<{ kuyrukta: true } | { kuyrukta: false; result: T }> => {
+    const enqueue = async () => {
+      await queue.enqueue({
         ...tanim,
-        referansAlanlari: REFERANS_ALANLARI[tanim.tablo] ?? [],
+        referenceFields: REFERENCE_FIELDS[tanim.tablo] ?? [],
       })
       await sayiyiTazele()
       toast(i18n.t('ctx.vehicleContext.cevrimdisisin_kayit_siraya_alindi_baglanti_gelin'), { icon: '📴' })
       return { kuyrukta: true } as const
     }
 
-    if (cevrimdisiMi()) return kuyrugaAl()
+    if (isOffline()) return enqueue()
 
     try {
-      return { kuyrukta: false, sonuc: await calistir() }
+      return { kuyrukta: false, result: await calistir() }
     } catch (error) {
       // Yalnızca AĞ hatasında kuyruğa al — doğrulama/RLS hatası tekrar denenirse
       // yine başarısız olur, kullanıcıya gösterilmeli.
-      if (agHatasiMi(error)) return kuyrugaAl()
+      if (isNetworkError(error)) return enqueue()
       throw error
     }
   }, [sayiyiTazele])
@@ -175,19 +175,19 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
     if (!userId) return
 
     const gonder = async () => {
-      if (cevrimdisiMi()) return
-      if ((await kuyruk.uzunluk()) === 0) return
+      if (isOffline()) return
+      if ((await queue.uzunluk()) === 0) return
 
-      const sonuc = await kuyruk.replay(createDispatcher(userId))
+      const result = await queue.replay(createDispatcher(userId))
       await sayiyiTazele()
 
-      if (sonuc.gonderilen > 0) {
-        toast.success(`${sonuc.gonderilen} bekleyen kayıt gönderildi ✓`)
+      if (result.sent > 0) {
+        toast.success(`${result.sent} bekleyen kayıt gönderildi ✓`)
         // Gerçek satırları almak için sorguları tazele
         queryClient.invalidateQueries({ queryKey: vehicleQueryKeys.all(userId) })
       }
-      if (sonuc.kalan > 0) {
-        console.warn('Kuyruk boşaltılamadı, kalan:', sonuc.kalan, sonuc.hata)
+      if (result.remaining > 0) {
+        console.warn('Kuyruk boşaltılamadı, kalan:', result.remaining, result.error)
       }
     }
 
@@ -196,9 +196,9 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
     return () => window.removeEventListener('online', gonder)
   }, [userId, queryClient, sayiyiTazele])
 
-  const setVehicles = useCallback((u: Guncelleyici<Vehicle[]>) => writeCache('vehicles', u), [writeCache])
+  const setVehicles = useCallback((u: Updater<Vehicle[]>) => writeCache('vehicles', u), [writeCache])
   const setMaintenanceRecordsErken = useCallback(
-    (u: Guncelleyici<MaintenanceRecord[]>) => writeCache('maintenanceRecords', u),
+    (u: Updater<MaintenanceRecord[]>) => writeCache('maintenanceRecords', u),
     [writeCache]
   )
 
@@ -207,26 +207,26 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
    * Geçici id verilir; bağlantı gelince gerçek id ile değiştirilir
    * (sorgular invalidate edilerek).
    */
-  const kuyrugaAlVeIyimserEkle = useCallback(async (record: Partial<MaintenanceRecord>) => {
-    const geciciId = `gecici-${crypto.randomUUID()}`
-    await kuyruklaCalistir(
+  const enqueueWithOptimisticInsert = useCallback(async (record: Partial<MaintenanceRecord>) => {
+    const tempId = `gecici-${crypto.randomUUID()}`
+    await runQueued(
       {
         tablo: 'maintenance_records',
-        islem: 'insert',
+        operation: 'insert',
         payload: record as Record<string, unknown>,
-        geciciId,
+        tempId,
       },
       async () => null
     )
-    const iyimser = { ...record, id: geciciId, cost: record.cost ?? 0 } as MaintenanceRecord
+    const iyimser = { ...record, id: tempId, cost: record.cost ?? 0 } as MaintenanceRecord
     setMaintenanceRecordsErken(prev => [...prev, iyimser])
     return iyimser
-  }, [kuyruklaCalistir, setMaintenanceRecordsErken])
-  const setMaintenanceRecords = useCallback((u: Guncelleyici<MaintenanceRecord[]>) => writeCache('maintenanceRecords', u), [writeCache])
-  const setFuelRecords = useCallback((u: Guncelleyici<FuelRecord[]>) => writeCache('fuelRecords', u), [writeCache])
-  const setTireSets = useCallback((u: Guncelleyici<TireSet[]>) => writeCache('tireSets', u), [writeCache])
-  const setTireChanges = useCallback((u: Guncelleyici<TireChange[]>) => writeCache('tireChanges', u), [writeCache])
-  const setCustomIntervals = useCallback((u: Guncelleyici<CustomIntervals>) => writeCache('customIntervals', u), [writeCache])
+  }, [runQueued, setMaintenanceRecordsErken])
+  const setMaintenanceRecords = useCallback((u: Updater<MaintenanceRecord[]>) => writeCache('maintenanceRecords', u), [writeCache])
+  const setFuelRecords = useCallback((u: Updater<FuelRecord[]>) => writeCache('fuelRecords', u), [writeCache])
+  const setTireSets = useCallback((u: Updater<TireSet[]>) => writeCache('tireSets', u), [writeCache])
+  const setTireChanges = useCallback((u: Updater<TireChange[]>) => writeCache('tireChanges', u), [writeCache])
+  const setCustomIntervals = useCallback((u: Updater<CustomIntervals>) => writeCache('customIntervals', u), [writeCache])
 
   // ============ REAL-TIME SUBSCRIPTIONS ============
   // Garajdaki herhangi bir değişiklik (kendi başka cihazın veya garajı
@@ -236,7 +236,7 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
 
     // Generic helper: state'i INSERT/UPDATE/DELETE event'ine göre güncelle
     const handleChange = <T extends { id: string }>(
-      setState: (u: Guncelleyici<T[]>) => void,
+      setState: (u: Updater<T[]>) => void,
       fromDbMapper: (row: never) => T | null
     ) => (payload: { eventType: string; new?: unknown; old?: { id?: string } }) => {
       const { eventType, new: newRow, old: oldRow } = payload
@@ -290,7 +290,7 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
 
       const table = <T extends { id: string }>(
         name: string,
-        setState: (u: Guncelleyici<T[]>) => void,
+        setState: (u: Updater<T[]>) => void,
         mapper: (row: never) => T | null
       ) => ({
         config: { event: '*' as const, schema: 'public', table: name, filter },
@@ -503,8 +503,8 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
 
     // Çevrimdışıysa kuyruğa al ve iyimser olarak listeye ekle.
     // Bu tam da servisteyken/yolda kayıt girilen senaryo — en çok burada gerekli.
-    if (cevrimdisiMi()) {
-      return kuyrugaAlVeIyimserEkle(record)
+    if (isOffline()) {
+      return enqueueWithOptimisticInsert(record)
     }
 
     try {
@@ -539,14 +539,14 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
       toast.success(i18n.t('ctx.vehicleContext.bakim_kaydi_eklendi'))
       return newRecord
     } catch (error) {
-      if (agHatasiMi(error)) {
-        return kuyrugaAlVeIyimserEkle(record)
+      if (isNetworkError(error)) {
+        return enqueueWithOptimisticInsert(record)
       }
       console.error('addMaintenance:', error)
       toast.error(i18n.t('ctx.vehicleContext.bakim_eklenemedi') + formatSupabaseError(error as Error))
       return null
     }
-  }, [user, setMaintenanceRecords, kuyrugaAlVeIyimserEkle])
+  }, [user, setMaintenanceRecords, enqueueWithOptimisticInsert])
 
   const updateMaintenance = useCallback(async (id: string, updates: Partial<MaintenanceRecord>) => {
     if (!user) return
@@ -868,9 +868,9 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
         if (!parsed) return
         const { vehicleId, maintenanceType } = parsed
         // Eski yedeklerde değer düz sayı olabiliyor; tek biçime çeviriyoruz
-        const ham = intervals[key]
+        const raw = intervals[key]
         const interval: CustomInterval | null =
-          typeof ham === 'number' ? { kilometers: ham, months: null } : (ham ?? null)
+          typeof raw === 'number' ? { kilometers: raw, months: null } : (raw ?? null)
 
         if (interval && (interval.kilometers || interval.months)) {
           rowsToInsert.push(
@@ -949,7 +949,7 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
     tireChanges,
     customIntervals,
     isLoaded,
-    bekleyenSayisi,
+    pendingCount,
     addVehicle,
     updateVehicle,
     deleteVehicle,
@@ -969,7 +969,7 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
     clearAllData,
   }), [
     vehicles, maintenanceRecords, fuelRecords, tireSets, tireChanges,
-    customIntervals, isLoaded, bekleyenSayisi,
+    customIntervals, isLoaded, pendingCount,
     addVehicle, updateVehicle, deleteVehicle,
     addMaintenance, updateMaintenance, deleteMaintenance,
     addFuel, updateFuel, deleteFuel,

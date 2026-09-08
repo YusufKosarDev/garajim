@@ -13,7 +13,7 @@ import MultiImageUploader from './MultiImageUploader'
 
 const fuelTypes = ['Benzin', 'Dizel', 'LPG', 'Hibrit', 'Elektrik']
 
-const bosForm = () => ({
+const emptyForm = () => ({
   plate: '', brand: '', model: '', year: '', fuelType: 'Benzin', currentKm: '',
   photos: [], inspectionDate: '', mtvDate: '', insuranceDate: '', kaskoDate: '', notes: '',
 })
@@ -34,17 +34,17 @@ export default function VehicleForm({ isOpen, onClose, editVehicle = null }) {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(schema),
-    defaultValues: bosForm(),
+    defaultValues: emptyForm(),
     mode: 'onSubmit',
   })
 
   // Formu SADECE modal açılırken doldur — araç listesi değişince (realtime
   // senkron, başka bir araç eklenmesi) kullanıcının girdileri silinmesin.
-  const acikMiydiRef = useRef(false)
+  const wasOpenRef = useRef(false)
   useEffect(() => {
-    const yeniAcildi = isOpen && !acikMiydiRef.current
-    acikMiydiRef.current = isOpen
-    if (!yeniAcildi) return
+    const justOpened = isOpen && !wasOpenRef.current
+    wasOpenRef.current = isOpen
+    if (!justOpened) return
 
     if (editVehicle) {
       reset({
@@ -63,7 +63,7 @@ export default function VehicleForm({ isOpen, onClose, editVehicle = null }) {
         notes: editVehicle.notes || '',
       })
     } else {
-      reset(bosForm())
+      reset(emptyForm())
     }
   }, [isOpen, editVehicle, reset])
 
@@ -97,7 +97,7 @@ export default function VehicleForm({ isOpen, onClose, editVehicle = null }) {
 
   const onInvalid = () => toast.error(t('vehicleForm.lutfen_hatalari_duzelt'))
 
-  const tarihAlanlari = [
+  const dateFields = [
     ['inspectionDate', 'Muayene'],
     ['mtvDate', 'MTV'],
     ['insuranceDate', t('vehicleForm.trafik_sigortasi')],
@@ -142,8 +142,8 @@ export default function VehicleForm({ isOpen, onClose, editVehicle = null }) {
             {...register('year')}
           />
           <FormField label={t('vehicleForm.yakit')}>
-            {(alanProps) => (
-              <select {...alanProps} {...register('fuelType')}>
+            {(fieldProps) => (
+              <select {...fieldProps} {...register('fuelType')}>
                 {fuelTypes.map(f => <option key={f} value={f}>{f}</option>)}
               </select>
             )}
@@ -179,10 +179,10 @@ export default function VehicleForm({ isOpen, onClose, editVehicle = null }) {
             {t('vehicleForm.onemli_tarihler_opsiyonel')}
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {tarihAlanlari.map(([ad, etiket]) => (
+            {dateFields.map(([ad, label]) => (
               <FormField
                 key={ad}
-                label={etiket}
+                label={label}
                 labelStyle="plain"
                 type="date"
                 error={errors[ad]?.message}

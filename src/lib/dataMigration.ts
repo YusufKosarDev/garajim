@@ -17,15 +17,15 @@ import {
 import { parseIntervalKey } from '../utils/maintenanceRecommendations'
 import type { Vehicle, MaintenanceRecord, FuelRecord, TireSet, TireChange, CustomIntervals } from '../types'
 
-export interface MigrationSayaci { total: number; success: number; failed: number }
-export interface MigrationSonucu {
+export interface MigrationCounts { total: number; success: number; failed: number }
+export interface MigrationResult {
   success: boolean
-  vehicles: MigrationSayaci
-  maintenance: MigrationSayaci
-  fuel: MigrationSayaci
-  tireSets: MigrationSayaci
-  tireChanges: MigrationSayaci
-  customIntervals: MigrationSayaci
+  vehicles: MigrationCounts
+  maintenance: MigrationCounts
+  fuel: MigrationCounts
+  tireSets: MigrationCounts
+  tireChanges: MigrationCounts
+  customIntervals: MigrationCounts
   errors: string[]
 }
 export type ProgressCallback = (step: string, current: number, total: number) => void
@@ -36,21 +36,21 @@ export type ProgressCallback = (step: string, current: number, total: number) =>
  * döneminde Date.now() sayısıydı, bazı alanlar hiç olmayabiliyor.
  * Bu yüzden alanlar opsiyonel ve id'ler string|number.
  */
-type EskiId = string | number
+type LegacyId = string | number
 
-export interface YedekVerisi {
-  vehicles?: (Partial<Vehicle> & { id?: EskiId; photo?: string | null })[]
-  maintenanceRecords?: (Partial<MaintenanceRecord> & { id?: EskiId; vehicleId?: EskiId })[]
-  fuelRecords?: (Partial<FuelRecord> & { id?: EskiId; vehicleId?: EskiId })[]
-  tireSets?: (Partial<TireSet> & { id?: EskiId; vehicleId?: EskiId })[]
-  tireChanges?: (Partial<TireChange> & { id?: EskiId; vehicleId?: EskiId })[]
+export interface BackupData {
+  vehicles?: (Partial<Vehicle> & { id?: LegacyId; photo?: string | null })[]
+  maintenanceRecords?: (Partial<MaintenanceRecord> & { id?: LegacyId; vehicleId?: LegacyId })[]
+  fuelRecords?: (Partial<FuelRecord> & { id?: LegacyId; vehicleId?: LegacyId })[]
+  tireSets?: (Partial<TireSet> & { id?: LegacyId; vehicleId?: LegacyId })[]
+  tireChanges?: (Partial<TireChange> & { id?: LegacyId; vehicleId?: LegacyId })[]
   customIntervals?: CustomIntervals
 }
 
 /**
  * Migration sonuç tipi
  */
-const createResult = (): MigrationSonucu => ({
+const createResult = (): MigrationResult => ({
   success: false,
   vehicles: { total: 0, success: 0, failed: 0 },
   maintenance: { total: 0, success: 0, failed: 0 },
@@ -70,10 +70,10 @@ const createResult = (): MigrationSonucu => ({
  * @returns {Promise<object>} Migration sonuç raporu
  */
 export const migrateDataToSupabase = async (
-  data: YedekVerisi | null | undefined,
+  data: BackupData | null | undefined,
   userId: string,
   onProgress: ProgressCallback = () => {}
-): Promise<MigrationSonucu> => {
+): Promise<MigrationResult> => {
   const result = createResult()
 
   if (!userId) {
@@ -332,10 +332,10 @@ export const migrateDataToSupabase = async (
       }
 
       // Eski yedeklerde değer düz sayı olabiliyor; tek biçime çeviriyoruz
-      const ham = intervals[key]
-      const interval = typeof ham === 'number'
-        ? { kilometers: ham, months: null }
-        : (ham ?? null)
+      const raw = intervals[key]
+      const interval = typeof raw === 'number'
+        ? { kilometers: raw, months: null }
+        : (raw ?? null)
 
       if (interval && (interval.kilometers || interval.months)) {
         rowsToInsert.push(
@@ -412,7 +412,7 @@ export const clearLocalStorageData = () => {
 /**
  * Veri sayılarını getir (UI'da göstermek için)
  */
-export const getDataCounts = (data: YedekVerisi | null | undefined) => {
+export const getDataCounts = (data: BackupData | null | undefined) => {
   if (!data) return null
   return {
     vehicles: (data.vehicles || []).length,

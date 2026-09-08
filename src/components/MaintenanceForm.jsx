@@ -61,17 +61,17 @@ export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord
   // Formu SADECE modal açılırken doldur.
   // Önceden bağımlılıklar arasında currentKm vardı; araç km'si başka bir yerden
   // güncellenince kullanıcı formu doldururken tüm alanlar sıfırlanıyordu.
-  const acikMiydiRef = useRef(false)
+  const wasOpenRef = useRef(false)
   useEffect(() => {
-    const yeniAcildi = isOpen && !acikMiydiRef.current
-    acikMiydiRef.current = isOpen
-    if (!yeniAcildi) return
+    const justOpened = isOpen && !wasOpenRef.current
+    wasOpenRef.current = isOpen
+    if (!justOpened) return
 
     if (editRecord) {
-      const bilinenTur = commonMaintenanceTypes.includes(editRecord.type) ? editRecord.type : 'Diğer'
+      const knownType = commonMaintenanceTypes.includes(editRecord.type) ? editRecord.type : 'Diğer'
       reset({
-        type: bilinenTur,
-        customType: bilinenTur === 'Diğer' ? editRecord.type : '',
+        type: knownType,
+        customType: knownType === 'Diğer' ? editRecord.type : '',
         date: editRecord.date || '',
         km: editRecord.km ? String(editRecord.km) : '',
         cost: editRecord.cost ? String(editRecord.cost) : '',
@@ -128,10 +128,10 @@ export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord
   // Fiş OCR'ının önerdiği ve kullanıcının onayladığı alanları forma yazar.
   // Kaydetmez — form açık kalıyor, kullanıcı her zamanki gibi "Bakım Ekle"ye
   // basana kadar hiçbir şey kaydedilmiyor. KM tutarlılık kontrolü de yerinde.
-  const onFisUygula = (alanlar) => {
-    if (alanlar.tutar !== undefined) setValue('cost', String(alanlar.tutar), { shouldValidate: true })
-    if (alanlar.tarih !== undefined) setValue('date', alanlar.tarih, { shouldValidate: true })
-    if (alanlar.km !== undefined) setValue('km', String(alanlar.km), { shouldValidate: true })
+  const onFisUygula = (fields) => {
+    if (fields.amount !== undefined) setValue('cost', String(fields.amount), { shouldValidate: true })
+    if (fields.date !== undefined) setValue('date', fields.date, { shouldValidate: true })
+    if (fields.km !== undefined) setValue('km', String(fields.km), { shouldValidate: true })
   }
 
   return (
@@ -143,8 +143,8 @@ export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord
     >
       <form onSubmit={handleSubmit(onValid, onInvalid)} className="p-5 space-y-4">
         <FormField label={t('maintenanceForm.bakim_turu')} required error={errors.type?.message}>
-          {(alanProps) => (
-            <select autoFocus {...alanProps} {...register('type')}>
+          {(fieldProps) => (
+            <select autoFocus {...fieldProps} {...register('type')}>
               <option value="">{t('maintenanceForm.sec')}</option>
               {commonMaintenanceTypes.map(tur => (
                 <option key={tur} value={tur}>{tur}</option>
@@ -210,7 +210,7 @@ export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord
                   maxSizeMB={1}
                 />
                 {/* Fotoğraf varsa fişten tutar/tarih/km okumayı öner */}
-                <ReceiptScanner photo={field.value} onUygula={onFisUygula} />
+                <ReceiptScanner photo={field.value} onApply={onFisUygula} />
               </>
             )}
           />

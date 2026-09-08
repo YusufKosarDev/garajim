@@ -44,7 +44,7 @@ export default function Calendar() {
   // Etkinlik üretimi utils/calendarEvents'te tek yerde (madde 28). Aynı iş
   // Dashboard'da da yapılıyordu ve iki farklı şekil üretiyordu.
   const allEvents = useMemo(
-    () => buildVehicleEvents(vehicles, { bakimlar: maintenanceRecords, yakitlar: fuelRecords }),
+    () => buildVehicleEvents(vehicles, { bakimlar: maintenanceRecords, fuels: fuelRecords }),
     [vehicles, maintenanceRecords, fuelRecords]
   )
 

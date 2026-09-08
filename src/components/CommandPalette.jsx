@@ -36,9 +36,9 @@ export default function CommandPalette({ isOpen, onClose, onNewVehicle, onNewMai
   // Açılışta aramayı sıfırla — efekt yerine render sırasında ayarlama
   // (React'in belgelediği desen). Efektle yapıldığında palet bir kare boyunca
   // önceki aramayı gösteriyordu.
-  const [oncekiAcik, setOncekiAcik] = useState(isOpen)
-  if (isOpen !== oncekiAcik) {
-    setOncekiAcik(isOpen)
+  const [prevOpen, setPrevOpen] = useState(isOpen)
+  if (isOpen !== prevOpen) {
+    setPrevOpen(isOpen)
     if (isOpen) {
       setQuery('')
       setSelectedIndex(0)
@@ -48,8 +48,8 @@ export default function CommandPalette({ isOpen, onClose, onNewVehicle, onNewMai
   // Odaklanma bir DOM yan etkisi — efektte kalması gerekiyor
   useEffect(() => {
     if (!isOpen) return
-    const zamanlayici = setTimeout(() => inputRef.current?.focus(), 100)
-    return () => clearTimeout(zamanlayici)
+    const timer = setTimeout(() => inputRef.current?.focus(), 100)
+    return () => clearTimeout(timer)
   }, [isOpen])
 
   // Sayfa linkleri
@@ -205,9 +205,9 @@ export default function CommandPalette({ isOpen, onClose, onNewVehicle, onNewMai
   // Query değişince seçimi sıfırla — yine render sırasında ayarlama.
   // Efektle yapıldığında yeni sonuç listesi bir kare boyunca ESKİ indeksle
   // vurgulanıyor, sonra ilk satıra atlıyordu.
-  const [oncekiQuery, setOncekiQuery] = useState(query)
-  if (query !== oncekiQuery) {
-    setOncekiQuery(query)
+  const [prevQuery, setPrevQuery] = useState(query)
+  if (query !== prevQuery) {
+    setPrevQuery(query)
     setSelectedIndex(0)
   }
 

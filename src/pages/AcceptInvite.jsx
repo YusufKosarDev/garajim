@@ -17,34 +17,34 @@ export default function AcceptInvite() {
   // TÜRETİLİYOR — eskiden bu türetme bir efektin içinde setStatus ile
   // yapılıyordu ve sayfa, oturum zaten hazırken bile bir kare "yükleniyor"
   // gösteriyordu.
-  const [islemDurumu, setIslemDurumu] = useState(null) // null | 'accepting' | 'success' | 'error'
+  const [actionStatus, setActionStatus] = useState(null) // null | 'accepting' | 'success' | 'error'
   const [error, setError] = useState('')
   const [garageName, setGarageName] = useState('')
   const [accepting, setAccepting] = useState(false)
 
   const status =
-    islemDurumu ??
+    actionStatus ??
     (!token ? 'error'
       : authLoading ? 'loading'
       // Login değil → login'e yönlendir, dönüşte davet linkine geri gel
       : !user ? 'login_required'
       : 'ready')
 
-  const hataMesaji = error || (!token ? t('acceptInvite.gecersiz_davet_linki_token_yok') : '')
+  const errorMessage = error || (!token ? t('acceptInvite.gecersiz_davet_linki_token_yok') : '')
 
   // "Garaja Katıl" butonuna tıklayınca
   const handleAccept = async () => {
     if (!token || !user) return
 
     setAccepting(true)
-    setIslemDurumu('accepting')
+    setActionStatus('accepting')
 
     try {
       // Mevcut session token'ı al
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
         toast.error(t('acceptInvite.oturum_bulunamadi'))
-        setIslemDurumu('error')
+        setActionStatus('error')
         setError(t('acceptInvite.oturum_bulunamadi_lutfen_tekrar_giris_yap'))
         setAccepting(false)
         return
@@ -66,7 +66,7 @@ export default function AcceptInvite() {
       const result = await response.json()
 
       if (!response.ok) {
-        setIslemDurumu('error')
+        setActionStatus('error')
         setError(result.error || 'Davet kabul edilemedi')
         toast.error(result.error || 'Davet kabul edilemedi')
         setAccepting(false)
@@ -75,7 +75,7 @@ export default function AcceptInvite() {
 
       // Başarı
       setGarageName(result.garage_name || 'Garaj')
-      setIslemDurumu('success')
+      setActionStatus('success')
 
       if (result.already_member) {
         toast.success(t('acceptInvite.zaten_bu_garajin_uyesisin'))
@@ -91,7 +91,7 @@ export default function AcceptInvite() {
       }, 2000)
     } catch (err) {
       console.error('Accept invite error:', err)
-      setIslemDurumu('error')
+      setActionStatus('error')
       setError(t('acceptInvite.beklenmedik_bir_hata_olustu'))
       setAccepting(false)
     }
@@ -227,7 +227,7 @@ export default function AcceptInvite() {
                 {t('acceptInvite.davet_kabul_edilemedi')}
               </h2>
               <p className="text-red-300 mb-6 break-words">
-                {hataMesaji}
+                {errorMessage}
               </p>
 
               <Link

@@ -35,9 +35,9 @@ export default function ShareModal({ isOpen, onClose, vehicle, maintenanceRecord
 
   // Modal her açıldığında kopyalandı/QR durumunu sıfırla — efekt yerine
   // render sırasında ayarlama (React'in belgelediği desen).
-  const [oncekiAcik, setOncekiAcik] = useState(isOpen)
-  if (isOpen !== oncekiAcik) {
-    setOncekiAcik(isOpen)
+  const [prevOpen, setPrevOpen] = useState(isOpen)
+  if (isOpen !== prevOpen) {
+    setPrevOpen(isOpen)
     if (isOpen) {
       setCopied(false)
       setShowQR(false)
@@ -296,7 +296,7 @@ export default function ShareModal({ isOpen, onClose, vehicle, maintenanceRecord
             <div className="flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
               <div className="text-xs text-slate-300">
-                <strong className="text-orange-400">{t('shareModal.qr_kod_olusturulamadi')}</strong> Veri çok büyük (URL {urlSize.chars} karakter). QR kodları en fazla ~2900 karakter destekler. Linki manuel kopyala veya kayıt sayısını azalt.
+                <strong className="text-orange-400">{t('shareModal.qr_kod_olusturulamadi')}</strong> Veri çok büyük (URL {urlSize.chars} char). QR kodları en fazla ~2900 char destekler. Linki manuel kopyala veya kayıt sayısını azalt.
               </div>
             </div>
           </div>

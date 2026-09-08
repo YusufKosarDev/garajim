@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseTurkishNumber, parseFisMetni } from './receiptParser'
+import { parseTurkishNumber, parseReceiptText } from './receiptParser'
 
 const BUGUN = new Date(2026, 2, 15) // 15 Mart 2026
 
@@ -56,91 +56,91 @@ ARA TOPLAM        1.250,00
 KDV %20             250,00
 GENEL TOPLAM      1.500,00
 `
-    expect(parseFisMetni(fis, BUGUN).tutar?.deger).toBe(1500)
+    expect(parseReceiptText(fis, BUGUN).amount?.value).toBe(1500)
   })
 
   it('GENEL TOPLAM yoksa TOPLAM kullanılır', () => {
     const fis = 'ORTA SERVIS\nTOPLAM   2.750,00\nNAKIT   3.000,00'
-    expect(parseFisMetni(fis, BUGUN).tutar?.deger).toBe(2750)
+    expect(parseReceiptText(fis, BUGUN).amount?.value).toBe(2750)
   })
 
   it('yalnızca ARA TOPLAM ve KDV varsa tutar önermez', () => {
     // Yanlış tutar önermektense hiç önermemek: kullanıcı zaten elle yazacaktı
     const fis = 'ARA TOPLAM  1.250,00\nKDV %20  250,00'
-    expect(parseFisMetni(fis, BUGUN).tutar).toBeNull()
+    expect(parseReceiptText(fis, BUGUN).amount).toBeNull()
   })
 
   it('PARA ÜSTÜ satırını tutar sanmaz', () => {
     const fis = 'TOPLAM  480,00\nALINAN  500,00\nPARA USTU  20,00'
-    expect(parseFisMetni(fis, BUGUN).tutar?.deger).toBe(480)
+    expect(parseReceiptText(fis, BUGUN).amount?.value).toBe(480)
   })
 
   it('sütun OCR\'da alt satıra kayan tutarı yakalar', () => {
     const fis = 'GENEL TOPLAM\n1.850,00\nTESEKKURLER'
-    expect(parseFisMetni(fis, BUGUN).tutar?.deger).toBe(1850)
+    expect(parseReceiptText(fis, BUGUN).amount?.value).toBe(1850)
   })
 
   it('ÖDENECEK yazan fişte Türkçe karakter OCR kaybını tolere eder', () => {
-    expect(parseFisMetni('ODENECEK TUTAR  920,00', BUGUN).tutar?.deger).toBe(920)
-    expect(parseFisMetni('ÖDENECEK TUTAR  920,00', BUGUN).tutar?.deger).toBe(920)
+    expect(parseReceiptText('ODENECEK TUTAR  920,00', BUGUN).amount?.value).toBe(920)
+    expect(parseReceiptText('ÖDENECEK TUTAR  920,00', BUGUN).amount?.value).toBe(920)
   })
 
   it('kaynak satırı öneriyle birlikte döner', () => {
-    const sonuc = parseFisMetni('GENEL TOPLAM      1.500,00', BUGUN)
-    expect(sonuc.tutar?.kaynak).toBe('GENEL TOPLAM      1.500,00')
+    const result = parseReceiptText('GENEL TOPLAM      1.500,00', BUGUN)
+    expect(result.amount?.sourceLine).toBe('GENEL TOPLAM      1.500,00')
   })
 })
 
 describe('parseFisMetni — tarih', () => {
   it('GG/AA/YYYY okur (12/03 = 12 Mart, 3 Aralık değil)', () => {
-    expect(parseFisMetni('TARIH: 12/03/2025', BUGUN).tarih?.deger).toBe('2025-03-12')
+    expect(parseReceiptText('TARIH: 12/03/2025', BUGUN).date?.value).toBe('2025-03-12')
   })
 
   it('nokta ve tire ayırıcılarını da kabul eder', () => {
-    expect(parseFisMetni('TARIH 05.11.2025', BUGUN).tarih?.deger).toBe('2025-11-05')
-    expect(parseFisMetni('TARIH 05-11-2025', BUGUN).tarih?.deger).toBe('2025-11-05')
+    expect(parseReceiptText('TARIH 05.11.2025', BUGUN).date?.value).toBe('2025-11-05')
+    expect(parseReceiptText('TARIH 05-11-2025', BUGUN).date?.value).toBe('2025-11-05')
   })
 
   it('iki haneli yılı 2000\'li yıllara tamamlar', () => {
-    expect(parseFisMetni('TARIH: 01/02/25', BUGUN).tarih?.deger).toBe('2025-02-01')
+    expect(parseReceiptText('TARIH: 01/02/25', BUGUN).date?.value).toBe('2025-02-01')
   })
 
   it('gelecek tarihi reddeder', () => {
     // Fiş gelecekten gelemez; bu bir OCR hatasıdır
-    expect(parseFisMetni('TARIH: 01/01/2027', BUGUN).tarih).toBeNull()
+    expect(parseReceiptText('TARIH: 01/01/2027', BUGUN).date).toBeNull()
   })
 
   it('var olmayan tarihi reddeder (31 Şubat)', () => {
-    expect(parseFisMetni('TARIH: 31/02/2025', BUGUN).tarih).toBeNull()
+    expect(parseReceiptText('TARIH: 31/02/2025', BUGUN).date).toBeNull()
   })
 
   it('TARİH etiketli satırı etiketsizden önce seçer', () => {
     const fis = 'SON KULLANMA 01/01/2020\nTARIH: 10/10/2025'
-    expect(parseFisMetni(fis, BUGUN).tarih?.deger).toBe('2025-10-10')
+    expect(parseReceiptText(fis, BUGUN).date?.value).toBe('2025-10-10')
   })
 
   it('tarih yoksa null döner', () => {
-    expect(parseFisMetni('GENEL TOPLAM 500,00', BUGUN).tarih).toBeNull()
+    expect(parseReceiptText('GENEL TOPLAM 500,00', BUGUN).date).toBeNull()
   })
 })
 
 describe('parseFisMetni — km', () => {
   it('etiketli kilometreyi okur', () => {
-    expect(parseFisMetni('KM: 145.000', BUGUN).km?.deger).toBe(145000)
-    expect(parseFisMetni('KILOMETRE 87500', BUGUN).km?.deger).toBe(87500)
+    expect(parseReceiptText('KM: 145.000', BUGUN).km?.value).toBe(145000)
+    expect(parseReceiptText('KILOMETRE 87500', BUGUN).km?.value).toBe(87500)
   })
 
   it('etiketsiz sayıyı km sanmaz', () => {
     // Bir fiş baştan aşağı sayı doludur; yanlış km, aracın kaydını bozar
-    expect(parseFisMetni('FIS NO 0042\nGENEL TOPLAM 1.500,00', BUGUN).km).toBeNull()
+    expect(parseReceiptText('FIS NO 0042\nGENEL TOPLAM 1.500,00', BUGUN).km).toBeNull()
   })
 
   it('ondalıklı eşleşmeyi km saymaz (o bir fiyattır)', () => {
-    expect(parseFisMetni('KM BASI 12,50', BUGUN).km).toBeNull()
+    expect(parseReceiptText('KM BASI 12,50', BUGUN).km).toBeNull()
   })
 
   it('imkansız büyüklükteki km\'yi reddeder', () => {
-    expect(parseFisMetni('KM: 9.999.999', BUGUN).km).toBeNull()
+    expect(parseReceiptText('KM: 9.999.999', BUGUN).km).toBeNull()
   })
 })
 
@@ -160,16 +160,16 @@ describe('parseFisMetni — bütün fiş', () => {
       KDV %20                     310,00
       GENEL TOPLAM              1.860,00
     `
-    const s = parseFisMetni(fis, BUGUN)
-    expect(s.tutar?.deger).toBe(1860)
-    expect(s.tarih?.deger).toBe('2026-01-20')
-    expect(s.km?.deger).toBe(128450)
+    const s = parseReceiptText(fis, BUGUN)
+    expect(s.amount?.value).toBe(1860)
+    expect(s.date?.value).toBe('2026-01-20')
+    expect(s.km?.value).toBe(128450)
   })
 
   it('boş veya anlamsız girdide hiçbir şey önermez', () => {
-    expect(parseFisMetni('', BUGUN)).toEqual({ tutar: null, tarih: null, km: null })
-    expect(parseFisMetni('   \n  \n ', BUGUN)).toEqual({ tutar: null, tarih: null, km: null })
-    const bozuk = parseFisMetni('~~~ ### @@@ ???', BUGUN)
-    expect(bozuk).toEqual({ tutar: null, tarih: null, km: null })
+    expect(parseReceiptText('', BUGUN)).toEqual({ amount: null, date: null, km: null })
+    expect(parseReceiptText('   \n  \n ', BUGUN)).toEqual({ amount: null, date: null, km: null })
+    const bozuk = parseReceiptText('~~~ ### @@@ ???', BUGUN)
+    expect(bozuk).toEqual({ amount: null, date: null, km: null })
   })
 })

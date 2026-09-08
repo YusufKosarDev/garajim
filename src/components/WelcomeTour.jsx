@@ -57,9 +57,9 @@ export default function WelcomeTour({ isOpen, onClose }) {
   // "Prop değişince state'i sıfırla" — React'in belgelediği desen: efekt yerine
   // render sırasında ayarla. Efektle yapıldığında tur bir kare boyunca ESKİ
   // adımı gösterip sonra başa dönüyordu.
-  const [oncekiAcik, setOncekiAcik] = useState(isOpen)
-  if (isOpen !== oncekiAcik) {
-    setOncekiAcik(isOpen)
+  const [prevOpen, setPrevOpen] = useState(isOpen)
+  if (isOpen !== prevOpen) {
+    setPrevOpen(isOpen)
     if (isOpen) setCurrentStep(0)
   }
 

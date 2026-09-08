@@ -47,25 +47,25 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
   // Formu SADECE modal açılırken doldur.
   // Önceden bağımlılıklar arasında tireSets vardı; herhangi bir lastik seti
   // değişince (realtime senkron) kullanıcı formu doldururken sıfırlanıyordu.
-  const acikMiydiRef = useRef(false)
+  const wasOpenRef = useRef(false)
   useEffect(() => {
-    const yeniAcildi = isOpen && !acikMiydiRef.current
-    acikMiydiRef.current = isOpen
-    if (!yeniAcildi) return
+    const justOpened = isOpen && !wasOpenRef.current
+    wasOpenRef.current = isOpen
+    if (!justOpened) return
 
     if (editTireSet) {
-      const mevcutLastikler = editTireSet.tires || []
+      const existingTires = editTireSet.tires || []
       reset({
         season: editTireSet.season,
         brand: editTireSet.brand || '',
         size: editTireSet.size || '',
         purchaseDate: editTireSet.purchaseDate || '',
         purchasePrice: editTireSet.purchasePrice ? String(editTireSet.purchasePrice) : '',
-        hasSpare: mevcutLastikler.some(lastik => lastik.position === 'S'),
+        hasSpare: existingTires.some(lastik => lastik.position === 'S'),
         notes: editTireSet.notes || '',
         // Eksik pozisyonları doldur
         tires: TIRE_POSITIONS.map(pos => {
-          const varOlan = mevcutLastikler.find(lastik => lastik.position === pos.code)
+          const varOlan = existingTires.find(lastik => lastik.position === pos.code)
           return varOlan
             ? { position: pos.code, dot: varOlan.dot || '', treadDepth: varOlan.treadDepth ?? '' }
             : { position: pos.code, dot: '', treadDepth: '' }
@@ -73,16 +73,16 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
       })
     } else {
       // Yeni set — araçta hangi sezonlar zaten var, eksik olanı seç
-      const mevcutSezonlar = tireSets
+      const existingSeasons = tireSets
         .filter(set => set.vehicleId === vehicleId)
         .map(set => set.season)
 
-      const varsayilanSezon = !mevcutSezonlar.includes('summer')
+      const defaultSeason = !existingSeasons.includes('summer')
         ? 'summer'
-        : (!mevcutSezonlar.includes('winter') ? 'winter' : 'summer')
+        : (!existingSeasons.includes('winter') ? 'winter' : 'summer')
 
       reset({
-        season: varsayilanSezon, brand: '', size: '', purchaseDate: '', purchasePrice: '',
+        season: defaultSeason, brand: '', size: '', purchaseDate: '', purchasePrice: '',
         hasSpare: false, notes: '', tires: createEmptyTires(),
       })
     }
@@ -90,7 +90,7 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
 
   const onValid = (form) => {
     // Stepney yoksa filtrele
-    const filtrelenmis = form.tires
+    const filtered = form.tires
       .filter(lastik => lastik.position !== 'S' || form.hasSpare)
       .map(lastik => ({
         position: lastik.position,
@@ -105,7 +105,7 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
       size: form.size.trim(),
       purchaseDate: form.purchaseDate,
       purchasePrice: Number(form.purchasePrice) || 0,
-      tires: filtrelenmis,
+      tires: filtered,
       notes: form.notes.trim(),
     }
 
@@ -117,7 +117,7 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
   const onInvalid = () => toast.error(t('tireForm.lutfen_hatalari_duzelt'))
 
   // DOT alanı: sadece rakam, en fazla 4 hane
-  const dotDegisti = (index) => (e) => {
+  const dotChanged = (index) => (e) => {
     setValue(`tires.${index}.dot`, e.target.value.replace(/\D/g, '').slice(0, 4))
   }
 
@@ -227,15 +227,15 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
             <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
               {TIRE_POSITIONS.filter(p => p.code !== 'S').map((pos, index) => {
                 const tire = tires[index] ?? { dot: '', treadDepth: '' }
-                const dotHata = errors.tires?.[index]?.dot?.message
-                const derinlikHata = errors.tires?.[index]?.treadDepth?.message
-                const yasBilgisi = (tire.dot || '').length === 4 ? calculateTireAge(tire.dot) : null
+                const dotError = errors.tires?.[index]?.dot?.message
+                const depthError = errors.tires?.[index]?.treadDepth?.message
+                const ageInfo = (tire.dot || '').length === 4 ? calculateTireAge(tire.dot) : null
 
                 return (
                   <div
                     key={pos.code}
                     className={`bg-slate-900 border-2 rounded-lg p-3 transition ${
-                      dotHata || derinlikHata ? 'border-red-500/50' : 'border-slate-700'
+                      dotError || depthError ? 'border-red-500/50' : 'border-slate-700'
                     }`}
                   >
                     <div className="text-xs font-semibold text-slate-400 mb-2">{pos.label}</div>
@@ -247,16 +247,16 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
                           maxLength={4}
                           aria-label={`${pos.label} DOT kodu`}
                           className={`w-full bg-slate-800 border rounded px-2 py-1.5 text-xs focus:outline-none transition ${
-                            dotHata ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
+                            dotError ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
                           }`}
-                          {...register(`tires.${index}.dot`, { onChange: dotDegisti(index) })}
+                          {...register(`tires.${index}.dot`, { onChange: dotChanged(index) })}
                         />
-                        {yasBilgisi && (
+                        {ageInfo && (
                           <div className="text-[9px] text-slate-500 mt-0.5">
-                            {yasBilgisi.ageYears} yaşında
+                            {ageInfo.ageYears} yaşında
                           </div>
                         )}
-                        {dotHata && <div className="text-[9px] text-red-400 mt-0.5" role="alert">{dotHata}</div>}
+                        {dotError && <div className="text-[9px] text-red-400 mt-0.5" role="alert">{dotError}</div>}
                       </div>
                       <div className="flex items-center gap-1">
                         <input
@@ -267,13 +267,13 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
                           step="0.1"
                           aria-label={`${pos.label} diş derinliği (mm)`}
                           className={`w-full bg-slate-800 border rounded px-2 py-1.5 text-xs focus:outline-none transition ${
-                            derinlikHata ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
+                            depthError ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
                           }`}
                           {...register(`tires.${index}.treadDepth`)}
                         />
                         <span className="text-[10px] text-slate-500">{t('tireForm.mm')}</span>
                       </div>
-                      {derinlikHata && <div className="text-[9px] text-red-400" role="alert">{derinlikHata}</div>}
+                      {depthError && <div className="text-[9px] text-red-400" role="alert">{depthError}</div>}
                     </div>
                   </div>
                 )
@@ -299,7 +299,7 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
                       maxLength={4}
                       aria-label={t('tireForm.stepney_dot_kodu')}
                       className="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-xs focus:outline-none focus:border-blue-500 transition"
-                      {...register(`tires.${spareIndex}.dot`, { onChange: dotDegisti(spareIndex) })}
+                      {...register(`tires.${spareIndex}.dot`, { onChange: dotChanged(spareIndex) })}
                     />
                     <div className="flex items-center gap-1">
                       <input

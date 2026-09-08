@@ -9,7 +9,7 @@ import { makeFuelSchema } from '../lib/formSchemas'
 import Modal from './Modal'
 import FormField from './FormField'
 
-const bosForm = () => ({
+const emptyForm = () => ({
   date: getTodayString(),
   km: '',
   liters: '',
@@ -42,7 +42,7 @@ export default function FuelForm({ isOpen, onClose, vehicleId, editRecord = null
     formState: { errors },
   } = useForm({
     resolver: zodResolver(schema),
-    defaultValues: bosForm(),
+    defaultValues: emptyForm(),
     mode: 'onSubmit',
   })
 
@@ -50,11 +50,11 @@ export default function FuelForm({ isOpen, onClose, vehicleId, editRecord = null
   // Önceden bağımlılıklar arasında araç verisi de vardı ve araç km'si başka bir
   // yerden güncellenince (realtime senkron, başka bir kayıt) kullanıcı formu
   // doldururken alanlar sıfırlanıyordu. Açılış geçişini ref ile izliyoruz.
-  const acikMiydiRef = useRef(false)
+  const wasOpenRef = useRef(false)
   useEffect(() => {
-    const yeniAcildi = isOpen && !acikMiydiRef.current
-    acikMiydiRef.current = isOpen
-    if (!yeniAcildi) return
+    const justOpened = isOpen && !wasOpenRef.current
+    wasOpenRef.current = isOpen
+    if (!justOpened) return
 
     if (editRecord) {
       reset({
@@ -69,7 +69,7 @@ export default function FuelForm({ isOpen, onClose, vehicleId, editRecord = null
       })
     } else {
       const vehicle = vehicles.find(v => v.id === vehicleId)
-      reset({ ...bosForm(), km: vehicle?.currentKm ? String(vehicle.currentKm) : '' })
+      reset({ ...emptyForm(), km: vehicle?.currentKm ? String(vehicle.currentKm) : '' })
     }
   }, [isOpen, editRecord, vehicleId, vehicles, reset])
 

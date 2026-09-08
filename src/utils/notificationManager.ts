@@ -1,11 +1,11 @@
 import type { Vehicle, MaintenanceRecord, TireSet, TireChange, CustomIntervals } from '../types'
 
-export type BildirimTuru = 'inspection' | 'mtv' | 'insurance' | 'kasko' | 'maintenance' | 'tire-season'
-export type BildirimOnceligi = 'critical' | 'high' | 'medium' | 'low'
+export type NotificationKind = 'inspection' | 'mtv' | 'insurance' | 'kasko' | 'maintenance' | 'tire-season'
+export type NotificationPriority = 'critical' | 'high' | 'medium' | 'low'
 
-export interface Bildirim {
+export interface AppNotification {
   id: string
-  type: BildirimTuru
+  type: NotificationKind
   vehicleId: string
   maintenanceType?: string
   title: string
@@ -13,20 +13,20 @@ export interface Bildirim {
   date: string
   targetDate?: string
   days?: number
-  priority: BildirimOnceligi
+  priority: NotificationPriority
   actionUrl: string
   read: boolean
   dismissed: boolean
   stale?: boolean
 }
 
-export interface TurAyari { enabled: boolean; daysBefore?: number[] }
-export interface BildirimAyarlari {
+export interface KindSettings { enabled: boolean; daysBefore?: number[] }
+export interface NotificationSettings {
   enabled: boolean
-  inspection: TurAyari
-  mtv: TurAyari
-  insurance: TurAyari
-  kasko: TurAyari
+  inspection: KindSettings
+  mtv: KindSettings
+  insurance: KindSettings
+  kasko: KindSettings
   maintenance: { enabled: boolean }
   tireSeason: { enabled: boolean }
   browserNotifications: boolean
@@ -38,7 +38,7 @@ import { getCriticalRecommendations } from './maintenanceRecommendations'
 import { getActiveTireSet, getSeasonChangeSuggestion } from './tireHelpers'
 
 // Default ayarlar
-export const DEFAULT_NOTIFICATION_SETTINGS: BildirimAyarlari = {
+export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   enabled: true,
   inspection: { enabled: true, daysBefore: [30, 7, 1] },
   mtv: { enabled: true, daysBefore: [30, 7, 1] },
@@ -60,7 +60,7 @@ const TYPE_CONFIG: Record<string, { label: string; icon: string; urgentColor: st
 }
 
 // Önceliği belirle
-const determinePriority = (days: number): BildirimOnceligi => {
+const determinePriority = (days: number): NotificationPriority => {
   if (days < 0) return 'critical' // Geçmiş
   if (days <= 1) return 'critical'
   if (days <= 7) return 'high'
@@ -74,10 +74,10 @@ const buildNotificationId = (type: string, vehicleId: string, targetDate: string
 }
 
 // Tarih bazlı bildirim oluştur (muayene, MTV, sigorta, kasko)
-const generateDateNotifications = (vehicles: Vehicle[], settings: BildirimAyarlari): Bildirim[] => {
-  const notifications: Bildirim[] = []
+const generateDateNotifications = (vehicles: Vehicle[], settings: NotificationSettings): AppNotification[] => {
+  const notifications: AppNotification[] = []
 
-  const dateFields: { type: BildirimTuru; field: keyof Vehicle; label: string }[] = [
+  const dateFields: { type: NotificationKind; field: keyof Vehicle; label: string }[] = [
     { type: 'inspection', field: 'inspectionDate', label: 'Muayene' },
     { type: 'mtv', field: 'mtvDate', label: 'MTV' },
     { type: 'insurance', field: 'insuranceDate', label: 'Trafik Sigortası' },
@@ -86,7 +86,7 @@ const generateDateNotifications = (vehicles: Vehicle[], settings: BildirimAyarla
 
   vehicles.forEach((vehicle: Vehicle) => {
     dateFields.forEach(({ type, field, label }) => {
-      const setting = settings[type] as TurAyari | undefined
+      const setting = settings[type] as KindSettings | undefined
       if (!setting || !setting.enabled) return
 
       const targetDate = vehicle[field] as string | null | undefined
@@ -145,12 +145,12 @@ const generateMaintenanceNotifications = (
   vehicles: Vehicle[],
   maintenanceRecords: MaintenanceRecord[],
   customIntervals: CustomIntervals,
-  settings: BildirimAyarlari
-): Bildirim[] => {
+  settings: NotificationSettings
+): AppNotification[] => {
   if (!settings.maintenance?.enabled) return []
 
   const recommendations = getCriticalRecommendations(vehicles, maintenanceRecords, customIntervals)
-  const notifications: Bildirim[] = []
+  const notifications: AppNotification[] = []
 
   recommendations.forEach(rec => {
     if (rec.status !== 'overdue' && rec.status !== 'urgent') return
@@ -184,11 +184,11 @@ const generateTireSeasonNotifications = (
   vehicles: Vehicle[],
   tireSets: TireSet[],
   tireChanges: TireChange[],
-  settings: BildirimAyarlari
-): Bildirim[] => {
+  settings: NotificationSettings
+): AppNotification[] => {
   if (!settings.tireSeason?.enabled) return []
 
-  const notifications: Bildirim[] = []
+  const notifications: AppNotification[] = []
 
   vehicles.forEach(vehicle => {
     const vehicleSets = tireSets.filter(t => t.vehicleId === vehicle.id)
@@ -241,8 +241,8 @@ export const generateAllNotifications = ({
   customIntervals: CustomIntervals
   tireSets: TireSet[]
   tireChanges: TireChange[]
-  settings: BildirimAyarlari | null | undefined
-}): Bildirim[] => {
+  settings: NotificationSettings | null | undefined
+}): AppNotification[] => {
   if (!settings || !settings.enabled) return []
 
   const all = [
@@ -260,9 +260,9 @@ export const generateAllNotifications = ({
 
 // Eski bildirimi yenisiyle merge et
 // — read durumu korunsun, mesaj/öncelik güncellensin
-export const mergeNotifications = (existing: Bildirim[], fresh: Bildirim[]): Bildirim[] => {
+export const mergeNotifications = (existing: AppNotification[], fresh: AppNotification[]): AppNotification[] => {
   const existingMap = new Map(existing.map(n => [n.id, n]))
-  const merged: Bildirim[] = []
+  const merged: AppNotification[] = []
   const newIds = new Set()
 
   fresh.forEach(n => {
@@ -313,11 +313,11 @@ export const getTypeConfig = (type: string) => {
  * Not: uygulama tamamen kapalıyken bildirim göndermek için sunucudan gelen
  * gerçek web push gerekir (VAPID anahtarı + gönderen servis).
  */
-export const sendBrowserNotification = async (notification: Bildirim): Promise<boolean> => {
+export const sendBrowserNotification = async (notification: AppNotification): Promise<boolean> => {
   if (!('Notification' in window)) return false
   if (Notification.permission !== 'granted') return false
 
-  const secenekler: NotificationOptions = {
+  const options: NotificationOptions = {
     body: notification.message,
     icon: '/icons/icon-192.png',
     badge: '/icons/icon-192.png',
@@ -328,11 +328,11 @@ export const sendBrowserNotification = async (notification: Bildirim): Promise<b
   try {
     if ('serviceWorker' in navigator) {
       const registration = await navigator.serviceWorker.ready
-      await registration.showNotification(notification.title, secenekler)
+      await registration.showNotification(notification.title, options)
       return true
     }
     // SW yoksa (dev modda kapalı) eski yönteme düş
-    new Notification(notification.title, secenekler)
+    new Notification(notification.title, options)
     return true
   } catch (err) {
     console.error('Browser notification error:', err)

@@ -11,22 +11,22 @@ vi.mock('react-hot-toast', () => ({ default: { error: vi.fn(), success: vi.fn() 
 
 const doldur = (input, value) => fireEvent.change(input, { target: { value } })
 
-const alan = {
+const field = {
   marka: () => screen.getByPlaceholderText('Michelin, Bridgestone...'),
   ebat: () => screen.getByPlaceholderText('205/55 R16'),
-  dot: (etiket) => screen.getByLabelText(`${etiket} DOT kodu`),
-  derinlik: (etiket) => screen.getByLabelText(`${etiket} diş derinliği (mm)`),
+  dot: (label) => screen.getByLabelText(`${label} DOT kodu`),
+  treadDepth: (label) => screen.getByLabelText(`${label} diş derinliği (mm)`),
   stepneyToggle: () => screen.getByRole('checkbox'),
   kaydet: () => screen.getByRole('button', { name: /set ekle|güncelle/i }),
 }
 
-const gecerliDoldur = () => {
-  doldur(alan.marka(), 'Michelin')
-  doldur(alan.ebat(), '205/55 R16')
+const fillValid = () => {
+  doldur(field.marka(), 'Michelin')
+  doldur(field.ebat(), '205/55 R16')
 }
 
 const gonder = async () => {
-  fireEvent.click(alan.kaydet())
+  fireEvent.click(field.kaydet())
   await waitFor(() => {})
 }
 
@@ -42,7 +42,7 @@ const ac = (props = {}) =>
 describe('TireForm', () => {
   it('geçerli veriyle addTireSet i çağırır ve stepney i hariç tutar', async () => {
     ac()
-    gecerliDoldur()
+    fillValid()
     await gonder()
 
     await waitFor(() => expect(addTireSet).toHaveBeenCalledTimes(1))
@@ -55,8 +55,8 @@ describe('TireForm', () => {
 
   it('stepney açıkken 5. lastiği de kaydeder', async () => {
     ac()
-    gecerliDoldur()
-    fireEvent.click(alan.stepneyToggle())
+    fillValid()
+    fireEvent.click(field.stepneyToggle())
     await gonder()
 
     await waitFor(() => expect(addTireSet).toHaveBeenCalledTimes(1))
@@ -65,7 +65,7 @@ describe('TireForm', () => {
 
   it('zorunlu alanlar boşken kaydetmez', async () => {
     ac()
-    fireEvent.click(alan.kaydet())
+    fireEvent.click(field.kaydet())
 
     expect(await screen.findByText('Marka zorunlu')).toBeInTheDocument()
     expect(screen.getByText('Ebat zorunlu')).toBeInTheDocument()
@@ -80,8 +80,8 @@ describe('TireForm', () => {
       { id: 't2', vehicleId: 'v1', season: 'winter' },
     ]
     ac()
-    gecerliDoldur()
-    fireEvent.click(alan.kaydet())
+    fillValid()
+    fireEvent.click(field.kaydet())
 
     expect(await screen.findByText(/zaten Yazlık set tanımlı/i)).toBeInTheDocument()
     expect(addTireSet).not.toHaveBeenCalled()
@@ -96,15 +96,15 @@ describe('TireForm', () => {
 
   it('DOT alanı sadece rakam kabul eder ve 4 haneyle sınırlı', async () => {
     ac()
-    doldur(alan.dot('Ön Sol'), 'ab35x23999')
-    await waitFor(() => expect(alan.dot('Ön Sol')).toHaveValue('3523'))
+    doldur(field.dot('Ön Sol'), 'ab35x23999')
+    await waitFor(() => expect(field.dot('Ön Sol')).toHaveValue('3523'))
   })
 
   it('eksik DOT kodunu reddeder', async () => {
     ac()
-    gecerliDoldur()
-    doldur(alan.dot('Ön Sol'), '35')
-    fireEvent.click(alan.kaydet())
+    fillValid()
+    doldur(field.dot('Ön Sol'), '35')
+    fireEvent.click(field.kaydet())
 
     expect(await screen.findByText('DOT 4 haneli olmalı')).toBeInTheDocument()
     expect(addTireSet).not.toHaveBeenCalled()
@@ -112,16 +112,16 @@ describe('TireForm', () => {
 
   it('diş derinliği alanı 0-15 mm ile sınırlı (max attribute)', () => {
     ac()
-    expect(alan.derinlik('Ön Sol')).toHaveAttribute('max', '15')
-    expect(alan.derinlik('Ön Sol')).toHaveAttribute('min', '0')
+    expect(field.treadDepth('Ön Sol')).toHaveAttribute('max', '15')
+    expect(field.treadDepth('Ön Sol')).toHaveAttribute('min', '0')
   })
 
   it('15 mm üstü değerde submit hiç başlamaz — tarayıcı kısıtı devrede', async () => {
     // max attribute'unu ihlal eden değerde HTML5 doğrulaması submit'i engelliyor;
     // şemadaki 0-15 kuralı ikinci savunma katmanı olarak duruyor.
     ac()
-    gecerliDoldur()
-    doldur(alan.derinlik('Ön Sol'), '20')
+    fillValid()
+    doldur(field.treadDepth('Ön Sol'), '20')
     await gonder()
 
     expect(addTireSet).not.toHaveBeenCalled()
@@ -135,22 +135,22 @@ describe('TireForm', () => {
     }
     ac({ editTireSet: set })
 
-    expect(alan.marka()).toHaveValue('Nokian')
-    expect(alan.dot('Ön Sol')).toHaveValue('3523')
+    expect(field.marka()).toHaveValue('Nokian')
+    expect(field.dot('Ön Sol')).toHaveValue('3523')
     expect(screen.getByRole('button', { name: /yazlık/i })).toBeDisabled()
   })
 
   it('lastik setleri listesi değişince açık formdaki girdiler KORUNUR', () => {
     const { rerender } = ac()
 
-    doldur(alan.marka(), 'Pirelli')
-    doldur(alan.ebat(), '195/65 R15')
+    doldur(field.marka(), 'Pirelli')
+    doldur(field.ebat(), '195/65 R15')
 
     // Realtime senkron başka bir set eklerse form sıfırlanmamalı
     mockCtx = { ...mockCtx, tireSets: [{ id: 'baska', vehicleId: 'v2', season: 'winter' }] }
     rerender(<TireForm isOpen onClose={vi.fn()} vehicleId="v1" />)
 
-    expect(alan.marka()).toHaveValue('Pirelli')
-    expect(alan.ebat()).toHaveValue('195/65 R15')
+    expect(field.marka()).toHaveValue('Pirelli')
+    expect(field.ebat()).toHaveValue('195/65 R15')
   })
 })

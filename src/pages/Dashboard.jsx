@@ -34,15 +34,15 @@ export default function Dashboard({ globalActionsRef }) {
 
     // Ref'in .current'ı temizlik fonksiyonu çalışana kadar değişebilir;
     // efekt kurulurken yakalanan nesneyi temizlemek doğru olan.
-    const eylemler = globalActionsRef.current
-    eylemler.newVehicle = () => navigate('/vehicles')
-    eylemler.newMaintenance = () => {
+    const actions = globalActionsRef.current
+    actions.newVehicle = () => navigate('/vehicles')
+    actions.newMaintenance = () => {
       if (vehicles.length > 0) {
         setSelectedVehicleId(vehicles[0].id)
         setQuickMaintenanceOpen(true)
       }
     }
-    eylemler.newFuel = () => {
+    actions.newFuel = () => {
       if (vehicles.length > 0) {
         setSelectedVehicleId(vehicles[0].id)
         setQuickFuelOpen(true)
@@ -50,9 +50,9 @@ export default function Dashboard({ globalActionsRef }) {
     }
 
     return () => {
-      eylemler.newVehicle = null
-      eylemler.newMaintenance = null
-      eylemler.newFuel = null
+      actions.newVehicle = null
+      actions.newMaintenance = null
+      actions.newFuel = null
     }
   }, [globalActionsRef, navigate, vehicles])
 

@@ -23,24 +23,24 @@ const VERITABANI_DEGERLERI = [
   'Diğer',
 ]
 
-const kaynakDosyalari = (): string[] => {
-  const bulunanlar: string[] = []
+const sourceFiles = (): string[] => {
+  const matches: string[] = []
   const tara = (d: string) => {
     for (const e of fs.readdirSync(d, { withFileTypes: true })) {
       const p = path.join(d, e.name)
       if (e.isDirectory()) tara(p)
-      else if (/\.(jsx|tsx|js|ts)$/.test(e.name) && !/\.test\./.test(e.name)) bulunanlar.push(p)
+      else if (/\.(jsx|tsx|js|ts)$/.test(e.name) && !/\.test\./.test(e.name)) matches.push(p)
     }
   }
   tara('src')
-  return bulunanlar
+  return matches
 }
 
 describe('i18n — veritabanı değerleri çevrilmez', () => {
   it('sözlükte hiçbir DB alan değeri yer almaz', () => {
-    const degerler = new Set(Object.values(tr as Record<string, string>))
-    const sizanlar = VERITABANI_DEGERLERI.filter(v => degerler.has(v))
-    expect(sizanlar, `Bu değerler DB'ye yazılıyor, çeviriye giremez: ${sizanlar.join(', ')}`)
+    const values = new Set(Object.values(tr as Record<string, string>))
+    const leaked = VERITABANI_DEGERLERI.filter(v => values.has(v))
+    expect(leaked, `Bu değerler DB'ye yazılıyor, çeviriye giremez: ${leaked.join(', ')}`)
       .toEqual([])
   })
 
@@ -52,49 +52,49 @@ describe('i18n — veritabanı değerleri çevrilmez', () => {
   })
 
   it('DEFAULT_INTERVALS anahtarları çeviri anahtarı değil, Türkçe metin', () => {
-    for (const anahtar of Object.keys(DEFAULT_INTERVALS)) {
-      expect(anahtar).not.toMatch(/^[a-z][a-zA-Z]*\./)
+    for (const key of Object.keys(DEFAULT_INTERVALS)) {
+      expect(key).not.toMatch(/^[a-z][a-zA-Z]*\./)
     }
   })
 })
 
 describe('i18n — sözlük sağlığı', () => {
   it('tr sözlüğünde boş değer yok', () => {
-    const bos = Object.entries(tr as Record<string, string>).filter(([, v]) => !v?.trim())
-    expect(bos.map(([k]) => k)).toEqual([])
+    const emptyValues = Object.entries(tr as Record<string, string>).filter(([, v]) => !v?.trim())
+    expect(emptyValues.map(([k]) => k)).toEqual([])
   })
 
   it('en sözlüğündeki her anahtarın tr karşılığı var', () => {
     // Ters yön şart değil: İngilizce kısmi, eksikler Türkçeye düşüyor.
     // Ama en'de olup tr'de olmayan bir anahtar yazım hatasıdır.
-    const trAnahtarlar = new Set(Object.keys(tr))
-    const fazlalik = Object.keys(en).filter(k => !trAnahtarlar.has(k))
-    expect(fazlalik, `en.json'da tr.json'da olmayan anahtarlar: ${fazlalik.join(', ')}`).toEqual([])
+    const trKeys = new Set(Object.keys(tr))
+    const extras = Object.keys(en).filter(k => !trKeys.has(k))
+    expect(extras, `en.json'da tr.json'da olmayan anahtarlar: ${extras.join(', ')}`).toEqual([])
   })
 
   it('kaynakta kullanılan her t() anahtarı sözlükte var', () => {
     // Eksik anahtar ekranda ham "settings.foo" metni gösterir
-    const trAnahtarlar = new Set(Object.keys(tr))
-    const eksikler: string[] = []
+    const trKeys = new Set(Object.keys(tr))
+    const missing: string[] = []
 
-    for (const dosya of kaynakDosyalari()) {
+    for (const file of sourceFiles()) {
       // Yorum satırları atlanıyor: açıklamalarda örnek olarak yazılan
       // `t('...')` gerçek bir kullanım değil (bu testin ilk çalıştırmasında
       // tam da böyle bir yorum yakalandı).
-      const kaynak = fs.readFileSync(dosya, 'utf8')
+      const source = fs.readFileSync(file, 'utf8')
         .split('\n')
         .filter(l => !/^\s*(\/\/|\*|\/\*)/.test(l))
         .join('\n')
 
-      for (const m of kaynak.matchAll(/\bi18n\.t\('([^']+)'\)|(?<![.\w])t\('([^']+)'\)/g)) {
-        const anahtar = m[1] ?? m[2]
+      for (const m of source.matchAll(/\bi18n\.t\('([^']+)'\)|(?<![.\w])t\('([^']+)'\)/g)) {
+        const key = m[1] ?? m[2]
         // Nokta içermeyenler çeviri anahtarı değil (başka bir `t` fonksiyonu olabilir)
-        if (!anahtar.includes('.')) continue
-        if (!trAnahtarlar.has(anahtar)) eksikler.push(`${dosya}: ${anahtar}`)
+        if (!key.includes('.')) continue
+        if (!trKeys.has(key)) missing.push(`${file}: ${key}`)
       }
     }
 
-    expect(eksikler, `Sözlükte olmayan anahtarlar:\n${eksikler.join('\n')}`).toEqual([])
+    expect(missing, `Sözlükte olmayan anahtarlar:\n${missing.join('\n')}`).toEqual([])
   })
 })
 
@@ -104,23 +104,23 @@ describe('i18n — dil davranışı', () => {
   })
 
   it('Türkçe metni döndürür', () => {
-    const anahtar = Object.keys(tr)[0]
-    expect(i18n.t(anahtar)).toBe((tr as Record<string, string>)[anahtar])
+    const key = Object.keys(tr)[0]
+    expect(i18n.t(key)).toBe((tr as Record<string, string>)[key])
   })
 
   it('İngilizce çevirisi olmayan anahtar Türkçeye düşer, ham anahtar göstermez', async () => {
     // fallbackLng: 'tr' — kısmi çeviride tek kabul edilebilir davranış budur
     await i18n.changeLanguage('en')
-    const cevrilmemis = Object.keys(tr).find(k => !(k in en))
-    expect(cevrilmemis, 'test anlamlı olsun diye çevrilmemiş bir anahtar gerekiyor').toBeDefined()
-    expect(i18n.t(cevrilmemis!)).toBe((tr as Record<string, string>)[cevrilmemis!])
+    const untranslatedKey = Object.keys(tr).find(k => !(k in en))
+    expect(untranslatedKey, 'test anlamlı olsun diye çevrilmemiş bir anahtar gerekiyor').toBeDefined()
+    expect(i18n.t(untranslatedKey!)).toBe((tr as Record<string, string>)[untranslatedKey!])
     await i18n.changeLanguage('tr')
   })
 
   it('desteklenmeyen dil Türkçeye düşer', async () => {
     await i18n.changeLanguage('de')
-    const anahtar = Object.keys(tr)[0]
-    expect(i18n.t(anahtar)).toBe((tr as Record<string, string>)[anahtar])
+    const key = Object.keys(tr)[0]
+    expect(i18n.t(key)).toBe((tr as Record<string, string>)[key])
     await i18n.changeLanguage('tr')
   })
 })

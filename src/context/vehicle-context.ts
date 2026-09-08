@@ -10,7 +10,7 @@ import type {
   Vehicle, MaintenanceRecord, FuelRecord, TireSet, TireChange, CustomIntervals,
 } from '../types'
 
-export interface VehicleContextDegeri {
+export interface VehicleContextValue {
   vehicles: Vehicle[]
   maintenanceRecords: MaintenanceRecord[]
   fuelRecords: FuelRecord[]
@@ -19,7 +19,7 @@ export interface VehicleContextDegeri {
   customIntervals: CustomIntervals
   isLoaded: boolean
   /** Çevrimdışıyken kuyruğa alınmış, henüz gönderilmemiş kayıt sayısı */
-  bekleyenSayisi: number
+  pendingCount: number
   addVehicle: (vehicle: Partial<Vehicle>) => Promise<Vehicle | null>
   updateVehicle: (id: string, updates: Partial<Vehicle>) => Promise<void>
   deleteVehicle: (id: string) => Promise<void>
@@ -39,9 +39,9 @@ export interface VehicleContextDegeri {
   clearAllData: () => Promise<void>
 }
 
-export const VehicleContext = createContext<VehicleContextDegeri | null>(null)
+export const VehicleContext = createContext<VehicleContextValue | null>(null)
 
-export const useVehicles = (): VehicleContextDegeri => {
+export const useVehicles = (): VehicleContextValue => {
   const ctx = useContext(VehicleContext)
   if (!ctx) throw new Error('useVehicles must be used within VehicleProvider')
   return ctx
