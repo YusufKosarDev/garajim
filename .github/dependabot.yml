@@ -1,0 +1,26 @@
+# Bağımlılık güncellemeleri — güvenlik yamalarının elle takip edilmesi gerekmesin diye.
+# Major sürümler kasıtlı olarak gruplanmıyor: kırıcı değişiklik içerdikleri için
+# tek tek incelenmeleri gerekiyor.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # Yama ve minor sürümler tek PR'da toplanır — 30 ayrı PR kimsenin
+      # bakmadığı bir kuyruk oluşturur.
+      minor-ve-yama:
+        update-types:
+          - minor
+          - patch
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "chore(ci)"

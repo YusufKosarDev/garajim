@@ -1,9 +1,35 @@
+import { readFileSync } from 'node:fs'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
+/**
+ * Güvenlik başlıkları TEK KAYNAKTAN okunuyor: `vercel.json`.
+ *
+ * Canlıda başlıkları Vercel uyguluyor, ama `npm run preview` sırasında da
+ * aynılarının geçerli olması gerekiyor — aksi halde CSP ihlalleri ancak
+ * deploy sonrası fark edilir. Kopyalayıp iki yerde tutmak yerine üretim
+ * yapılandırması burada okunup preview sunucusuna veriliyor.
+ *
+ * CSP'de izin verilen dış kaynaklar ve sebepleri:
+ *   cdn.jsdelivr.net          → Tesseract.js worker + WASM çekirdeği + dil verisi
+ *   *.supabase.co / wss:      → veritabanı, storage (fotoğraf) ve realtime
+ *   *.tile.openstreetmap.org  → Leaflet harita karoları
+ *   overpass.*                → yakındaki servis sorgusu (3 mirror, fallback)
+ *   fonts.googleapis/gstatic  → web fontları
+ *   *.ingest.sentry.io        → hata izleme (DSN tanımlıysa)
+ */
+const guvenlikBasliklari = () => {
+  const vercel = JSON.parse(readFileSync(new URL('./vercel.json', import.meta.url), 'utf8'))
+  const kural = vercel.headers?.find(h => h.source === '/(.*)')
+  return Object.fromEntries((kural?.headers ?? []).map(({ key, value }) => [key, value]))
+}
+
 export default defineConfig({
+  preview: {
+    headers: guvenlikBasliklari(),
+  },
   plugins: [
     react(),
     tailwindcss(),

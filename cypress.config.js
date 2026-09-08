@@ -1,6 +1,9 @@
-const { defineConfig } = require('cypress')
+// ESM sözdizimi: package.json'da "type": "module" var, bu dosya da .js.
+// CommonJS (`require`/`module.exports`) Cypress 15.21'den itibaren burada
+// çalışmıyor — "require is not defined in ES module scope" ile patlıyor.
+import { defineConfig } from 'cypress'
 
-module.exports = defineConfig({
+export default defineConfig({
   e2e: {
     // Localhost dev server URL
     baseUrl: 'http://localhost:5173',

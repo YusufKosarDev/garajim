@@ -14,8 +14,18 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
-      // Kapsam hedefi saf mantık katmanı; bileşenler Cypress E2E ile örtülüyor.
-      include: ['src/utils/**', 'src/lib/supabaseMappers.js'],
+      // Kapsam TÜM kaynak üzerinden ölçülüyor. Eskiden yalnızca `src/utils/**`
+      // dahildi; bu rakamı çift yönlü bozuyordu — hem context/bileşen testlerini
+      // görünmez kılıyor hem de oranı olduğundan iyi gösteriyordu.
+      include: ['src/**'],
+      exclude: [
+        'src/**/*.test.{js,jsx,ts,tsx}',
+        'src/test/**',          // test yardımcıları ve mock'lar
+        'src/i18n/locales/**',  // çeviri sözlükleri, kod değil
+        'src/types.ts',         // yalnızca tip tanımı, çalışma zamanı kodu yok
+        'src/sw.js',            // service worker; jsdom'da koşamaz
+        'src/main.jsx',         // uygulama giriş noktası
+      ],
     },
   },
 })

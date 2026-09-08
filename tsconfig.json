@@ -19,7 +19,10 @@
     "verbatimModuleSyntax": true,
     "resolveJsonModule": true,
     "allowImportingTsExtensions": true,
-    "types": ["vite/client", "vitest/globals"]
+    /* "node": i18n.test.ts çeviri dosyalarını fs ile okuyor. Bu tipler eskiden
+       transitif bir bağımlılıktan geliyordu; bağımlılık ağacı değişince kayboldu.
+       Artık @types/node açık bir devDependency ve burada da açıkça isteniyor. */
+    "types": ["vite/client", "vitest/globals", "node"]
   },
   "include": ["src", "vite.config.js", "vitest.config.js"],
   "exclude": ["node_modules", "dist", "coverage", "cypress"]
