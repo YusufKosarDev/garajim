@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { createPortal } from 'react-dom'
@@ -18,26 +18,38 @@ export default function CommandPalette({ isOpen, onClose, onNewVehicle, onNewMai
   const { vehicles, maintenanceRecords, fuelRecords } = useVehicles()
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
-  const [recentSearches, setRecentSearches] = useState([])
+  // Son aramalar mount'ta bir kez okunuyor. Eskiden her açılışta efekt içinde
+  // yeniden okunuyordu; gereksizdi — addToRecent hem state'i hem localStorage'ı
+  // birlikte güncelliyor, yani state zaten tek doğru kaynak.
+  const [recentSearches, setRecentSearches] = useState(() => {
+    try {
+      const stored = localStorage.getItem(RECENT_SEARCHES_KEY)
+      return stored ? JSON.parse(stored) : []
+    } catch {
+      // Bozuk JSON ya da erişilemeyen depolama — boş listeyle devam
+      return []
+    }
+  })
   const inputRef = useRef(null)
   const listRef = useRef(null)
 
-  // Son aramaları yükle
-  useEffect(() => {
+  // Açılışta aramayı sıfırla — efekt yerine render sırasında ayarlama
+  // (React'in belgelediği desen). Efektle yapıldığında palet bir kare boyunca
+  // önceki aramayı gösteriyordu.
+  const [oncekiAcik, setOncekiAcik] = useState(isOpen)
+  if (isOpen !== oncekiAcik) {
+    setOncekiAcik(isOpen)
     if (isOpen) {
-      const stored = localStorage.getItem(RECENT_SEARCHES_KEY)
-      if (stored) {
-        try {
-          setRecentSearches(JSON.parse(stored))
-        } catch {
-          setRecentSearches([])
-        }
-      }
-      // Açılınca focus + sıfırla
-      setTimeout(() => inputRef.current?.focus(), 100)
       setQuery('')
       setSelectedIndex(0)
     }
+  }
+
+  // Odaklanma bir DOM yan etkisi — efektte kalması gerekiyor
+  useEffect(() => {
+    if (!isOpen) return
+    const zamanlayici = setTimeout(() => inputRef.current?.focus(), 100)
+    return () => clearTimeout(zamanlayici)
   }, [isOpen])
 
   // Sayfa linkleri
@@ -190,10 +202,14 @@ export default function CommandPalette({ isOpen, onClose, onNewVehicle, onNewMai
     [groupedItems]
   )
 
-  // Query değişince seçimi sıfırla
-  useEffect(() => {
+  // Query değişince seçimi sıfırla — yine render sırasında ayarlama.
+  // Efektle yapıldığında yeni sonuç listesi bir kare boyunca ESKİ indeksle
+  // vurgulanıyor, sonra ilk satıra atlıyordu.
+  const [oncekiQuery, setOncekiQuery] = useState(query)
+  if (query !== oncekiQuery) {
+    setOncekiQuery(query)
     setSelectedIndex(0)
-  }, [query])
+  }
 
   // Seçili öğe değişince scroll into view
   useEffect(() => {
@@ -206,19 +222,24 @@ export default function CommandPalette({ isOpen, onClose, onNewVehicle, onNewMai
   }, [selectedIndex])
 
   // Son aramaya ekle
-  const addToRecent = (itemId) => {
-    const updated = [itemId, ...recentSearches.filter(id => id !== itemId)].slice(0, MAX_RECENT)
-    setRecentSearches(updated)
-    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated))
-  }
+  const addToRecent = useCallback((itemId) => {
+    setRecentSearches(prev => {
+      const updated = [itemId, ...prev.filter(id => id !== itemId)].slice(0, MAX_RECENT)
+      localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated))
+      return updated
+    })
+  }, [])
 
-  // Öğeyi seç ve eylem tetikle
-  const handleSelect = (item) => {
+  // Öğeyi seç ve eylem tetikle.
+  // useCallback: aşağıdaki klavye efektinin bağımlılık listesinde dürüstçe yer
+  // alabilsin diye — eskiden listeden dışarıda bırakılmıştı ve efekt, kapanmış
+  // (stale) bir handleSelect'e tutunuyordu.
+  const handleSelect = useCallback((item) => {
     if (!item) return
     addToRecent(item.id)
     item.action()
     onClose()
-  }
+  }, [addToRecent, onClose])
 
   // Klavye navigasyonu
   useEffect(() => {
@@ -242,7 +263,7 @@ export default function CommandPalette({ isOpen, onClose, onNewVehicle, onNewMai
 
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [isOpen, flatItems, selectedIndex])
+  }, [isOpen, flatItems, selectedIndex, handleSelect, onClose])
 
   // Tür başına renk ve emoji
   const typeConfig = {

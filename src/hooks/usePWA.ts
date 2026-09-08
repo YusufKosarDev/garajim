@@ -8,20 +8,20 @@ interface BeforeInstallPromptEvent extends Event {
 
 export const usePWA = () => {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null)
-  const [isInstalled, setIsInstalled] = useState(false)
+  // "Zaten yüklü mü" sorusunun cevabı ilk render'da biliniyor — efekte
+  // bırakılırsa uygulama bir kare boyunca "yüklü değil" varsayıyor ve
+  // yükleme çubuğu görünüp kayboluyordu.
+  const [isInstalled, setIsInstalled] = useState(
+    () =>
+      window.matchMedia('(display-mode: standalone)').matches ||
+      // iOS Safari'nin standart dışı alanı
+      (window.navigator as Navigator & { standalone?: boolean }).standalone === true
+  )
   const [isOnline, setIsOnline] = useState(navigator.onLine)
   const [updateAvailable, setUpdateAvailable] = useState(false)
 
   // Install prompt yakalama
   useEffect(() => {
-    // Zaten yüklü mü?
-    const isStandalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      // iOS Safari'nin standart dışı alanı
-      (window.navigator as Navigator & { standalone?: boolean }).standalone === true
-
-    setIsInstalled(isStandalone)
-
     // Install promptu yakala
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault()

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
@@ -13,45 +13,38 @@ export default function AcceptInvite() {
   const navigate = useNavigate()
   const { user, loading: authLoading } = useAuth()
 
-  const [status, setStatus] = useState('loading')  // loading | login_required | ready | accepting | success | error
+  // Kullanıcının tetiklediği aşama. null iken durum token/oturum bilgisinden
+  // TÜRETİLİYOR — eskiden bu türetme bir efektin içinde setStatus ile
+  // yapılıyordu ve sayfa, oturum zaten hazırken bile bir kare "yükleniyor"
+  // gösteriyordu.
+  const [islemDurumu, setIslemDurumu] = useState(null) // null | 'accepting' | 'success' | 'error'
   const [error, setError] = useState('')
   const [garageName, setGarageName] = useState('')
   const [accepting, setAccepting] = useState(false)
 
-  // Sayfa açılınca: token var mı, login mı?
-  useEffect(() => {
-    if (!token) {
-      setStatus('error')
-      setError(t('acceptInvite.gecersiz_davet_linki_token_yok'))
-      return
-    }
-
-    // Auth loading bitsin
-    if (authLoading) return
-
-    if (!user) {
+  const status =
+    islemDurumu ??
+    (!token ? 'error'
+      : authLoading ? 'loading'
       // Login değil → login'e yönlendir, dönüşte davet linkine geri gel
-      setStatus('login_required')
-      return
-    }
+      : !user ? 'login_required'
+      : 'ready')
 
-    // Login var, davet'i kabul edebilir
-    setStatus('ready')
-  }, [token, user, authLoading, t])
+  const hataMesaji = error || (!token ? t('acceptInvite.gecersiz_davet_linki_token_yok') : '')
 
   // "Garaja Katıl" butonuna tıklayınca
   const handleAccept = async () => {
     if (!token || !user) return
 
     setAccepting(true)
-    setStatus('accepting')
+    setIslemDurumu('accepting')
 
     try {
       // Mevcut session token'ı al
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
         toast.error(t('acceptInvite.oturum_bulunamadi'))
-        setStatus('error')
+        setIslemDurumu('error')
         setError(t('acceptInvite.oturum_bulunamadi_lutfen_tekrar_giris_yap'))
         setAccepting(false)
         return
@@ -73,7 +66,7 @@ export default function AcceptInvite() {
       const result = await response.json()
 
       if (!response.ok) {
-        setStatus('error')
+        setIslemDurumu('error')
         setError(result.error || 'Davet kabul edilemedi')
         toast.error(result.error || 'Davet kabul edilemedi')
         setAccepting(false)
@@ -82,7 +75,7 @@ export default function AcceptInvite() {
 
       // Başarı
       setGarageName(result.garage_name || 'Garaj')
-      setStatus('success')
+      setIslemDurumu('success')
 
       if (result.already_member) {
         toast.success(t('acceptInvite.zaten_bu_garajin_uyesisin'))
@@ -98,7 +91,7 @@ export default function AcceptInvite() {
       }, 2000)
     } catch (err) {
       console.error('Accept invite error:', err)
-      setStatus('error')
+      setIslemDurumu('error')
       setError(t('acceptInvite.beklenmedik_bir_hata_olustu'))
       setAccepting(false)
     }
@@ -234,7 +227,7 @@ export default function AcceptInvite() {
                 {t('acceptInvite.davet_kabul_edilemedi')}
               </h2>
               <p className="text-red-300 mb-6 break-words">
-                {error}
+                {hataMesaji}
               </p>
 
               <Link

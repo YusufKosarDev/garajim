@@ -1,10 +1,9 @@
 import { useParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useState, useEffect } from 'react'
+import { useMemo } from 'react'
 import {
   ArrowLeft,
   AlertTriangle,
-  Loader2,
   Car,
   Fuel,
   Gauge,
@@ -26,39 +25,21 @@ export default function SharedReport() {
   const { t } = useTranslation()
 
   const { encodedData } = useParams()
-  const [data, setData] = useState(null)
-  const [error, setError] = useState(null)
-  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
+  // Çözümleme TAMAMEN SENKRON (lz-string, ağ yok) — yani bu bir state değil,
+  // URL parametresinin saf bir türevi. Efekt + üç ayrı state ile yapıldığında
+  // sayfa önce "yükleniyor" render'ı yapıp hemen ikinci bir render'a giriyordu;
+  // oysa beklenen bir iş yok.
+  const { data, error } = useMemo(() => {
     if (!encodedData) {
-      setError(t('sharedReport.gecersiz_paylasim_linki'))
-      setLoading(false)
-      return
+      return { data: null, error: t('sharedReport.gecersiz_paylasim_linki') }
     }
-
     const decoded = decodeShareData(encodedData)
     if (!decoded) {
-      setError(t('sharedReport.bu_link_bozuk_veya_gecersiz'))
-      setLoading(false)
-      return
+      return { data: null, error: t('sharedReport.bu_link_bozuk_veya_gecersiz') }
     }
-
-    setData(decoded)
-    setLoading(false)
+    return { data: decoded, error: null }
   }, [encodedData, t])
-
-  // Yükleniyor
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 text-blue-400 animate-spin mx-auto mb-4" />
-          <p className="text-slate-400">{t('sharedReport.rapor_yukleniyor')}</p>
-        </div>
-      </div>
-    )
-  }
 
   // Hata
   if (error || !data) {

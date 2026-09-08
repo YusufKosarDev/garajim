@@ -39,11 +39,13 @@ export default function Vehicles({ globalActionsRef }) {
 
   // Global kısayol için trigger'ı register et
   useEffect(() => {
-    if (globalActionsRef) {
-      globalActionsRef.current.newVehicle = () => setIsFormOpen(true)
-      return () => {
-        globalActionsRef.current.newVehicle = null
-      }
+    if (!globalActionsRef) return
+    // Ref'in .current'ı temizlik fonksiyonu çalışana kadar değişebilir;
+    // efekt kurulurken yakalanan nesneyi temizlemek doğru olan.
+    const eylemler = globalActionsRef.current
+    eylemler.newVehicle = () => setIsFormOpen(true)
+    return () => {
+      eylemler.newVehicle = null
     }
   }, [globalActionsRef])
 

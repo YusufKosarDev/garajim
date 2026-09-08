@@ -95,14 +95,17 @@ export default function VehicleDetail({ globalActionsRef }) {
   useEffect(() => {
     if (!globalActionsRef) return
 
-    globalActionsRef.current.newVehicle = () => navigate('/vehicles')
-    globalActionsRef.current.newMaintenance = () => setIsMaintenanceOpen(true)
-    globalActionsRef.current.newFuel = () => setIsFuelOpen(true)
+    // Ref'in .current'ı temizlik fonksiyonu çalışana kadar değişebilir;
+    // efekt kurulurken yakalanan nesneyi temizlemek doğru olan.
+    const eylemler = globalActionsRef.current
+    eylemler.newVehicle = () => navigate('/vehicles')
+    eylemler.newMaintenance = () => setIsMaintenanceOpen(true)
+    eylemler.newFuel = () => setIsFuelOpen(true)
 
     return () => {
-      globalActionsRef.current.newVehicle = null
-      globalActionsRef.current.newMaintenance = null
-      globalActionsRef.current.newFuel = null
+      eylemler.newVehicle = null
+      eylemler.newMaintenance = null
+      eylemler.newFuel = null
     }
   }, [globalActionsRef, navigate])
 
@@ -140,9 +143,15 @@ export default function VehicleDetail({ globalActionsRef }) {
     return sortedFuelRecords.slice(start, start + ITEMS_PER_PAGE)
   }, [sortedFuelRecords, fuelPage])
 
-  useEffect(() => {
+  // Arama ya da sıralama değişince ilk sayfaya dön — efekt yerine render
+  // sırasında ayarlama (React'in belgelediği desen). Efektle yapıldığında,
+  // 3. sayfadayken arama yazınca liste bir kare boyunca "3. sayfa" dilimini
+  // yeni sonuçlardan kesiyordu; çoğu zaman bu boş bir liste demekti.
+  const [oncekiFiltre, setOncekiFiltre] = useState({ searchQuery, sortBy })
+  if (oncekiFiltre.searchQuery !== searchQuery || oncekiFiltre.sortBy !== sortBy) {
+    setOncekiFiltre({ searchQuery, sortBy })
     setMaintenancePage(1)
-  }, [searchQuery, sortBy])
+  }
 
   useEffect(() => {
     const listElement = document.getElementById('records-list-top')

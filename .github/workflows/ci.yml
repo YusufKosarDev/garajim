@@ -21,13 +21,8 @@ jobs:
       - name: Bağımlılıklar
         run: npm ci
 
-      # NOT: Şu an 54 bilinen lint hatası var (çoğu react-hooks/set-state-in-effect;
-      # form katmanının yeniden yapılandırılmasını gerektiriyor ve Faz 3-4'e planlı).
-      # Baştan kırmızı bir CI kimsenin bakmadığı bir CI olur; o yüzden bu adım
-      # şimdilik bloklamıyor. Hatalar sıfırlanınca continue-on-error kaldırılacak.
-      - name: Lint (henüz bloklamıyor — bilinen hatalar temizlenene kadar)
+      - name: Lint
         run: npm run lint
-        continue-on-error: true
 
       - name: Tip kontrolü
         run: npm run typecheck

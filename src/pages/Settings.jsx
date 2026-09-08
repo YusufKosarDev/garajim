@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Download, Upload, Trash2, Database, AlertTriangle, Info, Smartphone, Wifi, WifiOff, CheckCircle, User, LogOut, CloudUpload } from 'lucide-react'
@@ -43,14 +43,12 @@ export default function Settings({ onShowTour }) {
   const [isLogoutOpen, setIsLogoutOpen] = useState(false)
   const [migrationData, setMigrationData] = useState(null)
   const [isMigrationOpen, setIsMigrationOpen] = useState(false)
-  const [hasOldData, setHasOldData] = useState(false)
+  // localStorage senkron okunuyor: efekt içinde setState yerine lazy
+  // initializer. Efektle yapıldığında ilk render "eski veri yok" diyor,
+  // hemen ardından ikinci bir render geliyordu.
+  const [hasOldData, setHasOldData] = useState(() => hasLocalStorageData())
   const [isClearLocalOpen, setIsClearLocalOpen] = useState(false)
   const fileInputRef = useRef(null)
-
-  // LocalStorage'da eski veri var mı kontrol et (sayfa açılınca bir kez)
-  useEffect(() => {
-    setHasOldData(hasLocalStorageData())
-  }, [])
 
   const handleExport = () => {
     if (vehicles.length === 0 && maintenanceRecords.length === 0 && fuelRecords.length === 0) {

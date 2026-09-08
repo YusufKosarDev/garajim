@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { QRCodeCanvas } from 'qrcode.react'
 import { Share2, Copy, Check, ExternalLink, AlertTriangle, Info, Send, QrCode, Download, X } from 'lucide-react'
@@ -16,21 +16,33 @@ import Modal from './Modal'
 export default function ShareModal({ isOpen, onClose, vehicle, maintenanceRecords, fuelRecords }) {
   const { t } = useTranslation()
 
-  const [shareUrl, setShareUrl] = useState('')
   const [copied, setCopied] = useState(false)
-  const [urlSize, setUrlSize] = useState({ chars: 0, kb: '0' })
   const [showQR, setShowQR] = useState(false)
   const qrCanvasRef = useRef(null)
 
-  useEffect(() => {
-    if (!isOpen || !vehicle) return
+  // Paylaşım URL'i state DEĞİL, türetilmiş değer: girdilerin saf bir
+  // fonksiyonu. State'te tutulduğunda modal ilk karede boş bir URL ile
+  // render oluyor, sonra efekt ikinci bir render tetikliyordu.
+  // lz-string sıkıştırması pahalı olduğu için useMemo ile korunuyor.
+  const shareUrl = useMemo(
+    () => (isOpen && vehicle ? createShareUrl(vehicle, maintenanceRecords, fuelRecords) : ''),
+    [isOpen, vehicle, maintenanceRecords, fuelRecords]
+  )
+  const urlSize = useMemo(
+    () => (shareUrl ? getShareUrlSize(shareUrl) : { chars: 0, kb: '0' }),
+    [shareUrl]
+  )
 
-    const url = createShareUrl(vehicle, maintenanceRecords, fuelRecords)
-    setShareUrl(url)
-    setUrlSize(getShareUrlSize(url))
-    setCopied(false)
-    setShowQR(false)
-  }, [isOpen, vehicle, maintenanceRecords, fuelRecords])
+  // Modal her açıldığında kopyalandı/QR durumunu sıfırla — efekt yerine
+  // render sırasında ayarlama (React'in belgelediği desen).
+  const [oncekiAcik, setOncekiAcik] = useState(isOpen)
+  if (isOpen !== oncekiAcik) {
+    setOncekiAcik(isOpen)
+    if (isOpen) {
+      setCopied(false)
+      setShowQR(false)
+    }
+  }
 
   const handleCopy = async () => {
     const success = await copyToClipboard(shareUrl)

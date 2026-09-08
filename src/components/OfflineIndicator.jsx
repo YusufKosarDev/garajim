@@ -11,21 +11,32 @@ export default function OfflineIndicator() {
   const { isOnline } = usePWA()
   const { bekleyenSayisi } = useVehicles()
   const [showReconnected, setShowReconnected] = useState(false)
-  const [wasOffline, setWasOffline] = useState(false)
+  // Uygulama çevrimdışı açıldıysa da bağlantı dönünce rozet görünsün
+  const [wasOffline, setWasOffline] = useState(!isOnline)
 
-  useEffect(() => {
+  // Çevrimiçi/çevrimdışı GEÇİŞİNİ render sırasında yakala. Eskiden bu bir
+  // efektin gövdesindeydi ve `wasOffline` kendi bağımlılığıydı — her geçiş
+  // fazladan bir render turu tetikliyordu.
+  const [oncekiOnline, setOncekiOnline] = useState(isOnline)
+  if (isOnline !== oncekiOnline) {
+    setOncekiOnline(isOnline)
     if (!isOnline) {
       setWasOffline(true)
     } else if (wasOffline) {
-      // Tekrar çevrimiçi olduğunda 3 saniye "bağlantı geri geldi" göster
       setShowReconnected(true)
-      const timer = setTimeout(() => {
-        setShowReconnected(false)
-        setWasOffline(false)
-      }, 3000)
-      return () => clearTimeout(timer)
     }
-  }, [isOnline, wasOffline])
+  }
+
+  // "Bağlantı geri geldi" rozetini 3 saniye sonra gizle.
+  // Zamanlayıcı gerçek bir yan etki, efektte kalması doğru.
+  useEffect(() => {
+    if (!showReconnected) return
+    const timer = setTimeout(() => {
+      setShowReconnected(false)
+      setWasOffline(false)
+    }, 3000)
+    return () => clearTimeout(timer)
+  }, [showReconnected])
 
   return (
     <AnimatePresence mode="wait">

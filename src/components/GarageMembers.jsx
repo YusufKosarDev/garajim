@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useQuery } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { 
   Users, UserPlus, Mail, Trash2, Loader2, X,
@@ -24,11 +25,6 @@ export default function GarageMembers() {
 
   const { user } = useAuth()
 
-  const [garage, setGarage] = useState(null)
-  const [members, setMembers] = useState([])
-  const [invitations, setInvitations] = useState([])
-  const [loading, setLoading] = useState(true)
-
   // Davet etme state
   const [showInviteForm, setShowInviteForm] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
@@ -38,15 +34,21 @@ export default function GarageMembers() {
   const [cancelInviteTarget, setCancelInviteTarget] = useState(null)
   const [removeMemberTarget, setRemoveMemberTarget] = useState(null)
 
-  // Owner mu kullanıcı?
-  const isOwner = garage && garage.owner_id === user?.id
-
-  // loadData, onu çağıran efektten ÖNCE tanımlı olmalı — `const` bildirimden
-  // önce okunamaz. useCallback ile sarılı olması efektin bağımlılık listesine
-  // dürüstçe yazılabilmesini de sağlıyor.
-  const loadData = useCallback(async () => {
-    setLoading(true)
-    try {
+  // Okuma katmanı TanStack Query'de — uygulamanın geri kalanıyla aynı desen
+  // (bkz. VehicleContext). Eskiden elle yazılmış bir useEffect + üç ayrı state
+  // + bir `loading` bayrağı vardı; efekt gövdesinden senkron setState çağırdığı
+  // için fazladan render turları tetikliyordu (react-hooks/set-state-in-effect).
+  // Query ile birlikte yeniden deneme, pencere odaklanınca tazeleme ve
+  // isteklerin birleştirilmesi de bedavaya geliyor.
+  const {
+    data: garajVerisi,
+    isPending: loading,
+    error: yuklemeHatasi,
+    refetch: loadData,
+  } = useQuery({
+    queryKey: ['garaj-uyeleri', user?.id],
+    enabled: Boolean(user?.id),
+    queryFn: async () => {
       // 1. Kullanıcının sahibi olduğu garaj
       const { data: garageData, error: garageError } = await supabase
         .from('garages')
@@ -55,17 +57,9 @@ export default function GarageMembers() {
         .maybeSingle()
 
       if (garageError) throw garageError
-      
-      if (!garageData) {
-        // Garaj yok? Beklenmedik durum, ama default'a düş
-        setGarage(null)
-        setMembers([])
-        setInvitations([])
-        setLoading(false)
-        return
-      }
 
-      setGarage(garageData)
+      // Garaj yok? Beklenmedik durum, ama default'a düş
+      if (!garageData) return { garage: null, members: [], invitations: [] }
 
       // 2. Garajın üyelerini al
       // Note: garage_members.user_id → auth.users join'i RLS'siz değil,
@@ -78,11 +72,6 @@ export default function GarageMembers() {
 
       if (membersError) throw membersError
 
-      // Kullanıcı emaillerini almak için auth.admin gerek (frontend'den yok)
-      // Workaround: mevcut user'ın bilgisi var, diğerlerini "User ..." olarak göster
-      // Production'da: profiles tablosu kullanılabilir
-      setMembers(membersData || [])
-
       // 3. Bekleyen davetleri al
       const { data: invitesData, error: invitesError } = await supabase
         .from('garage_invitations')
@@ -93,20 +82,31 @@ export default function GarageMembers() {
 
       if (invitesError) throw invitesError
 
-      setInvitations(invitesData || [])
-    } catch (err) {
-      console.error('Load garage data error:', err)
-      toast.error(t('garageMembers.uye_bilgileri_yuklenemedi'))
-    } finally {
-      setLoading(false)
-    }
-  }, [user, t])
+      // Kullanıcı emaillerini almak için auth.admin gerek (frontend'den yok)
+      // Workaround: mevcut user'ın bilgisi var, diğerlerini "User ..." olarak göster
+      // Production'da: profiles tablosu kullanılabilir
+      return {
+        garage: garageData,
+        members: membersData || [],
+        invitations: invitesData || [],
+      }
+    },
+  })
 
-  // İlk yüklemede verileri al
+  const garage = garajVerisi?.garage ?? null
+  const members = garajVerisi?.members ?? []
+  const invitations = garajVerisi?.invitations ?? []
+
+  // Owner mu kullanıcı?
+  const isOwner = garage && garage.owner_id === user?.id
+
+  // Yükleme hatasını kullanıcıya bildir. Efekt içinde setState YOK — sadece
+  // toast, yani gerçek bir yan etki.
   useEffect(() => {
-    if (!user) return
-    loadData()
-  }, [user, loadData])
+    if (!yuklemeHatasi) return
+    console.error('Load garage data error:', yuklemeHatasi)
+    toast.error(t('garageMembers.uye_bilgileri_yuklenemedi'))
+  }, [yuklemeHatasi, t])
 
   // Davet gönder
   const handleInvite = async (e) => {

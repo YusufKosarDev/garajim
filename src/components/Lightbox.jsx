@@ -11,12 +11,14 @@ export default function Lightbox({ isOpen, onClose, photos = [], initialIndex = 
   const containerRef = useRef(null)
   const touchStartX = useRef(null)
 
-  // Modal açılınca initial index'e git
-  useEffect(() => {
-    if (isOpen) {
-      setCurrentIndex(initialIndex)
-    }
-  }, [isOpen, initialIndex])
+  // Modal açılınca initial index'e git. Efekt yerine render sırasında ayarlama
+  // (React'in belgelediği desen): efektle yapıldığında lightbox bir kare
+  // boyunca ÖNCEKİ fotoğrafı gösterip sonra doğru olana atlıyordu.
+  const [oncekiAcik, setOncekiAcik] = useState(isOpen)
+  if (isOpen !== oncekiAcik) {
+    setOncekiAcik(isOpen)
+    if (isOpen) setCurrentIndex(initialIndex)
+  }
 
   // Açılışta odağı kapsayıcıya al — ok tuşları/Escape'in çalışması ve ekran
   // okuyucunun diyaloğu duyurması için gerekli.

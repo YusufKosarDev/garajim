@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CloudUpload, CheckCircle2, XCircle, Loader2, AlertTriangle } from 'lucide-react'
 import Modal from './Modal'
@@ -19,14 +19,18 @@ export default function MigrationModal({
   const [progress, setProgress] = useState({})
   const [result, setResult] = useState(null)
 
-  useEffect(() => {
-    // Modal her açıldığında sıfırla
+  // Modal her açıldığında sıfırla. Efekt yerine render sırasında ayarlama
+  // (React'in belgelediği desen): efektle yapıldığında modal bir kare boyunca
+  // önceki taşımanın "tamamlandı" ekranını gösteriyordu.
+  const [oncekiAcik, setOncekiAcik] = useState(isOpen)
+  if (isOpen !== oncekiAcik) {
+    setOncekiAcik(isOpen)
     if (isOpen) {
       setPhase('confirm')
       setProgress({})
       setResult(null)
     }
-  }, [isOpen])
+  }
 
   const handleStart = async () => {
     setPhase('running')

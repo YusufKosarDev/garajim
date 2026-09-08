@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Car, Calendar, Wrench, Droplet, Bell, ChevronRight, ChevronLeft, X } from 'lucide-react'
@@ -54,9 +54,14 @@ export default function WelcomeTour({ isOpen, onClose }) {
 
   const [currentStep, setCurrentStep] = useState(0)
 
-  useEffect(() => {
+  // "Prop değişince state'i sıfırla" — React'in belgelediği desen: efekt yerine
+  // render sırasında ayarla. Efektle yapıldığında tur bir kare boyunca ESKİ
+  // adımı gösterip sonra başa dönüyordu.
+  const [oncekiAcik, setOncekiAcik] = useState(isOpen)
+  if (isOpen !== oncekiAcik) {
+    setOncekiAcik(isOpen)
     if (isOpen) setCurrentStep(0)
-  }, [isOpen])
+  }
 
   const step = steps[currentStep]
   const Icon = step?.icon
