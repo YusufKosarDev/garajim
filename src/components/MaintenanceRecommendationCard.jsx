@@ -22,14 +22,14 @@ const statusConfig = {
     icon: Clock,
     bg: 'bg-yellow-500/10 border-yellow-500/30',
     text: 'text-yellow-400',
-    label: 'Yaklaşıyor',
+    label: 'maintenanceRecommendationCard.yaklasiyor',
     getMessage: (km) => `${km.toLocaleString('tr-TR')} km kaldı`,
   },
   ok: {
     icon: Wrench,
     bg: 'bg-green-500/10 border-green-500/30',
     text: 'text-green-400',
-    label: 'Güvenli',
+    label: 'maintenanceRecommendationCard.guvenli',
     getMessage: (km) => `${km.toLocaleString('tr-TR')} km sonra`,
   },
 }
@@ -50,7 +50,7 @@ function MaintenanceRecommendationCard({ recommendation, onQuickAdd, showVehicle
         <div className="font-semibold text-sm truncate flex items-center gap-2">
           {recommendation.type}
           <span className={`text-[10px] px-1.5 py-0.5 rounded uppercase tracking-wide ${config.bg} ${config.text}`}>
-            {config.label}
+            {t(config.label)}
           </span>
         </div>
         <div className="text-xs text-slate-400 truncate">

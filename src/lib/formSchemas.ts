@@ -1,3 +1,4 @@
+import i18n from '../i18n'
 import { z } from 'zod'
 import { validatePastDate, validateExpiryDate, validateVehicleYear } from '../utils/dateValidation'
 import { formatPlate, isValidPlate, platesMatch } from '../utils/plateHelpers'
@@ -185,7 +186,7 @@ export const makeTireSetSchema = ({ tireSets = [], vehicleId = null, isEdit = fa
       if (existing) {
         ctx.addIssue({
           code: 'custom', path: ['season'],
-          message: `Bu araç için zaten ${SEASONS[val.season as Season].label} set tanımlı — düzenlemek için onu aç`,
+          message: i18n.t('formSchemas.sezon_zaten_tanimli', { season: i18n.t(SEASONS[val.season as Season].label) }),
         })
       }
     }

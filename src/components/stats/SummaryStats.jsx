@@ -1,7 +1,9 @@
+import { useTranslation } from 'react-i18next'
 import { Wrench, Droplet, Calendar, TrendingUp, DollarSign } from 'lucide-react'
 import { getCurrentMonthSpending, getYearComparison } from '../../utils/statisticsHelpers'
 
 export default function SummaryStats({ maintenanceRecords, fuelRecords }) {
+  const { t } = useTranslation()
   const currentMonth = getCurrentMonthSpending(maintenanceRecords, fuelRecords)
   const yearData = getYearComparison(maintenanceRecords, fuelRecords)
 
@@ -14,14 +16,14 @@ export default function SummaryStats({ maintenanceRecords, fuelRecords }) {
       color: 'blue',
     },
     {
-      label: `Bu Yıl (${yearData.currentYear})`,
+      label: t('stats.summaryStats.bu_yil', { year: yearData.currentYear }),
       value: `${yearData.current.total.toLocaleString('tr-TR')} ₺`,
       sub: `${maintenanceRecords.filter(r => new Date(r.date).getFullYear() === yearData.currentYear).length + fuelRecords.filter(r => new Date(r.date).getFullYear() === yearData.currentYear).length} kayıt`,
       icon: DollarSign,
       color: 'green',
     },
     {
-      label: `Geçen Yıl (${yearData.previousYear})`,
+      label: t('stats.summaryStats.gecen_yil', { year: yearData.previousYear }),
       value: `${yearData.previous.total.toLocaleString('tr-TR')} ₺`,
       sub: yearData.percentChange !== null
         ? `${yearData.percentChange > 0 ? '+' : ''}${yearData.percentChange}% değişim`
@@ -30,7 +32,7 @@ export default function SummaryStats({ maintenanceRecords, fuelRecords }) {
       color: yearData.percentChange > 0 ? 'red' : yearData.percentChange < 0 ? 'green' : 'slate',
     },
     {
-      label: 'Toplam Kayıt',
+      label: 'stats.summaryStats.toplam_kayit',
       value: maintenanceRecords.length + fuelRecords.length,
       sub: `🔧 ${maintenanceRecords.length} bakım • ⛽ ${fuelRecords.length} yakıt`,
       icon: Wrench,
@@ -55,7 +57,7 @@ export default function SummaryStats({ maintenanceRecords, fuelRecords }) {
           </div>
           <div className="text-xl font-bold text-white mb-1">{stat.value}</div>
           <div className="text-[10px] opacity-80 uppercase tracking-wide font-semibold">
-            {stat.label}
+            {t(stat.label)}
           </div>
           <div className="text-xs text-slate-500 mt-1 truncate" title={stat.sub}>
             {stat.sub}

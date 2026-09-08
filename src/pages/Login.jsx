@@ -178,7 +178,7 @@ function Login() {
                 to="/forgot-password"
                 className="text-sm text-blue-400 hover:text-blue-300 transition"
               >
-                Şifremi unuttum
+                {t('login.sifremi_unuttum')}
               </Link>
             </div>
 
@@ -205,12 +205,12 @@ function Login() {
           {/* Register Link */}
           <div className="mt-6 text-center">
             <p className="text-sm text-slate-400">
-              Hesabın yok mu?{' '}
+              {t('login.hesabin_yok_mu')}{' '}
               <Link
                 to="/register"
                 className="text-blue-400 hover:text-blue-300 font-medium transition"
               >
-                Kayıt Ol
+                {t('login.kayit_ol')}
               </Link>
             </p>
           </div>

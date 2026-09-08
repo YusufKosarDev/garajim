@@ -206,7 +206,7 @@ export default function VehicleForm({ isOpen, onClose, editVehicle = null }) {
             onClick={onClose}
             className="flex-1 bg-slate-800 hover:bg-slate-700 py-2.5 rounded-lg font-semibold transition"
           >
-            İptal
+            {t('vehicleForm.iptal')}
           </button>
           <button
             type="submit"

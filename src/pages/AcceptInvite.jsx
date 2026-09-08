@@ -141,14 +141,14 @@ export default function AcceptInvite() {
                 state={{ from: { pathname: `/accept-invite/${token}` } }}
                 className="inline-block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition shadow-lg shadow-blue-600/30 mb-3"
               >
-                Giriş Yap
+                {t('acceptInvite.giris_yap')}
               </Link>
               <Link
                 to="/register"
                 state={{ from: { pathname: `/accept-invite/${token}` } }}
                 className="inline-block w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 rounded-xl transition"
               >
-                Hesap Oluştur
+                {t('acceptInvite.hesap_olustur')}
               </Link>
             </div>
           )}
@@ -186,7 +186,7 @@ export default function AcceptInvite() {
                 disabled={accepting}
                 className="mt-3 text-sm text-slate-400 hover:text-white transition"
               >
-                Şimdi değil
+                {t('acceptInvite.simdi_degil')}
               </button>
             </div>
           )}
@@ -234,7 +234,7 @@ export default function AcceptInvite() {
                 to="/"
                 className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition"
               >
-                Dashboard'a Dön
+                {t('acceptInvite.dashboard_a_don')}
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>

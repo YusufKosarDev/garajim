@@ -59,4 +59,19 @@ i18n
     returnEmptyString: false,
   })
 
+/**
+ * <html lang> her zaman aktif dili göstermeli.
+ *
+ * index.html'de sabit `lang="tr"` yazıyor ve dil değiştirilince orada
+ * kalıyordu. Bunun iki somut sonucu var: ekran okuyucu İngilizce metni Türkçe
+ * telaffuz kurallarıyla okuyor, ve tarayıcının çeviri önerisi yanlış dili
+ * varsayıyor. Tek satırlık bir düzeltme ama a11y açısından gerçek bir hata.
+ */
+const dilEtiketiniUygula = (lng: string) => {
+  if (typeof document !== 'undefined') document.documentElement.lang = lng
+}
+
+dilEtiketiniUygula(i18n.resolvedLanguage ?? 'tr')
+i18n.on('languageChanged', dilEtiketiniUygula)
+
 export default i18n

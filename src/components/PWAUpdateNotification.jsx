@@ -38,7 +38,7 @@ export default function PWAUpdateNotification() {
                     onClick={reload}
                     className="bg-white text-blue-600 hover:bg-blue-50 px-3 py-1.5 rounded-lg font-semibold text-xs transition"
                   >
-                    Şimdi Yenile
+                    {t('pWAUpdateNotification.simdi_yenile')}
                   </button>
                   <button
                     onClick={() => setDismissed(true)}

@@ -5,8 +5,8 @@ import { getVehicleCostAnalysis } from '../../utils/statisticsHelpers'
 
 const metrics = [
   { id: 'totalCost', label: 'Toplam Harcama', unit: '₺', color: '#22c55e' },
-  { id: 'costPerKm', label: 'KM Başına Maliyet', unit: '₺/km', color: '#3b82f6' },
-  { id: 'recordCount', label: 'Kayıt Sayısı', unit: '', color: '#a855f7' },
+  { id: 'costPerKm', label: 'stats.vehicleRankingChart.km_basina_maliyet', unit: '₺/km', color: '#3b82f6' },
+  { id: 'recordCount', label: 'stats.vehicleRankingChart.kayit_sayisi', unit: '', color: '#a855f7' },
   { id: 'kmRange', label: 'Kat Edilen KM', unit: 'km', color: '#f97316' },
 ]
 
@@ -63,7 +63,7 @@ export default function VehicleRankingChart({ vehicles = [], maintenanceRecords 
                 : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
             }`}
           >
-            {m.label}
+            {t(m.label)}
           </button>
         ))}
       </div>
@@ -104,7 +104,7 @@ export default function VehicleRankingChart({ vehicles = [], maintenanceRecords 
               const formatted = selectedMetric === 'costPerKm'
                 ? value.toFixed(2)
                 : Number(value).toLocaleString('tr-TR')
-              return [`${formatted} ${metric.unit}`, metric.label]
+              return [`${formatted} ${metric.unit}`, t(metric.label)]
             }}
             labelFormatter={(_, payload) => payload?.[0]?.payload?.name || ''}
           />

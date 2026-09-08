@@ -66,7 +66,7 @@ export default function TireChangeForm({ isOpen, onClose, vehicleId, currentSeas
             <div className="text-center flex-1">
               <div className="text-3xl mb-1" aria-hidden="true">{fromConfig.icon}</div>
               <div className="text-xs text-slate-400 uppercase tracking-wide">{t('tireChangeForm.cikar')}</div>
-              <div className="text-sm font-bold text-slate-300">{fromConfig.label}</div>
+              <div className="text-sm font-bold text-slate-300">{t(fromConfig.label)}</div>
             </div>
 
             <ArrowLeftRight className="w-5 h-5 text-blue-400 shrink-0" aria-hidden="true" />
@@ -77,7 +77,7 @@ export default function TireChangeForm({ isOpen, onClose, vehicleId, currentSeas
               <div className={`text-sm font-bold ${
                 targetSeason === 'summer' ? 'text-yellow-400' : 'text-cyan-400'
               }`}>
-                {toConfig.label}
+                {t(toConfig.label)}
               </div>
             </div>
           </div>
@@ -139,7 +139,7 @@ export default function TireChangeForm({ isOpen, onClose, vehicleId, currentSeas
             onClick={onClose}
             className="flex-1 bg-slate-800 hover:bg-slate-700 py-2.5 rounded-lg font-semibold transition"
           >
-            İptal
+            {t('tireChangeForm.iptal')}
           </button>
           <button
             type="submit"

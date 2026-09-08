@@ -230,7 +230,7 @@ export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord
             onClick={onClose}
             className="flex-1 bg-slate-800 hover:bg-slate-700 py-2.5 rounded-lg font-semibold transition"
           >
-            İptal
+            {t('maintenanceForm.iptal')}
           </button>
           <button
             type="submit"

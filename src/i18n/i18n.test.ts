@@ -64,12 +64,25 @@ describe('i18n — sözlük sağlığı', () => {
     expect(emptyValues.map(([k]) => k)).toEqual([])
   })
 
-  it('en sözlüğündeki her anahtarın tr karşılığı var', () => {
-    // Ters yön şart değil: İngilizce kısmi, eksikler Türkçeye düşüyor.
-    // Ama en'de olup tr'de olmayan bir anahtar yazım hatasıdır.
+  it('iki sözlüğün anahtar kümeleri birebir aynı', () => {
+    // Çeviri artık tam. Bu test onu öyle TUTAR: yeni bir Türkçe metin
+    // eklenip İngilizcesi unutulursa CI kırılır. Eskiden yalnızca tek yön
+    // (en -> tr) sınanıyordu ve İngilizce %19'da kalmıştı; kimse fark etmedi.
     const trKeys = new Set(Object.keys(tr))
-    const extras = Object.keys(en).filter(k => !trKeys.has(k))
-    expect(extras, `en.json'da tr.json'da olmayan anahtarlar: ${extras.join(', ')}`).toEqual([])
+    const enKeys = new Set(Object.keys(en))
+
+    const missingInEn = [...trKeys].filter(k => !enKeys.has(k))
+    const extraInEn = [...enKeys].filter(k => !trKeys.has(k))
+
+    expect(missingInEn, `en.json'da eksik anahtarlar:\n${missingInEn.join('\n')}`).toEqual([])
+    expect(extraInEn, `en.json'da fazladan anahtarlar:\n${extraInEn.join('\n')}`).toEqual([])
+  })
+
+  it('en sözlüğünde boş değer yok', () => {
+    // Boş bir çeviri `returnEmptyString: false` yüzünden sessizce Türkçeye
+    // düşer — yani anahtar "çevrilmiş" görünür ama ekranda Türkçe çıkar.
+    const emptyValues = Object.entries(en as Record<string, string>).filter(([, v]) => !v?.trim())
+    expect(emptyValues.map(([k]) => k)).toEqual([])
   })
 
   it('kaynakta kullanılan her t() anahtarı sözlükte var', () => {
@@ -109,12 +122,29 @@ describe('i18n — dil davranışı', () => {
   })
 
   it('İngilizce çevirisi olmayan anahtar Türkçeye düşer, ham anahtar göstermez', async () => {
-    // fallbackLng: 'tr' — kısmi çeviride tek kabul edilebilir davranış budur
+    // fallbackLng: 'tr' — ileride bir anahtarın İngilizcesi unutulursa ekranda
+    // "settings.foo" değil Türkçe metin görünmeli.
+    //
+    // Anahtar SENTETİK: sözlükteki gerçek bir boşluğa dayanmıyor. Eskiden bu
+    // test `Object.keys(tr).find(k => !(k in en))` ile çalışıyordu, yani
+    // çeviri tamamlandığı anda kendi kendini geçersiz kılıyordu.
+    const sentetikAnahtar = '__test.yalnizca_turkcede_var'
+    const sentetikDeger = 'Yalnızca Türkçede var'
+    i18n.addResource('tr', 'translation', sentetikAnahtar, sentetikDeger)
+
     await i18n.changeLanguage('en')
-    const untranslatedKey = Object.keys(tr).find(k => !(k in en))
-    expect(untranslatedKey, 'test anlamlı olsun diye çevrilmemiş bir anahtar gerekiyor').toBeDefined()
-    expect(i18n.t(untranslatedKey!)).toBe((tr as Record<string, string>)[untranslatedKey!])
+    expect(i18n.t(sentetikAnahtar)).toBe(sentetikDeger)
     await i18n.changeLanguage('tr')
+  })
+
+  it('dil değişince <html lang> güncellenir', async () => {
+    // index.html'de sabit lang="tr" var; dil değişince orada kalırsa ekran
+    // okuyucu İngilizce metni Türkçe telaffuzuyla okur.
+    await i18n.changeLanguage('en')
+    expect(document.documentElement.lang).toBe('en')
+
+    await i18n.changeLanguage('tr')
+    expect(document.documentElement.lang).toBe('tr')
   })
 
   it('desteklenmeyen dil Türkçeye düşer', async () => {

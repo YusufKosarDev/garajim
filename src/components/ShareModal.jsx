@@ -58,7 +58,7 @@ export default function ShareModal({ isOpen, onClose, vehicle, maintenanceRecord
 
   const handleNativeShare = async () => {
     const result = await shareNatively({
-      title: `${vehicle.brand} ${vehicle.model} - Garajım Raporu`,
+      title: t('shareModal.rapor_basligi', { vehicle: `${vehicle.brand} ${vehicle.model}` }),
       text: `${vehicle.brand} ${vehicle.model} (${vehicle.plate}) için detaylı bakım ve yakıt raporu`,
       url: shareUrl,
     })

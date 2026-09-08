@@ -10,18 +10,18 @@ import ConfirmDialog from './ConfirmDialog'
 const NOTIFICATION_TYPES = [
   { key: 'inspection', label: 'Muayene', description: 'Araç muayene tarihleri', hasThresholds: true },
   { key: 'mtv', label: 'MTV', description: 'Motorlu Taşıt Vergisi son ödeme', hasThresholds: true },
-  { key: 'insurance', label: 'Trafik Sigortası', description: 'Sigorta yenileme tarihleri', hasThresholds: true },
+  { key: 'insurance', label: 'notificationSettings.type.trafik_sigortasi', description: 'Sigorta yenileme tarihleri', hasThresholds: true },
   { key: 'kasko', label: 'Kasko', description: 'Kasko yenileme tarihleri', hasThresholds: true },
-  { key: 'maintenance', label: 'Bakım Önerileri', description: 'Yağ değişimi, balata vb.', hasThresholds: false },
-  { key: 'tireSeason', label: 'Lastik Mevsim Değişimi', description: 'Yazlık/kışlık geçiş uyarısı', hasThresholds: false },
+  { key: 'maintenance', label: 'notificationSettings.type.bakim_onerileri', description: 'Yağ değişimi, balata vb.', hasThresholds: false },
+  { key: 'tireSeason', label: 'notificationSettings.type.lastik_mevsim_degisimi', description: 'Yazlık/kışlık geçiş uyarısı', hasThresholds: false },
 ]
 
 const PRESET_THRESHOLDS = [
-  { value: [60, 30, 7, 1], label: '60-30-7-1 gün (Sık)' },
-  { value: [30, 7, 1], label: '30-7-1 gün (Önerilen)' },
-  { value: [14, 3], label: '14-3 gün (Az)' },
-  { value: [7], label: 'Sadece 7 gün' },
-  { value: [1], label: 'Sadece son gün' },
+  { value: [60, 30, 7, 1], label: 'notificationSettings.type.60_30_7_1_gun_sik' },
+  { value: [30, 7, 1], label: 'notificationSettings.type.30_7_1_gun_onerilen' },
+  { value: [14, 3], label: 'notificationSettings.type.14_3_gun_az' },
+  { value: [7], label: 'notificationSettings.type.sadece_7_gun' },
+  { value: [1], label: 'notificationSettings.type.sadece_son_gun' },
 ]
 
 export default function NotificationSettings() {
@@ -235,7 +235,7 @@ export default function NotificationSettings() {
                       <div className={`font-semibold text-sm ${
                         typeSettings.enabled ? 'text-white' : 'text-slate-400'
                       }`}>
-                        {type.label}
+                        {t(type.label)}
                       </div>
                       <div className="text-xs text-slate-500">
                         {type.description}
@@ -261,7 +261,7 @@ export default function NotificationSettings() {
                         const isActive = JSON.stringify(typeSettings.daysBefore) === JSON.stringify(preset.value)
                         return (
                           <button
-                            key={preset.label}
+                            key={t(preset.label)}
                             onClick={() => handleThresholdChange(type.key, preset.value)}
                             className={`text-[11px] px-2.5 py-1 rounded font-semibold transition border ${
                               isActive
@@ -269,7 +269,7 @@ export default function NotificationSettings() {
                                 : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
                             }`}
                           >
-                            {preset.label}
+                            {t(preset.label)}
                           </button>
                         )
                       })}

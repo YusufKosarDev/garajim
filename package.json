@@ -16,7 +16,8 @@
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
     "test:e2e": "cypress run",
-    "test:e2e:preview": "cypress run --config baseUrl=http://localhost:4173"
+    "test:e2e:preview": "cypress run --config baseUrl=http://localhost:4173",
+    "i18n:audit": "node scripts/i18n-audit.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

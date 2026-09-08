@@ -142,7 +142,7 @@ export default function CostPerKmTable({ vehicles = [], maintenanceRecords = [],
                   onClick={() => toggleSort('recordCount')}
                   className="flex items-center gap-1 hover:text-white transition ml-auto"
                 >
-                  Kayıt <SortIcon field="recordCount" sortBy={sortBy} sortDir={sortDir} />
+                  {t('stats.costPerKmTable.kayit')} <SortIcon field="recordCount" sortBy={sortBy} sortDir={sortDir} />
                 </button>
               </th>
             </tr>

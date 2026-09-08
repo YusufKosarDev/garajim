@@ -7,37 +7,37 @@ const steps = [
   {
     icon: Car,
     color: 'blue',
-    title: 'Araçlarını Ekle',
-    description: 'İlk olarak garajındaki araçları ekle. Plaka, marka, model ve opsiyonel olarak fotoğraf ekleyebilirsin.',
-    tip: '💡 Ne kadar araç eklersen o kadar kolay takip edersin',
+    title: 'welcomeTour.araclarini_ekle',
+    description: 'welcomeTour.ilk_olarak_garajindaki_araclari_ekle_plaka_mar',
+    tip: 'welcomeTour.ne_kadar_arac_eklersen_o_kadar_kolay_takip_ede',
   },
   {
     icon: Calendar,
     color: 'purple',
-    title: 'Önemli Tarihleri Gir',
-    description: 'Muayene, MTV, sigorta ve kasko tarihlerini ekle. Uygulama tarih yaklaşınca seni uyarır.',
-    tip: '🔴 Kırmızı = süresi geçmiş, 🟡 Sarı = 30 gün ve altı, 🟢 Yeşil = güvende',
+    title: 'welcomeTour.onemli_tarihleri_gir',
+    description: 'welcomeTour.muayene_mtv_sigorta_ve_kasko_tarihlerini_ekle',
+    tip: 'welcomeTour.kirmizi_suresi_gecmis_sari_30_gun_ve_alti_yesi',
   },
   {
     icon: Wrench,
     color: 'green',
-    title: 'Bakım Kayıtları',
-    description: 'Her yağ değişimi, filtre, lastik gibi bakımı kaydet. Harcamalarını ve geçmişini tek yerde gör.',
-    tip: '📄 İleride aracı satarken PDF rapor olarak alıcıya verebilirsin',
+    title: 'welcomeTour.bakim_kayitlari',
+    description: 'welcomeTour.her_yag_degisimi_filtre_lastik_gibi_bakimi_kay',
+    tip: 'welcomeTour.ileride_araci_satarken_pdf_rapor_olarak_aliciy',
   },
   {
     icon: Droplet,
     color: 'orange',
-    title: 'Yakıt Takibi',
-    description: 'Her yakıt alımını kaydet. Uygulama ortalama tüketimini hesaplar ve trend grafiği gösterir.',
-    tip: '⛽ Tam depo doldurunca "Depo dolu" seçeneğini işaretle',
+    title: 'welcomeTour.yakit_takibi',
+    description: 'welcomeTour.her_yakit_alimini_kaydet_uygulama_ortalama_tuk',
+    tip: 'welcomeTour.tam_depo_doldurunca_depo_dolu_secenegini_isare',
   },
   {
     icon: Bell,
     color: 'red',
-    title: 'Bildirimlere İzin Ver',
-    description: 'Sağ üstteki "Bildirimleri Aç" butonuyla tarayıcı bildirimlerine izin ver. Tarih yaklaşınca haber verelim.',
-    tip: '🔔 30, 15, 7, 1 gün kala ve bitince bildirim alırsın',
+    title: 'welcomeTour.bildirimlere_izin_ver',
+    description: 'welcomeTour.sag_ustteki_bildirimleri_ac_butonuyla_tarayici',
+    tip: 'welcomeTour.30_15_7_1_gun_kala_ve_bitince_bildirim_alirsin',
   },
 ]
 
@@ -105,12 +105,12 @@ export default function WelcomeTour({ isOpen, onClose }) {
                 <div className="text-xs text-slate-500 font-semibold mb-2">
                   ADIM {currentStep + 1} / {steps.length}
                 </div>
-                <h2 className="text-2xl font-bold mb-3">{step.title}</h2>
-                <p className="text-slate-300 leading-relaxed">{step.description}</p>
+                <h2 className="text-2xl font-bold mb-3">{t(step.title)}</h2>
+                <p className="text-slate-300 leading-relaxed">{t(step.description)}</p>
               </div>
 
               <div className={`${color.bg} ${color.border} border rounded-lg p-3 text-center text-sm text-slate-300 mb-6`}>
-                {step.tip}
+                {t(step.tip)}
               </div>
 
               {/* Progress Bar */}
@@ -143,13 +143,13 @@ export default function WelcomeTour({ isOpen, onClose }) {
                       onClick={handleFinish}
                       className="flex-1 bg-slate-800 hover:bg-slate-700 py-2.5 rounded-lg transition text-slate-400"
                     >
-                      Atla
+                      {t('welcomeTour.atla')}
                     </button>
                     <button
                       onClick={() => setCurrentStep(currentStep + 1)}
                       className={`flex-1 flex items-center justify-center gap-1 ${color.button} py-2.5 rounded-lg transition font-semibold`}
                     >
-                      İleri
+                      {t('welcomeTour.ileri')}
                       <ChevronRight className="w-4 h-4" />
                     </button>
                   </>
@@ -158,7 +158,7 @@ export default function WelcomeTour({ isOpen, onClose }) {
                     onClick={handleFinish}
                     className={`flex-1 ${color.button} py-2.5 rounded-lg transition font-semibold`}
                   >
-                    🚀 Başlayalım!
+                    {t('welcomeTour.baslayalim')}
                   </button>
                 )}
               </div>

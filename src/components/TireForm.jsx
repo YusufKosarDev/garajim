@@ -154,7 +154,7 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
                 } ${isEdit ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
               >
                 <div className="text-2xl mb-1" aria-hidden="true">{config.icon}</div>
-                <div className="text-sm font-bold">{config.label}</div>
+                <div className="text-sm font-bold">{t(config.label)}</div>
               </button>
             ))}
           </div>
@@ -218,7 +218,7 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
               {t('tireForm.lastik_detaylari')}
             </h3>
             <div className="text-[10px] text-slate-500">
-              DOT kodu: HHWW (ör. 3523 = 35. hafta 2023)
+              {t('tireForm.dot_kodu_hhww_or_3523_35_hafta_2023')}
             </div>
           </div>
 
@@ -238,14 +238,14 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
                       dotError || depthError ? 'border-red-500/50' : 'border-slate-700'
                     }`}
                   >
-                    <div className="text-xs font-semibold text-slate-400 mb-2">{pos.label}</div>
+                    <div className="text-xs font-semibold text-slate-400 mb-2">{t(pos.label)}</div>
                     <div className="space-y-2">
                       <div>
                         <input
                           type="text"
                           placeholder={t('tireForm.dot_3523')}
                           maxLength={4}
-                          aria-label={`${pos.label} DOT kodu`}
+                          aria-label={t('tireForm.pos_dot_kodu', { pos: t(pos.label) })}
                           className={`w-full bg-slate-800 border rounded px-2 py-1.5 text-xs focus:outline-none transition ${
                             dotError ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
                           }`}
@@ -265,7 +265,7 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
                           min="0"
                           max="15"
                           step="0.1"
-                          aria-label={`${pos.label} diş derinliği (mm)`}
+                          aria-label={t('tireForm.pos_dis_derinligi', { pos: t(pos.label) })}
                           className={`w-full bg-slate-800 border rounded px-2 py-1.5 text-xs focus:outline-none transition ${
                             depthError ? 'border-red-500' : 'border-slate-700 focus:border-blue-500'
                           }`}
@@ -325,7 +325,7 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
             <div className="flex items-start gap-2 text-xs text-slate-300">
               <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" aria-hidden="true" />
               <div>
-                <p><strong>{t('tireForm.dot_kodu')}</strong> Lastiğin yan yüzünde 4 haneli sayı (örn. 3523 = 2023'ün 35. haftası)</p>
+                <p><strong>{t('tireForm.dot_kodu')}</strong> {t('tireForm.lastigin_yan_yuzunde_4_haneli_sayi_orn_3523_20')}</p>
                 <p className="mt-1"><strong>{t('tireForm.dis_derinligi')}</strong> {t('tireForm.yasal_minimum_1_6mm_kis_icin')}</p>
               </div>
             </div>
@@ -346,7 +346,7 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
             onClick={onClose}
             className="flex-1 bg-slate-800 hover:bg-slate-700 py-2.5 rounded-lg font-semibold transition"
           >
-            İptal
+            {t('tireForm.iptal')}
           </button>
           <button
             type="submit"
@@ -359,7 +359,7 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
             {isEdit ? t('tireForm.guncelle') : (
               <>
                 <Plus className="w-4 h-4" />
-                {currentSeason.label} Set Ekle
+                {t('tireForm.set_ekle', { season: t(currentSeason.label) })}
               </>
             )}
           </button>

@@ -113,7 +113,7 @@ export default function StorageIndicator() {
 
       {isCritical && (
         <div className="mt-3 pt-3 border-t border-slate-800 text-xs text-slate-300">
-          <strong className="text-red-400">{t('storageIndicator.uyari')}</strong> Depolama alanı %90'ı geçti. Gerekirse eski verileri dışa aktarıp silebilirsin. Ayarlar &gt; Yedekleme'den yedek alabilirsin.
+          <strong className="text-red-400">{t('storageIndicator.uyari')}</strong> {t('storageIndicator.depolama_alani_90_i_gecti_gerekirse_eski_veril')}
         </div>
       )}
     </div>

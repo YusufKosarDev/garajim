@@ -119,14 +119,14 @@ export default function CommandPalette({ isOpen, onClose, onNewVehicle, onNewMai
         id: `fuel-${r.id}`,
         type: 'fuel',
         icon: Droplet,
-        title: `${r.liters} L yakıt${r.station ? ` — ${r.station}` : ''}`,
+        title: `${t('commandPalette.litre_yakit', { liters: r.liters })}${r.station ? ` — ${r.station}` : ''}`,
         subtitle: `${vehicle.brand} ${vehicle.model} • ${formatDateShort(r.date)} • ${r.totalCost.toLocaleString('tr-TR')} ₺`,
         action: () => navigate(`/vehicles/${vehicle.id}`),
         data: r,
         keywords: `${vehicle.brand} ${vehicle.model} ${vehicle.plate} ${r.station || ''} yakıt benzin`,
       }
     }).filter(Boolean)
-  }, [fuelRecords, vehicles, navigate])
+  }, [fuelRecords, vehicles, navigate, t])
 
   // Tüm aranabilir öğeler
   const allItems = useMemo(() => [

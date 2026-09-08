@@ -124,7 +124,7 @@ export default function NotificationPanel({ isOpen, onClose, anchorRef }) {
                     onClick={handleEnableBrowser}
                     className="text-[11px] bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded font-semibold transition"
                   >
-                    Bildirimleri Aç
+                    {t('notificationPanel.bildirimleri_ac')}
                   </button>
                 </div>
               </div>

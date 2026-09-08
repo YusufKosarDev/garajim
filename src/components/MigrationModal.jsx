@@ -154,7 +154,7 @@ export default function MigrationModal({
                 onClick={handleClose}
                 className="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-2.5 rounded-lg font-medium transition"
               >
-                İptal
+                {t('migrationModal.iptal')}
               </button>
               <button
                 onClick={handleStart}

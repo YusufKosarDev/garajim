@@ -147,9 +147,9 @@ export default function Dashboard({ globalActionsRef }) {
             </Link>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-10 text-left">
-              <FeatureCard icon="📅" title={t('dashboard.tarih_takibi')} desc="Muayene, MTV, sigorta, kasko" />
-              <FeatureCard icon="🔧" title={t('dashboard.bakim_yakit')} desc="Tüm harcamalar tek yerde" />
-              <FeatureCard icon="🔔" title={t('dashboard.akilli_bildirim')} desc="Tarih yaklaşınca haber verir" />
+              <FeatureCard icon="📅" title={t('dashboard.tarih_takibi')} desc={t('dashboard.muayene_mtv_sigorta_kasko')} />
+              <FeatureCard icon="🔧" title={t('dashboard.bakim_yakit')} desc={t('dashboard.tum_harcamalar_tek_yerde')} />
+              <FeatureCard icon="🔔" title={t('dashboard.akilli_bildirim')} desc={t('dashboard.tarih_yaklasinca_haber_verir')} />
             </div>
 
             <div className="mt-8 text-xs text-slate-500">
@@ -262,7 +262,7 @@ export default function Dashboard({ globalActionsRef }) {
                 to="/calendar"
                 className="text-xs text-blue-400 hover:text-blue-300 transition inline-flex items-center gap-1"
               >
-                Tam takvimi aç →
+                {t('dashboard.tam_takvimi_ac')}
               </Link>
             </div>
           </div>

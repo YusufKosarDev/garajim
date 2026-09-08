@@ -154,7 +154,7 @@ export default function ReceiptScanner({ photo, onApply }) {
               onClick={() => setResult(null)}
               className="flex-1 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold transition"
             >
-              Vazgeç
+              {t('receiptScanner.vazgec')}
             </button>
             {foundFields.length > 0 && (
               <button

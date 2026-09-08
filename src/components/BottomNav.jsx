@@ -1,18 +1,23 @@
+import { useMemo } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { LayoutDashboard, Car, Calendar, BarChart3, Settings as SettingsIcon, MapPin } from 'lucide-react'
 import { useNotifications } from '../context/notification-context'
 
-const navItems = [
-  { path: '/', icon: LayoutDashboard, label: 'Anasayfa', exact: true },
-  { path: '/vehicles', icon: Car, label: 'Araçlar' },
-  { path: '/calendar', icon: Calendar, label: 'Takvim' },
-  { path: '/nearby', icon: MapPin, label: 'Yakın' },
-  { path: '/statistics', icon: BarChart3, label: 'İstatistik' },
-  { path: '/settings', icon: SettingsIcon, label: 'Ayarlar' },
-]
-
 export default function BottomNav() {
+  const { t } = useTranslation()
   const location = useLocation()
+
+  // Dil değişince etiketler de değişmeli — bu yüzden dizi modül seviyesinde
+  // değil, bileşen içinde ve useMemo ile üretiliyor.
+  const navItems = useMemo(() => [
+    { path: '/', icon: LayoutDashboard, label: t('bottomNav.anasayfa'), exact: true },
+    { path: '/vehicles', icon: Car, label: t('bottomNav.araclar') },
+    { path: '/calendar', icon: Calendar, label: t('bottomNav.takvim') },
+    { path: '/nearby', icon: MapPin, label: t('bottomNav.yakin') },
+    { path: '/statistics', icon: BarChart3, label: t('bottomNav.istatistik') },
+    { path: '/settings', icon: SettingsIcon, label: t('bottomNav.ayarlar') },
+  ], [t])
   const { unreadCount } = useNotifications()
 
   // Bazı sayfalarda bottom nav'i gizle (örneğin araç detayında daha fazla alan istiyoruz)

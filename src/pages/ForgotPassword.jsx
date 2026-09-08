@@ -136,7 +136,7 @@ function ForgotPassword() {
                 }}
                 className="text-blue-400 hover:text-blue-300 text-sm font-medium transition"
               >
-                Tekrar gönder
+                {t('forgotPassword.tekrar_gonder')}
               </button>
             </div>
           )}

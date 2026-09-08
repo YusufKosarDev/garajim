@@ -28,8 +28,8 @@ import FuelConsumptionChart from '../components/charts/FuelConsumptionChart'
 const tabs = [
   { id: 'overview', label: 'Genel', icon: BarChart3 },
   { id: 'time', label: 'Zaman', icon: Calendar },
-  { id: 'vehicles', label: 'Araçlar', icon: Car },
-  { id: 'fuel', label: 'Yakıt', icon: Droplet },
+  { id: 'vehicles', label: 'statistics.tab.araclar', icon: Car },
+  { id: 'fuel', label: 'statistics.tab.yakit', icon: Droplet },
 ]
 
 export default function Statistics() {

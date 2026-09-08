@@ -1,3 +1,4 @@
+import i18n from '../i18n'
 import type { Vehicle, MaintenanceRecord, TireSet, TireChange, CustomIntervals } from '../types'
 
 export type NotificationKind = 'inspection' | 'mtv' | 'insurance' | 'kasko' | 'maintenance' | 'tire-season'
@@ -51,12 +52,12 @@ export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
 
 // Tür için config
 const TYPE_CONFIG: Record<string, { label: string; icon: string; urgentColor: string }> = {
-  inspection: { label: 'Muayene', icon: '📋', urgentColor: 'red' },
+  inspection: { label: 'notification.type.muayene', icon: '📋', urgentColor: 'red' },
   mtv: { label: 'MTV', icon: '💳', urgentColor: 'red' },
-  insurance: { label: 'Trafik Sigortası', icon: '🛡️', urgentColor: 'red' },
-  kasko: { label: 'Kasko', icon: '🛡️', urgentColor: 'orange' },
-  maintenance: { label: 'Bakım', icon: '🔧', urgentColor: 'blue' },
-  'tire-season': { label: 'Lastik Mevsimi', icon: '🛞', urgentColor: 'cyan' },
+  insurance: { label: 'notification.type.trafik_sigortasi', icon: '🛡️', urgentColor: 'red' },
+  kasko: { label: 'notification.type.kasko', icon: '🛡️', urgentColor: 'orange' },
+  maintenance: { label: 'notification.type.bakim', icon: '🔧', urgentColor: 'blue' },
+  'tire-season': { label: 'notification.type.lastik_mevsimi', icon: '🛞', urgentColor: 'cyan' },
 }
 
 // Önceliği belirle
@@ -78,10 +79,10 @@ const generateDateNotifications = (vehicles: Vehicle[], settings: NotificationSe
   const notifications: AppNotification[] = []
 
   const dateFields: { type: NotificationKind; field: keyof Vehicle; label: string }[] = [
-    { type: 'inspection', field: 'inspectionDate', label: 'Muayene' },
+    { type: 'inspection', field: 'inspectionDate', label: 'notification.type.muayene' },
     { type: 'mtv', field: 'mtvDate', label: 'MTV' },
-    { type: 'insurance', field: 'insuranceDate', label: 'Trafik Sigortası' },
-    { type: 'kasko', field: 'kaskoDate', label: 'Kasko' },
+    { type: 'insurance', field: 'insuranceDate', label: 'notification.type.trafik_sigortasi' },
+    { type: 'kasko', field: 'kaskoDate', label: 'notification.type.kasko' },
   ]
 
   vehicles.forEach((vehicle: Vehicle) => {
@@ -107,17 +108,17 @@ const generateDateNotifications = (vehicles: Vehicle[], settings: NotificationSe
 
       let title, message
       if (isExpired) {
-        title = `${label} süresi geçti!`
-        message = `${vehicleName} (${vehicle.plate}) — ${Math.abs(days)} gün önce`
+        title = i18n.t('notification.date.expired_title', { label: i18n.t(label) })
+        message = i18n.t('notification.date.expired_message', { vehicleName, plate: vehicle.plate, days: Math.abs(days) })
       } else if (days === 0) {
-        title = `${label} bugün!`
-        message = `${vehicleName} (${vehicle.plate}) için bugün son gün`
+        title = i18n.t('notification.date.today_title', { label: i18n.t(label) })
+        message = i18n.t('notification.date.today_message', { vehicleName, plate: vehicle.plate })
       } else if (days === 1) {
-        title = `${label} yarın!`
-        message = `${vehicleName} (${vehicle.plate}) için yarın son gün`
+        title = i18n.t('notification.date.tomorrow_title', { label: i18n.t(label) })
+        message = i18n.t('notification.date.tomorrow_message', { vehicleName, plate: vehicle.plate })
       } else {
-        title = `${label} yaklaşıyor`
-        message = `${vehicleName} (${vehicle.plate}) — ${days} gün kaldı`
+        title = i18n.t('notification.date.upcoming_title', { label: i18n.t(label) })
+        message = i18n.t('notification.date.upcoming_message', { vehicleName, plate: vehicle.plate, days })
       }
 
       notifications.push({
@@ -166,8 +167,8 @@ const generateMaintenanceNotifications = (
       type: 'maintenance',
       vehicleId: rec.vehicleId,
       maintenanceType: rec.type,
-      title: isOverdue ? `${rec.type} bakım zamanı geçti!` : `${rec.type} bakım zamanı yaklaşıyor`,
-      message: `${vehicleName} (${vehicle.plate}) — ${rec.message || 'Periyot dolmak üzere'}`,
+      title: isOverdue ? i18n.t('notification.maintenance.overdue_title', { type: rec.type }) : i18n.t('notification.maintenance.upcoming_title', { type: rec.type }),
+      message: i18n.t('notification.maintenance.message', { vehicleName, plate: vehicle.plate, detail: rec.message || i18n.t('notification.maintenance.interval_due') }),
       date: new Date().toISOString(),
       priority: isOverdue ? 'critical' : 'high',
       actionUrl: `/vehicles/${rec.vehicleId}`,
@@ -213,8 +214,8 @@ const generateTireSeasonNotifications = (
         id: `tire-season-${vehicle.id}-${suggestion.target}`,
         type: 'tire-season',
         vehicleId: vehicle.id,
-        title: 'Lastik mevsim değişimi',
-        message: `${vehicleName} — ${suggestion.message}`,
+        title: i18n.t('notification.tire.season_title'),
+        message: i18n.t('notification.tire.season_message', { vehicleName, detail: suggestion.message }),
         date: new Date().toISOString(),
         priority: suggestion.urgent ? 'high' : 'medium',
         actionUrl: `/vehicles/${vehicle.id}`,

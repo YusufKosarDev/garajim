@@ -1,8 +1,11 @@
+import { useTranslation } from 'react-i18next'
 import { Droplet, TrendingUp, DollarSign, Gauge } from 'lucide-react'
 import { useMemo } from 'react'
 import { getAverageConsumption, getAveragePrice, getTotalFuelCost } from '../../utils/fuelHelpers'
 
 export default function FuelSummaryCards({ fuelRecords = [] }) {
+  const { t } = useTranslation()
+
   const stats = useMemo(() => {
     const totalCost = getTotalFuelCost(fuelRecords)
     const totalLiters = fuelRecords.reduce((sum, r) => sum + (Number(r.liters) || 0), 0)
@@ -41,7 +44,7 @@ export default function FuelSummaryCards({ fuelRecords = [] }) {
       color: 'blue',
     },
     {
-      label: 'Ort. Tüketim',
+      label: 'stats.fuelSummaryCards.ort_tuketim',
       value: stats.avgConsumption ? `${stats.avgConsumption.toFixed(1)}` : '—',
       sub: stats.avgConsumption ? 'L/100km' : 'Veri yetersiz',
       icon: Gauge,
@@ -63,7 +66,7 @@ export default function FuelSummaryCards({ fuelRecords = [] }) {
           <card.icon className="w-5 h-5 mb-2" />
           <div className="text-xl font-bold text-white">{card.value}</div>
           <div className="text-[10px] uppercase tracking-wide font-semibold opacity-80 mt-0.5">
-            {card.label}
+            {t(card.label)}
           </div>
           <div className="text-xs text-slate-500 mt-1 truncate" title={card.sub}>
             {card.sub}

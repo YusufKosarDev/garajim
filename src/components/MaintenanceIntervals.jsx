@@ -134,7 +134,7 @@ export default function MaintenanceIntervals() {
           htmlFor="interval-vehicle"
           className="block text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1"
         >
-          Araç
+          {t('maintenanceIntervals.arac')}
         </label>
         <div className="relative">
           <Car className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />

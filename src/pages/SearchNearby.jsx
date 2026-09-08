@@ -47,7 +47,7 @@ const ICONS = {
 
 const CATEGORIES = {
   fuel: {
-    label: 'Yakıt İstasyonu',
+    label: 'searchNearby.category.yakit_istasyonu',
     icon: Fuel,
     bgClass: 'bg-green-500/10 border-green-500/30',
     textClass: 'text-green-400',
@@ -59,7 +59,7 @@ const CATEGORIES = {
     textClass: 'text-orange-400',
   },
   tire: {
-    label: 'Lastikçi',
+    label: 'searchNearby.category.lastikci',
     icon: CircleDot,
     bgClass: 'bg-purple-500/10 border-purple-500/30',
     textClass: 'text-purple-400',

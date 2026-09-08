@@ -12,9 +12,9 @@ import {
 } from '../../utils/csvExporter'
 
 const dateRanges = [
-  { id: 'all', label: 'Tümü' },
+  { id: 'all', label: 'stats.exportDataModal.option.tumu' },
   { id: 'last12', label: 'Son 12 Ay' },
-  { id: 'year', label: 'Bu Yıl' },
+  { id: 'year', label: 'stats.exportDataModal.option.bu_yil' },
   { id: 'quarter', label: 'Son 3 Ay' },
   { id: 'month', label: 'Bu Ay' },
 ]
@@ -29,21 +29,21 @@ const exportTypes = [
   },
   {
     id: 'vehicles',
-    label: 'Sadece Araçlar',
+    label: 'stats.exportDataModal.option.sadece_araclar',
     description: 'Araç bilgileri ve tarihler',
     icon: Car,
     color: 'purple',
   },
   {
     id: 'maintenance',
-    label: 'Sadece Bakımlar',
+    label: 'stats.exportDataModal.option.sadece_bakimlar',
     description: 'Tüm bakım kayıtları',
     icon: Wrench,
     color: 'orange',
   },
   {
     id: 'fuel',
-    label: 'Sadece Yakıt',
+    label: 'stats.exportDataModal.option.sadece_yakit',
     description: 'Tüm yakıt alımları',
     icon: Droplet,
     color: 'green',
@@ -220,7 +220,7 @@ export default function ExportDataModal({ isOpen, onClose, vehicles, maintenance
             disabled={isExporting}
             className="flex-1 bg-slate-800 hover:bg-slate-700 py-2.5 rounded-lg font-semibold transition disabled:opacity-50"
           >
-            İptal
+            {t('stats.exportDataModal.iptal')}
           </button>
           <button
             onClick={handleExport}

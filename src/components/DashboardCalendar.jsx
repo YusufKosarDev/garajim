@@ -104,7 +104,7 @@ function DashboardCalendar({ events = [] }) {
             className="px-3 py-1 text-xs bg-slate-800 hover:bg-slate-700 rounded-lg transition"
             title={t('dashboardCalendar.bugune_don')}
           >
-            Bugün
+            {t('dashboardCalendar.bugun')}
           </button>
           <button
             onClick={nextMonth}

@@ -21,7 +21,7 @@ const shortcutGroups = [
     ],
   },
   {
-    title: 'Hızlı Ekleme',
+    title: 'keyboardShortcutsModal.hizli_ekleme',
     shortcuts: [
       { keys: ['N', 'V'], description: 'Yeni araç' },
       { keys: ['N', 'M'], description: 'Yeni bakım (araç detayında)' },
@@ -56,9 +56,9 @@ export default function KeyboardShortcutsModal({ isOpen, onClose }) {
 
         <div className="space-y-5">
           {shortcutGroups.map((group) => (
-            <div key={group.title}>
+            <div key={t(group.title)}>
               <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">
-                {group.title}
+                {t(group.title)}
               </h3>
               <div className="space-y-1">
                 {group.shortcuts.map((shortcut, i) => {

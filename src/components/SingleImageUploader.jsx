@@ -109,7 +109,7 @@ export default function SingleImageUploader({
                   disabled={isUploading}
                   className="text-[11px] text-blue-400 hover:text-blue-300 transition"
                 >
-                  Değiştir
+                  {t('singleImageUploader.degistir')}
                 </button>
                 <span className="text-slate-600">|</span>
                 <button
@@ -117,7 +117,7 @@ export default function SingleImageUploader({
                   onClick={handleRemove}
                   className="text-[11px] text-red-400 hover:text-red-300 transition"
                 >
-                  Kaldır
+                  {t('singleImageUploader.kaldir')}
                 </button>
               </div>
             </div>

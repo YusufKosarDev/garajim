@@ -44,7 +44,7 @@ export default function TireCard({ tireSet, isActive = false, onEdit, onDelete }
             <div>
               <div className="flex items-center gap-2">
                 <h3 className={`text-lg font-bold ${colors.text}`}>
-                  {season.label}
+                  {t(season.label)}
                 </h3>
                 {isActive && (
                   <span className="flex items-center gap-1 text-[10px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full font-semibold">

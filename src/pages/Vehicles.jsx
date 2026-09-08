@@ -15,14 +15,14 @@ import SortDropdown from '../components/SortDropdown'
 import VehicleGridSkeleton from '../components/skeletons/VehicleGridSkeleton'
 
 const sortOptions = [
-  { value: 'newest', label: 'En Yeni Eklenen' },
-  { value: 'oldest', label: 'En Eski Eklenen' },
-  { value: 'brand', label: 'Markaya Göre (A-Z)' },
-  { value: 'year-desc', label: 'Yıla Göre (Yeni)' },
-  { value: 'year-asc', label: 'Yıla Göre (Eski)' },
-  { value: 'km-desc', label: 'KM (Çok → Az)' },
-  { value: 'km-asc', label: 'KM (Az → Çok)' },
-  { value: 'urgent', label: 'Acil Tarihe Göre' },
+  { value: 'newest', label: 'vehicles.sort.en_yeni_eklenen' },
+  { value: 'oldest', label: 'vehicles.sort.en_eski_eklenen' },
+  { value: 'brand', label: 'vehicles.sort.markaya_gore_a_z' },
+  { value: 'year-desc', label: 'vehicles.sort.yila_gore_yeni' },
+  { value: 'year-asc', label: 'vehicles.sort.yila_gore_eski' },
+  { value: 'km-desc', label: 'vehicles.sort.km_cok_az' },
+  { value: 'km-asc', label: 'vehicles.sort.km_az_cok' },
+  { value: 'urgent', label: 'vehicles.sort.acil_tarihe_gore' },
 ]
 
 export default function Vehicles({ globalActionsRef }) {
@@ -187,7 +187,7 @@ export default function Vehicles({ globalActionsRef }) {
                 onClick={() => setSearchQuery('')}
                 className="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 px-5 py-2 rounded-lg font-semibold transition"
               >
-                Aramayı Temizle
+                {t('vehicles.aramayi_temizle')}
               </button>
             }
           />

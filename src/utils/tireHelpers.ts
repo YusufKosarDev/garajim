@@ -2,18 +2,18 @@ import type { Tire, TireSet, TireChange, Season, TireStatus } from '../types'
 
 // Pozisyon etiketleri
 export const TIRE_POSITIONS = [
-  { code: 'FL', label: 'Ön Sol', short: 'Ö-S' },
-  { code: 'FR', label: 'Ön Sağ', short: 'Ö-Sa' },
-  { code: 'RL', label: 'Arka Sol', short: 'A-S' },
-  { code: 'RR', label: 'Arka Sağ', short: 'A-Sa' },
-  { code: 'S', label: 'Stepney', short: 'Stp' },
+  { code: 'FL', label: 'tire.position.on_sol', short: 'Ö-S' },
+  { code: 'FR', label: 'tire.position.on_sag', short: 'Ö-Sa' },
+  { code: 'RL', label: 'tire.position.arka_sol', short: 'A-S' },
+  { code: 'RR', label: 'tire.position.arka_sag', short: 'A-Sa' },
+  { code: 'S', label: 'tire.position.stepney', short: 'Stp' },
 ]
 
 // Sezon bilgileri
 export const SEASONS = {
-  summer: { label: 'Yazlık', icon: '☀️', color: 'yellow' },
-  winter: { label: 'Kışlık', icon: '❄️', color: 'cyan' },
-  'all-season': { label: '4 Mevsim', icon: '🌤️', color: 'purple' },
+  summer: { label: 'tire.season.yazlik', icon: '☀️', color: 'yellow' },
+  winter: { label: 'tire.season.kislik', icon: '❄️', color: 'cyan' },
+  'all-season': { label: 'tire.season.4_mevsim', icon: '🌤️', color: 'purple' },
 }
 
 // DOT kodundan lastik yaşını hesapla

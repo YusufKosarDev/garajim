@@ -24,8 +24,8 @@ const eventTypeConfig = {
   mtv: { label: 'MTV', icon: Receipt, color: 'purple', dot: 'bg-purple-400', text: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/30' },
   insurance: { label: 'Sigorta', icon: Shield, color: 'cyan', dot: 'bg-cyan-400', text: 'text-cyan-400', bg: 'bg-cyan-500/10', border: 'border-cyan-500/30' },
   kasko: { label: 'Kasko', icon: Shield, color: 'indigo', dot: 'bg-indigo-400', text: 'text-indigo-400', bg: 'bg-indigo-500/10', border: 'border-indigo-500/30' },
-  maintenance: { label: 'Bakım', icon: Wrench, color: 'orange', dot: 'bg-orange-400', text: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/30' },
-  fuel: { label: 'Yakıt', icon: Droplet, color: 'green', dot: 'bg-green-400', text: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/30' },
+  maintenance: { label: 'calendar.filter.bakim', icon: Wrench, color: 'orange', dot: 'bg-orange-400', text: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/30' },
+  fuel: { label: 'calendar.filter.yakit', icon: Droplet, color: 'green', dot: 'bg-green-400', text: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/30' },
 }
 
 export default function Calendar() {
@@ -199,14 +199,14 @@ export default function Calendar() {
                 onClick={() => toggleAll(true)}
                 className="text-xs text-slate-400 hover:text-white transition"
               >
-                Tümünü Aç
+                {t('calendar.tumunu_ac')}
               </button>
               <span className="text-slate-600">|</span>
               <button
                 onClick={() => toggleAll(false)}
                 className="text-xs text-slate-400 hover:text-white transition"
               >
-                Tümünü Kapat
+                {t('calendar.tumunu_kapat')}
               </button>
             </div>
           </div>
@@ -246,7 +246,7 @@ export default function Calendar() {
                 to="/vehicles"
                 className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-5 py-2 rounded-lg font-semibold transition"
               >
-                İlk Aracını Ekle
+                {t('calendar.ilk_aracini_ekle')}
               </Link>
             }
           />
@@ -270,7 +270,7 @@ export default function Calendar() {
                     onClick={goToToday}
                     className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition text-sm font-semibold"
                   >
-                    Bugün
+                    {t('calendar.bugun')}
                   </button>
                   <button
                     onClick={nextMonth}

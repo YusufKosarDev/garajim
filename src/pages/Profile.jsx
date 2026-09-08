@@ -588,7 +588,7 @@ export default function Profile() {
                 disabled={deleteLoading}
                 className="flex-1 bg-slate-800 hover:bg-slate-700 text-white px-5 py-2.5 rounded-lg font-semibold transition disabled:opacity-50"
               >
-                İptal
+                {t('profile.iptal')}
               </button>
               <button
                 onClick={handleDeleteAccount}

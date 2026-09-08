@@ -147,7 +147,7 @@ function Register() {
                 to="/login"
                 className="inline-block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition shadow-lg shadow-blue-600/30"
               >
-                Giriş Sayfasına Git
+                {t('register.giris_sayfasina_git')}
               </Link>
 
               <button
@@ -160,7 +160,7 @@ function Register() {
                 }}
                 className="mt-3 text-sm text-slate-400 hover:text-white transition"
               >
-                Farklı bir email ile kayıt ol
+                {t('register.farkli_bir_email_ile_kayit_ol')}
               </button>
             </div>
           </div>
@@ -324,12 +324,12 @@ function Register() {
           {/* Login Link */}
           <div className="mt-6 text-center">
             <p className="text-sm text-slate-400">
-              Hesabın var mı?{' '}
+              {t('register.hesabin_var_mi')}{' '}
               <Link
                 to="/login"
                 className="text-blue-400 hover:text-blue-300 font-medium transition"
               >
-                Giriş Yap
+                {t('register.giris_yap')}
               </Link>
             </p>
           </div>

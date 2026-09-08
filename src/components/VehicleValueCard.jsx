@@ -26,9 +26,9 @@ const fiyatOku = (vehicleId) => {
 }
 
 const CONFIDENCE_LABELS = {
-  high: { label: 'Yüksek', className: 'text-green-400' },
-  medium: { label: 'Orta', className: 'text-yellow-400' },
-  low: { label: 'Düşük', className: 'text-red-400' },
+  high: { label: 'vehicleValueCard.confidence.yuksek', className: 'text-green-400' },
+  medium: { label: 'vehicleValueCard.confidence.orta', className: 'text-yellow-400' },
+  low: { label: 'vehicleValueCard.confidence.dusuk', className: 'text-red-400' },
 }
 
 const yuzde = (oran) => `${oran >= 0 ? '+' : ''}${(oran * 100).toFixed(1)}%`
@@ -82,7 +82,7 @@ export default function VehicleValueCard({ vehicle, maintenanceRecords = [] }) {
   const componentRows = [
     {
       ikon: CalendarClock,
-      label: `Yaş (${estimate.age} yıl)`,
+      label: t('vehicleValueCard.yas_yil', { years: estimate.age }),
       value: `${Math.round(estimate.components.age * 100)}% kalır`,
       renk: 'text-slate-300',
     },
@@ -110,7 +110,7 @@ export default function VehicleValueCard({ vehicle, maintenanceRecords = [] }) {
           {t('vehicleValueCard.deger_tahmini')}
         </h3>
         <span className="text-xs text-slate-500">
-          {t('vehicleValueCard.guven')} <strong className={confidence.className}>{confidence.label}</strong>
+          {t('vehicleValueCard.guven')} <strong className={confidence.className}>{t(confidence.label)}</strong>
         </span>
       </div>
 
@@ -171,8 +171,7 @@ export default function VehicleValueCard({ vehicle, maintenanceRecords = [] }) {
 
       {/* Kapsam sınırı gizlenmiyor */}
       <p className="text-[11px] text-slate-500 mt-3 leading-relaxed">
-        Kaba bir tahmindir; piyasa ilanlarına bakmaz. Hasar kaydı, donanım paketi,
-        renk ve bölge farkı hesaba katılmaz. Satış kararı için ekspertiz yerine geçmez.
+        {t('vehicleValueCard.kaba_bir_tahmindir_piyasa_ilanlarina_bakmaz')}
       </p>
     </div>
   )

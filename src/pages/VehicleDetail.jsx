@@ -30,12 +30,12 @@ import ShareModal from '../components/ShareModal'
 const ITEMS_PER_PAGE = 20
 
 const maintenanceSortOptions = [
-  { value: 'date-desc', label: 'En Yeni Bakım' },
-  { value: 'date-asc', label: 'En Eski Bakım' },
-  { value: 'cost-desc', label: 'En Pahalı' },
-  { value: 'cost-asc', label: 'En Ucuz' },
-  { value: 'km-desc', label: 'KM (Çok → Az)' },
-  { value: 'type', label: 'Bakım Türüne Göre' },
+  { value: 'date-desc', label: 'vehicleDetail.sort.en_yeni_bakim' },
+  { value: 'date-asc', label: 'vehicleDetail.sort.en_eski_bakim' },
+  { value: 'cost-desc', label: 'vehicleDetail.sort.en_pahali' },
+  { value: 'cost-asc', label: 'vehicleDetail.sort.en_ucuz' },
+  { value: 'km-desc', label: 'vehicleDetail.sort.km_cok_az' },
+  { value: 'type', label: 'vehicleDetail.sort.bakim_turune_gore' },
 ]
 
 export default function VehicleDetail({ globalActionsRef }) {
