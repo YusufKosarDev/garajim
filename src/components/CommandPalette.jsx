@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Car, Wrench, Droplet, LayoutDashboard, Calendar, BarChart3, Settings, Plus, Download, FileDown, Clock, ArrowRight, Command, X } from 'lucide-react'
-import { useVehicles } from '../context/VehicleContext'
+import { useVehicles } from '../context/vehicle-context'
 import { multiFieldSearch } from '../utils/fuzzySearch'
 import { formatDateShort } from '../utils/dateHelpers'
 

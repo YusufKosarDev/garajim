@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Plus, ArrowLeftRight, Sun, Snowflake, Info, AlertTriangle } from 'lucide-react'
-import { useVehicles } from '../context/VehicleContext'
+import { useVehicles } from '../context/vehicle-context'
 import {
   SEASONS,
   getActiveTireSet,

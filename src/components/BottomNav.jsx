@@ -1,6 +1,6 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { LayoutDashboard, Car, Calendar, BarChart3, Settings as SettingsIcon, MapPin } from 'lucide-react'
-import { useNotifications } from '../context/NotificationContext'
+import { useNotifications } from '../context/notification-context'
 
 const navItems = [
   { path: '/', icon: LayoutDashboard, label: 'Anasayfa', exact: true },

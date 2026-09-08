@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Settings2, RotateCcw, Check, X, Car } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { useVehicles } from '../context/VehicleContext'
+import { useVehicles } from '../context/vehicle-context'
 import {
   DEFAULT_INTERVALS,
   buildIntervalKey,

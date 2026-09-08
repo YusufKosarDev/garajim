@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { WifiOff, Wifi, Clock } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { usePWA } from '../hooks/usePWA'
-import { useVehicles } from '../context/VehicleContext'
+import { useVehicles } from '../context/vehicle-context'
 
 export default function OfflineIndicator() {
   const { t } = useTranslation()

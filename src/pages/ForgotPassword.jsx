@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/auth-context'
 import toast from 'react-hot-toast'
 import { Car, Mail, ArrowLeft, Send, CheckCircle2 } from 'lucide-react'
 

@@ -6,7 +6,7 @@ import {
   Crown, Clock, Send, Copy, Check
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/auth-context'
 import ConfirmDialog from './ConfirmDialog'
 
 /**

@@ -1,6 +1,6 @@
 import { Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/auth-context'
 
 /**
  * PublicOnlyRoute - Sadece giriş yapmamış kullanıcıların erişebileceği sayfaları sarar.

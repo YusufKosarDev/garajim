@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { BarChart3, Calendar, Car, Droplet, FileDown } from 'lucide-react'
-import { useVehicles } from '../context/VehicleContext'
+import { useVehicles } from '../context/vehicle-context'
 import { usePageTitle } from '../hooks/usePageTitle'
 import PageTransition from '../components/PageTransition'
 import EmptyState from '../components/EmptyState'

@@ -25,12 +25,15 @@ const h = vi.hoisted(() => {
 vi.mock('../lib/supabase', () => ({
   get supabase() { return h.sb.client },
 }))
-vi.mock('./AuthContext', () => ({ useAuth: () => h.auth }))
+vi.mock('./auth-context', () => ({ useAuth: () => h.auth }))
 vi.mock('react-hot-toast', () => ({ default: h.toast }))
 vi.mock('../lib/storageHelpers', () => h.storage)
 
-// Mock'lardan SONRA import edilmeli
-const { VehicleProvider, useVehicles } = await import('./VehicleContext')
+// Mock'lardan SONRA import edilmeli.
+// Sağlayıcı ve hook artık ayrı modüllerde (bkz. vehicle-context.ts) — Fast
+// Refresh'in çalışması için bileşen olmayan export'lar dışarı taşındı.
+const { VehicleProvider } = await import('./VehicleContext')
+const { useVehicles } = await import('./vehicle-context')
 const { vehicleQueue: kuyruk } = await import('../lib/vehicleQueue')
 
 // ---------------------------------------------------------------------------

@@ -6,7 +6,7 @@ const addMaintenance = vi.fn()
 const updateMaintenance = vi.fn()
 let mockCtx
 
-vi.mock('../context/VehicleContext', () => ({ useVehicles: () => mockCtx }))
+vi.mock('../context/vehicle-context', () => ({ useVehicles: () => mockCtx }))
 vi.mock('react-hot-toast', () => ({ default: { error: vi.fn(), success: vi.fn() } }))
 
 const ARAC = { id: 'v1', brand: 'BMW', model: '320i', plate: '34 ABC 1234', currentKm: 100000 }

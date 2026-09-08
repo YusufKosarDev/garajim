@@ -1,22 +1,8 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { AuthContext } from './auth-context'
 import type { Session, User } from '@supabase/supabase-js'
 import type { ReactNode } from 'react'
-
-export interface AuthContextDegeri {
-  user: User | null
-  session: Session | null
-  loading: boolean
-  signUp: (email: string, password: string) => Promise<{ data: unknown; error: unknown }>
-  signIn: (email: string, password: string) => Promise<{ data: unknown; error: unknown }>
-  signInWithGoogle: () => Promise<{ data: unknown; error: unknown }>
-  signOut: () => Promise<{ error: unknown }>
-  resetPassword: (email: string) => Promise<{ data: unknown; error: unknown }>
-  isAuthenticated: boolean
-}
-
-// Context oluştur
-const AuthContext = createContext<AuthContextDegeri | null>(null)
 
 /**
  * AuthProvider - Tüm uygulamayı sarar, auth state'ini sağlar.
@@ -118,18 +104,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       {children}
     </AuthContext.Provider>
   )
-}
-
-/**
- * useAuth - Auth Context'i kullanmak için hook.
- *
- * Kullanım:
- *   const { user, signIn, signOut } = useAuth()
- */
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (context === null) {
-    throw new Error('useAuth, AuthProvider içinde kullanılmalı!')
-  }
-  return context
 }

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { NavLink, Link, useNavigate } from 'react-router-dom'
 import { LayoutDashboard, Car, BarChart3, Settings, Calendar, Search, User, LogOut, ChevronDown, MapPin } from 'lucide-react'
 import NotificationButton from './NotificationButton'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/auth-context'
 import toast from 'react-hot-toast'
 
 export default function Navbar({ onOpenCommandPalette }) {

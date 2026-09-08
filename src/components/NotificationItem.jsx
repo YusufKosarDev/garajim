@@ -50,23 +50,11 @@ export default function NotificationItem({ notification, onDismiss, onMarkRead, 
     if (onClose) onClose()
   }
 
-  const Wrapper = ({ children }) => {
-    if (notification.actionUrl) {
-      return (
-        <Link
-          to={notification.actionUrl}
-          onClick={handleClick}
-          className="block"
-        >
-          {children}
-        </Link>
-      )
-    }
-    return <div onClick={handleClick}>{children}</div>
-  }
-
-  return (
-    <Wrapper>
+  // Sarmalayıcı bir BİLEŞEN değil, düz JSX + koşullu return.
+  // Render sırasında bileşen tanımlamak her render'da yeni bir tip üretir;
+  // React o zaman alt ağacı yeniden mount eder — bildirim listesinde bu,
+  // her güncellemede tüm satırların sıfırdan kurulması demekti.
+  const icerik = (
       <div className={`relative group transition ${
         isUnread ? colors.bg : 'hover:bg-slate-800/50'
       } ${isStale ? 'opacity-60' : ''}`}>
@@ -123,6 +111,15 @@ export default function NotificationItem({ notification, onDismiss, onMarkRead, 
           </div>
         </div>
       </div>
-    </Wrapper>
   )
+
+  if (notification.actionUrl) {
+    return (
+      <Link to={notification.actionUrl} onClick={handleClick} className="block">
+        {icerik}
+      </Link>
+    )
+  }
+
+  return <div onClick={handleClick}>{icerik}</div>
 }

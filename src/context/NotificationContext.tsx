@@ -1,21 +1,14 @@
-import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import type { ReactNode } from 'react'
 import type { Bildirim, BildirimAyarlari, TurAyari } from '../utils/notificationManager'
-import { useVehicles } from './VehicleContext'
+import { NotificationContext } from './notification-context'
+import { useVehicles } from './vehicle-context'
 import {
   DEFAULT_NOTIFICATION_SETTINGS,
   generateAllNotifications,
   mergeNotifications,
   sendBrowserNotification,
 } from '../utils/notificationManager'
-
-const NotificationContext = createContext<Record<string, unknown> | null>(null)
-
-export const useNotifications = () => {
-  const ctx = useContext(NotificationContext)
-  if (!ctx) throw new Error('useNotifications must be used within NotificationProvider')
-  return ctx
-}
 
 const STORAGE_KEY = 'garajim_notifications'
 const SETTINGS_KEY = 'garajim_notification_settings'

@@ -45,19 +45,22 @@ export default function Modal({
 }) {
   const { t } = useTranslation()
 
-  const modalIdRef = useRef(`modal-${Date.now()}-${Math.random()}`)
   const modalRef = useRef(null)
   const previousFocusRef = useRef(null)
 
-  // Başlık id'si modal'a özel olmalı: sabit "modal-title" kullanılınca iç içe
+  // Modal'a özel, kararlı kimlik. Eskiden `useRef(Date.now() + Math.random())`
+  // ile üretiliyordu: ikisi de render sırasında çağrılmaması gereken saf
+  // olmayan fonksiyonlar ve aşağıdaki z-index hesabı bu ref'i render sırasında
+  // okuyordu. useId ikisini de çözüyor — React'in kendi ürettiği, örnek başına
+  // benzersiz ve render'lar arasında değişmeyen bir kimlik.
+  //
+  // Başlık id'si de buradan türüyor: sabit "modal-title" kullanılınca iç içe
   // iki modal açıkken DOM'da aynı id iki kez oluşuyor ve etiketleme bozuluyor.
-  // useId kullanıyoruz — ref'i render sırasında okumak React kuralına aykırı.
-  const titleId = `${useId()}-baslik`
+  const modalId = useId()
+  const titleId = `${modalId}-baslik`
 
   // Modal açıldığında stack'e ekle, kapandığında çıkar
   useEffect(() => {
-    const modalId = modalIdRef.current
-
     if (isOpen) {
       addToStack(modalId)
       // Açılmadan önceki focus elementini kaydet
@@ -73,7 +76,7 @@ export default function Modal({
         }
       }
     }
-  }, [isOpen])
+  }, [isOpen, modalId])
 
   // Açılışta odağı modal'a al — yoksa odak body'de kalıyor, ekran okuyucu
   // diyaloğu duyurmuyor ve ilk Tab kullanıcıyı modalın dışına çıkarabiliyor.
@@ -91,7 +94,7 @@ export default function Modal({
     if (!isOpen || !closeOnEsc) return
 
     const handleEsc = (e) => {
-      if (e.key === 'Escape' && isTopModal(modalIdRef.current)) {
+      if (e.key === 'Escape' && isTopModal(modalId)) {
         e.stopPropagation()
         onClose()
       }
@@ -99,7 +102,7 @@ export default function Modal({
 
     window.addEventListener('keydown', handleEsc)
     return () => window.removeEventListener('keydown', handleEsc)
-  }, [isOpen, closeOnEsc, onClose])
+  }, [isOpen, closeOnEsc, onClose, modalId])
 
   // Focus trap — Tab tuşu modal içinde dolaşsın
   useEffect(() => {
@@ -108,7 +111,7 @@ export default function Modal({
     const handleTab = (e) => {
       if (e.key !== 'Tab') return
       if (!modalRef.current) return
-      if (!isTopModal(modalIdRef.current)) return
+      if (!isTopModal(modalId)) return
 
       const focusableElements = modalRef.current.querySelectorAll(
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
@@ -137,7 +140,7 @@ export default function Modal({
 
     window.addEventListener('keydown', handleTab)
     return () => window.removeEventListener('keydown', handleTab)
-  }, [isOpen])
+  }, [isOpen, modalId])
 
   // Backdrop tıklama — sadece backdrop'a tıklanırsa kapansın (içerik değil)
   const handleBackdropClick = (e) => {
@@ -147,7 +150,7 @@ export default function Modal({
   }
 
   // Stack'teki sıraya göre z-index hesapla (her modal 10 artar)
-  const zIndexBase = 50 + (modalStack.indexOf(modalIdRef.current) * 10)
+  const zIndexBase = 50 + (modalStack.indexOf(modalId) * 10)
 
   return createPortal(
     <AnimatePresence>

@@ -1,9 +1,10 @@
-import { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from 'react'
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import i18n from '../i18n'
 import { useQueries, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
-import { useAuth } from './AuthContext'
+import { useAuth } from './auth-context'
+import { VehicleContext, vehicleQueryKeys } from './vehicle-context'
 import {
   vehicleFromDb,
   vehicleToDb,
@@ -41,51 +42,8 @@ import type {
 
 type Kayit = Vehicle | MaintenanceRecord | FuelRecord | TireSet | TireChange
 
-export interface VehicleContextDegeri {
-  vehicles: Vehicle[]
-  maintenanceRecords: MaintenanceRecord[]
-  fuelRecords: FuelRecord[]
-  tireSets: TireSet[]
-  tireChanges: TireChange[]
-  customIntervals: CustomIntervals
-  isLoaded: boolean
-  /** Çevrimdışıyken kuyruğa alınmış, henüz gönderilmemiş kayıt sayısı */
-  bekleyenSayisi: number
-  addVehicle: (vehicle: Partial<Vehicle>) => Promise<Vehicle | null>
-  updateVehicle: (id: string, updates: Partial<Vehicle>) => Promise<void>
-  deleteVehicle: (id: string) => Promise<void>
-  addMaintenance: (record: Partial<MaintenanceRecord>) => Promise<MaintenanceRecord | null>
-  updateMaintenance: (id: string, updates: Partial<MaintenanceRecord>) => Promise<void>
-  deleteMaintenance: (id: string) => Promise<void>
-  addFuel: (record: Partial<FuelRecord>) => Promise<FuelRecord | null>
-  updateFuel: (id: string, updates: Partial<FuelRecord>) => Promise<void>
-  deleteFuel: (id: string) => Promise<void>
-  addTireSet: (tireSet: Partial<TireSet>) => Promise<TireSet | null>
-  updateTireSet: (id: string, updates: Partial<TireSet>) => Promise<void>
-  deleteTireSet: (id: string) => Promise<void>
-  addTireChange: (change: Partial<TireChange>) => Promise<TireChange | null>
-  updateTireChange: (id: string, updates: Partial<TireChange>) => Promise<void>
-  deleteTireChange: (id: string) => Promise<void>
-  updateCustomIntervals: (intervals: CustomIntervals) => Promise<void>
-  clearAllData: () => Promise<void>
-}
-
 /** useState setter'larıyla aynı imza: doğrudan değer ya da önceki değeri alan fonksiyon */
 type Guncelleyici<T> = T | ((prev: T) => T)
-
-const VehicleContext = createContext<VehicleContextDegeri | null>(null)
-
-export const useVehicles = (): VehicleContextDegeri => {
-  const ctx = useContext(VehicleContext)
-  if (!ctx) throw new Error('useVehicles must be used within VehicleProvider')
-  return ctx
-}
-
-// Sorgu anahtarları — realtime ve mutasyonlar cache'e bunlarla yazıyor
-export const vehicleQueryKeys = {
-  all: (userId?: string) => ['garaj', userId],
-  list: (userId: string | undefined, name: string) => ['garaj', userId, name],
-}
 
 // Modül seviyesinde sabit boş referanslar (bkz. aşağıdaki `?? BOS_DIZI` kullanımı)
 const BOS_DIZI: never[] = []

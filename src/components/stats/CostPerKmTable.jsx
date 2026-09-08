@@ -4,6 +4,18 @@ import { Link } from 'react-router-dom'
 import { Car, Trophy, TrendingUp, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { getVehicleCostAnalysis } from '../../utils/statisticsHelpers'
 
+/**
+ * Sıralama oku. Modül seviyesinde tanımlı — render sırasında bileşen
+ * tanımlamak her render'da yeni bir tip üretir ve React bu ikonları
+ * (tablo başlığındaki beş adedini) her sıralamada yeniden mount ederdi.
+ */
+function SortIcon({ field, sortBy, sortDir }) {
+  if (sortBy !== field) return <ArrowUpDown className="w-3 h-3 opacity-40" />
+  return sortDir === 'desc'
+    ? <ArrowDown className="w-3 h-3 text-blue-400" />
+    : <ArrowUp className="w-3 h-3 text-blue-400" />
+}
+
 export default function CostPerKmTable({ vehicles = [], maintenanceRecords = [], fuelRecords = [] }) {
   const { t } = useTranslation()
 
@@ -58,13 +70,6 @@ export default function CostPerKmTable({ vehicles = [], maintenanceRecords = [],
     }
   }
 
-  const SortIcon = ({ field }) => {
-    if (sortBy !== field) return <ArrowUpDown className="w-3 h-3 opacity-40" />
-    return sortDir === 'desc'
-      ? <ArrowDown className="w-3 h-3 text-blue-400" />
-      : <ArrowUp className="w-3 h-3 text-blue-400" />
-  }
-
   // En verimli araç — km başına maliyet en düşük (ama KM verisi olmalı)
   const mostEfficient = useMemo(() => {
     const withData = analysis.filter(a => a.costPerKm !== null && a.costPerKm > 0)
@@ -105,7 +110,7 @@ export default function CostPerKmTable({ vehicles = [], maintenanceRecords = [],
                   onClick={() => toggleSort('totalCost')}
                   className="flex items-center gap-1 hover:text-white transition ml-auto"
                 >
-                  Toplam ₺ <SortIcon field="totalCost" />
+                  Toplam ₺ <SortIcon field="totalCost" sortBy={sortBy} sortDir={sortDir} />
                 </button>
               </th>
               <th className="text-right py-2 px-3 font-semibold hidden md:table-cell">
@@ -113,7 +118,7 @@ export default function CostPerKmTable({ vehicles = [], maintenanceRecords = [],
                   onClick={() => toggleSort('kmRange')}
                   className="flex items-center gap-1 hover:text-white transition ml-auto"
                 >
-                  Kat edilen KM <SortIcon field="kmRange" />
+                  Kat edilen KM <SortIcon field="kmRange" sortBy={sortBy} sortDir={sortDir} />
                 </button>
               </th>
               <th className="text-right py-2 px-3 font-semibold">
@@ -121,7 +126,7 @@ export default function CostPerKmTable({ vehicles = [], maintenanceRecords = [],
                   onClick={() => toggleSort('costPerKm')}
                   className="flex items-center gap-1 hover:text-white transition ml-auto"
                 >
-                  ₺/KM <SortIcon field="costPerKm" />
+                  ₺/KM <SortIcon field="costPerKm" sortBy={sortBy} sortDir={sortDir} />
                 </button>
               </th>
               <th className="text-right py-2 px-3 font-semibold hidden lg:table-cell">
@@ -129,7 +134,7 @@ export default function CostPerKmTable({ vehicles = [], maintenanceRecords = [],
                   onClick={() => toggleSort('avgFuelPrice')}
                   className="flex items-center gap-1 hover:text-white transition ml-auto"
                 >
-                  Ort. ₺/L <SortIcon field="avgFuelPrice" />
+                  Ort. ₺/L <SortIcon field="avgFuelPrice" sortBy={sortBy} sortDir={sortDir} />
                 </button>
               </th>
               <th className="text-right py-2 px-5 font-semibold hidden md:table-cell">
@@ -137,7 +142,7 @@ export default function CostPerKmTable({ vehicles = [], maintenanceRecords = [],
                   onClick={() => toggleSort('recordCount')}
                   className="flex items-center gap-1 hover:text-white transition ml-auto"
                 >
-                  Kayıt <SortIcon field="recordCount" />
+                  Kayıt <SortIcon field="recordCount" sortBy={sortBy} sortDir={sortDir} />
                 </button>
               </th>
             </tr>

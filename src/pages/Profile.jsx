@@ -7,7 +7,7 @@ import {
   Eye, EyeOff, CheckCircle2, XCircle, Save,
   Trash2, AlertTriangle
 } from 'lucide-react'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/auth-context'
 import { supabase } from '../lib/supabase'
 import { usePageTitle } from '../hooks/usePageTitle'
 import PageTransition from '../components/PageTransition'

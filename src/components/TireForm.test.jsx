@@ -6,7 +6,7 @@ const addTireSet = vi.fn()
 const updateTireSet = vi.fn()
 let mockCtx
 
-vi.mock('../context/VehicleContext', () => ({ useVehicles: () => mockCtx }))
+vi.mock('../context/vehicle-context', () => ({ useVehicles: () => mockCtx }))
 vi.mock('react-hot-toast', () => ({ default: { error: vi.fn(), success: vi.fn() } }))
 
 const doldur = (input, value) => fireEvent.change(input, { target: { value } })

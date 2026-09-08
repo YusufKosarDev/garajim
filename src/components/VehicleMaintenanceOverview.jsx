@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Wrench, ChevronDown, ChevronUp } from 'lucide-react'
 import { getVehicleRecommendations } from '../utils/maintenanceRecommendations'
-import { useVehicles } from '../context/VehicleContext'
+import { useVehicles } from '../context/vehicle-context'
 import MaintenanceRecommendationCard from './MaintenanceRecommendationCard'
 
 export default function VehicleMaintenanceOverview({ vehicle, maintenanceRecords, onQuickAdd }) {

@@ -6,7 +6,7 @@ const addVehicle = vi.fn()
 const updateVehicle = vi.fn()
 let mockCtx
 
-vi.mock('../context/VehicleContext', () => ({ useVehicles: () => mockCtx }))
+vi.mock('../context/vehicle-context', () => ({ useVehicles: () => mockCtx }))
 vi.mock('react-hot-toast', () => ({ default: { error: vi.fn(), success: vi.fn() } }))
 
 const MEVCUT = {

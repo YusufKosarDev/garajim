@@ -10,7 +10,7 @@ const updateVehicle = vi.fn()
 
 let mockCtx
 
-vi.mock('../context/VehicleContext', () => ({
+vi.mock('../context/vehicle-context', () => ({
   useVehicles: () => mockCtx,
 }))
 

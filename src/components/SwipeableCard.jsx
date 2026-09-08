@@ -50,8 +50,15 @@ export default function SwipeableCard({
     if (onDelete) onDelete()
   }
 
-  // Aksiyon butonları arka planda
-  const ActionButtons = () => (
+  if (!enabled) {
+    return <>{children}</>
+  }
+
+  // Aksiyon butonları arka planda.
+  // Bileşen DEĞİL, düz JSX: render sırasında bileşen tanımlamak her render'da
+  // yeni bir tip üretir ve React alt ağacı yeniden mount eder (butonlar bir
+  // kaydırmanın ortasında sıfırlanırdı).
+  const actionButtons = (
     <div
       className="absolute right-0 top-0 bottom-0 flex items-stretch"
       style={{ width: `${maxSwipe}px` }}
@@ -75,13 +82,9 @@ export default function SwipeableCard({
     </div>
   )
 
-  if (!enabled) {
-    return <>{children}</>
-  }
-
   return (
     <div ref={cardRef} className="relative overflow-hidden rounded-lg">
-      <ActionButtons />
+      {actionButtons}
 
       <div
         {...handlers}

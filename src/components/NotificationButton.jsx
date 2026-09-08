@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Bell } from 'lucide-react'
-import { useNotifications } from '../context/NotificationContext'
+import { useNotifications } from '../context/notification-context'
 import NotificationPanel from './NotificationPanel'
 
 export default function NotificationButton() {

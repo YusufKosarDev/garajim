@@ -5,7 +5,7 @@ import TireChangeForm from './TireChangeForm'
 const addTireChange = vi.fn()
 let mockCtx
 
-vi.mock('../context/VehicleContext', () => ({ useVehicles: () => mockCtx }))
+vi.mock('../context/vehicle-context', () => ({ useVehicles: () => mockCtx }))
 vi.mock('react-hot-toast', () => ({ default: { error: vi.fn(), success: vi.fn() } }))
 
 const ARAC = { id: 'v1', brand: 'BMW', model: '320i', currentKm: 100000 }
