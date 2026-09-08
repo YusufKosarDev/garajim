@@ -64,20 +64,15 @@ export default defineConfig([
     },
   },
 
-  // Node tarafı: CommonJS config
+  // Node tarafı: yapılandırma dosyaları ve build script'leri.
+  // Hepsi ESM — package.json'da "type": "module" var, ayrı bir CommonJS
+  // bloğuna gerek yok (cypress.config.js de artık ESM).
   {
-    files: ['cypress.config.js'],
-    extends: [js.configs.recommended],
-    languageOptions: {
-      ecmaVersion: 'latest',
-      sourceType: 'commonjs',
-      globals: globals.node,
-    },
-  },
-
-  // Node tarafı: ESM config
-  {
-    files: ['vite.config.js', 'eslint.config.js'],
+    files: [
+      '*.config.js',
+      'eslint.config.js',
+      'scripts/**/*.mjs',
+    ],
     extends: [js.configs.recommended],
     languageOptions: {
       ecmaVersion: 'latest',

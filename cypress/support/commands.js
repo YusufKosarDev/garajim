@@ -102,11 +102,13 @@ Cypress.Commands.add('waitForApp', () => {
  * Toast mesajı kontrol et.
  * react-hot-toast ile gösterilen mesajları kontrol için.
  *
+ * Not: yalnızca metni doğrular, toast'ın türünü (success/error) ayırt etmez —
+ * react-hot-toast türü DOM'da ayırt edilebilir bir sınıfla işaretlemiyor.
+ *
  * @example
  *   cy.checkToast('Hoş geldin')
- *   cy.checkToast('hata', 'error')
  */
-Cypress.Commands.add('checkToast', (message, type = 'success') => {
+Cypress.Commands.add('checkToast', (message) => {
   // react-hot-toast renderer DOM'a ekleniyor
   cy.contains(message, { timeout: 8000 }).should('be.visible')
 })

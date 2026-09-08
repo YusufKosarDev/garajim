@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { Pencil, Trash2 } from 'lucide-react'
 import { useSwipe } from '../hooks/useSwipe'
 import { hapticLight, hapticStrong } from '../utils/hapticFeedback'

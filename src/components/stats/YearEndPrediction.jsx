@@ -22,7 +22,6 @@ export default function YearEndPrediction({ maintenanceRecords = [], fuelRecords
 
     // Yılın başı
     const yearStart = new Date(currentYear, 0, 1)
-    const lastYearStart = new Date(lastYear, 0, 1)
 
     // Yılın bugüne kadar geçen gün sayısı
     const dayOfYear = Math.floor((today - yearStart) / (1000 * 60 * 60 * 24)) + 1

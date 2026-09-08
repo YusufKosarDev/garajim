@@ -33,7 +33,10 @@ export const hapticLight = () => {
   if (!isHapticEnabled()) return
   try {
     navigator.vibrate(10)
-  } catch {}
+  } catch {
+    // navigator.vibrate her tarayıcıda yok ve iOS Safari'de çağrı atılabiliyor.
+    // Titreşim tamamen kozmetik — başarısızlığı kullanıcıya yansıtmıyoruz.
+  }
 }
 
 // Orta titreşim (20ms) — başarılı aksiyon, kayıt ekleme
@@ -41,7 +44,10 @@ export const hapticMedium = () => {
   if (!isHapticEnabled()) return
   try {
     navigator.vibrate(20)
-  } catch {}
+  } catch {
+    // navigator.vibrate her tarayıcıda yok ve iOS Safari'de çağrı atılabiliyor.
+    // Titreşim tamamen kozmetik — başarısızlığı kullanıcıya yansıtmıyoruz.
+  }
 }
 
 // Güçlü titreşim (40ms) — silme, hata, kritik aksiyon
@@ -49,7 +55,10 @@ export const hapticStrong = () => {
   if (!isHapticEnabled()) return
   try {
     navigator.vibrate(40)
-  } catch {}
+  } catch {
+    // navigator.vibrate her tarayıcıda yok ve iOS Safari'de çağrı atılabiliyor.
+    // Titreşim tamamen kozmetik — başarısızlığı kullanıcıya yansıtmıyoruz.
+  }
 }
 
 // Başarı pattern (kısa-kısa) — tamamlama
@@ -57,7 +66,10 @@ export const hapticSuccess = () => {
   if (!isHapticEnabled()) return
   try {
     navigator.vibrate([10, 50, 10])
-  } catch {}
+  } catch {
+    // navigator.vibrate her tarayıcıda yok ve iOS Safari'de çağrı atılabiliyor.
+    // Titreşim tamamen kozmetik — başarısızlığı kullanıcıya yansıtmıyoruz.
+  }
 }
 
 // Hata pattern (uzun-kısa-uzun) — uyarı
@@ -65,5 +77,8 @@ export const hapticError = () => {
   if (!isHapticEnabled()) return
   try {
     navigator.vibrate([40, 30, 40])
-  } catch {}
+  } catch {
+    // navigator.vibrate her tarayıcıda yok ve iOS Safari'de çağrı atılabiliyor.
+    // Titreşim tamamen kozmetik — başarısızlığı kullanıcıya yansıtmıyoruz.
+  }
 }

@@ -56,7 +56,7 @@ export const parseImportFile = (file: File): Promise<Record<string, unknown>> =>
           customIntervals: data.customIntervals || {},
           exportDate: data.exportDate,
         })
-      } catch (err) {
+      } catch {
         reject(new Error('Dosya okunamadı — geçerli bir JSON yedek dosyası olmalı'))
       }
     }

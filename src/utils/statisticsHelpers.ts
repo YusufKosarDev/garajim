@@ -214,7 +214,6 @@ export const getSpendingTrend = (records: MaintenanceRecord[], fuelRecords: Fuel
 
   // Trend: son 3 ayın ortalama değişimi
   const avgChange = previous > 0 ? ((current - previous) / previous) * 100 : 0
-  const prevChange = before > 0 ? ((previous - before) / before) * 100 : 0
 
   return {
     current,

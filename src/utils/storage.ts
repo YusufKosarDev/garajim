@@ -55,7 +55,8 @@ export const getStorageInfo = () => {
       usagePercent: Math.round(usagePercent * 100) / 100,
       estimatedTotalMB,
     }
-  } catch (err: unknown) {
+  } catch {
+    // Kota bilgisi okunamıyorsa (private mod, kısıtlı depolama) gösterge gizlenir
     return null
   }
 }

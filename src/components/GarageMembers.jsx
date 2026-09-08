@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { 
@@ -41,13 +41,10 @@ export default function GarageMembers() {
   // Owner mu kullanıcı?
   const isOwner = garage && garage.owner_id === user?.id
 
-  // İlk yüklemede verileri al
-  useEffect(() => {
-    if (!user) return
-    loadData()
-  }, [user])
-
-  const loadData = async () => {
+  // loadData, onu çağıran efektten ÖNCE tanımlı olmalı — `const` bildirimden
+  // önce okunamaz. useCallback ile sarılı olması efektin bağımlılık listesine
+  // dürüstçe yazılabilmesini de sağlıyor.
+  const loadData = useCallback(async () => {
     setLoading(true)
     try {
       // 1. Kullanıcının sahibi olduğu garaj
@@ -103,7 +100,13 @@ export default function GarageMembers() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user, t])
+
+  // İlk yüklemede verileri al
+  useEffect(() => {
+    if (!user) return
+    loadData()
+  }, [user, loadData])
 
   // Davet gönder
   const handleInvite = async (e) => {

@@ -143,7 +143,7 @@ export default function CostPerKmTable({ vehicles = [], maintenanceRecords = [],
             </tr>
           </thead>
           <tbody>
-            {sorted.map((a, i) => {
+            {sorted.map((a) => {
               const isEfficient = mostEfficient?.vehicle.id === a.vehicle.id && vehicles.length > 1
               return (
                 <tr

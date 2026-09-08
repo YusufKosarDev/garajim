@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -42,6 +42,18 @@ export default function Lightbox({ isOpen, onClose, photos = [], initialIndex = 
     }
   }, [isOpen])
 
+  // Gezinme, klavye efektinden ÖNCE tanımlı olmalı: efekt bunlara referans
+  // veriyor ve `const` bildirimden önce okunamaz.
+  const goToPrev = useCallback(() => {
+    if (photos.length <= 1) return
+    setCurrentIndex(prev => (prev - 1 + photos.length) % photos.length)
+  }, [photos.length])
+
+  const goToNext = useCallback(() => {
+    if (photos.length <= 1) return
+    setCurrentIndex(prev => (prev + 1) % photos.length)
+  }, [photos.length])
+
   // Klavye kontrolleri
   useEffect(() => {
     if (!isOpen) return
@@ -61,17 +73,7 @@ export default function Lightbox({ isOpen, onClose, photos = [], initialIndex = 
 
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [isOpen, currentIndex, photos.length])
-
-  const goToPrev = () => {
-    if (photos.length <= 1) return
-    setCurrentIndex(prev => (prev - 1 + photos.length) % photos.length)
-  }
-
-  const goToNext = () => {
-    if (photos.length <= 1) return
-    setCurrentIndex(prev => (prev + 1) % photos.length)
-  }
+  }, [isOpen, onClose, goToPrev, goToNext])
 
   // Touch gestures (mobil swipe)
   const handleTouchStart = (e) => {

@@ -1,5 +1,4 @@
 /// <reference lib="webworker" />
-/* global clients */
 
 /**
  * Özel service worker (vite-plugin-pwa injectManifest modu).

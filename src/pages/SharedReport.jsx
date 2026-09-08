@@ -386,11 +386,8 @@ function SummaryStat({ label, value, color, highlighted = false, icon: Icon }) {
     slate: 'text-slate-300',
   }
 
-  const bg = highlighted
-    ? `bg-${color}-500/10 border border-${color}-500/30`
-    : 'bg-slate-800/50'
-
-  // Tailwind dynamic class problem fix — manual
+  // Tailwind dinamik sınıf adı üretemez (`bg-${color}-500` derlemede taranmaz),
+  // o yüzden aşağıda sınıflar açıkça yazılıyor.
   const bgClass = highlighted
     ? color === 'emerald'
       ? 'bg-emerald-500/10 border border-emerald-500/30'
