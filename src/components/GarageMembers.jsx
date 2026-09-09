@@ -148,9 +148,9 @@ export default function GarageMembers() {
 
       // Başarı
       if (result.email_sent) {
-        toast.success(`Davet gönderildi: ${email} 📧`)
+        toast.success(t('garageMembers.davet_gonderildi', { email }))
       } else {
-        toast.success(`Davet oluşturuldu, ama email gönderilemedi. Linki manuel paylaşabilirsin.`, {
+        toast.success(t('garageMembers.davet_olusturuldu_mail_yok'), {
           duration: 6000,
         })
       }

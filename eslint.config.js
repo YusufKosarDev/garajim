@@ -7,7 +7,10 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', 'dev-dist', 'coverage']),
+  // supabase/functions Deno kodu: Deno.serve, jsr: import'ları ve Deno global'i
+  // bu yapılandırmanın tanımadığı bir çalışma zamanına ait. Kendi araçlarıyla
+  // (deno lint / deno check) denetlenir, buradan dışlanıyor.
+  globalIgnores(['dist', 'dev-dist', 'coverage', 'supabase/functions']),
 
   // Uygulama kaynağı (tarayıcı, ESM, JSX + TS)
   {

@@ -201,7 +201,7 @@ export default function Profile() {
 
       if (!response.ok) {
         // Hata mesajını göster ama oturumu kapatma
-        toast.error(result.error || 'Hesap silinemedi')
+        toast.error(result.error || t('profile.hesap_silinemedi'))
         setDeleteLoading(false)
         return
       }

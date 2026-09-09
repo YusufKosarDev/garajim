@@ -67,8 +67,8 @@ export default function AcceptInvite() {
 
       if (!response.ok) {
         setActionStatus('error')
-        setError(result.error || 'Davet kabul edilemedi')
-        toast.error(result.error || 'Davet kabul edilemedi')
+        setError(result.error || t('acceptInvite.davet_kabul_edilemedi'))
+        toast.error(result.error || t('acceptInvite.davet_kabul_edilemedi'))
         setAccepting(false)
         return
       }
@@ -80,7 +80,7 @@ export default function AcceptInvite() {
       if (result.already_member) {
         toast.success(t('acceptInvite.zaten_bu_garajin_uyesisin'))
       } else {
-        toast.success(`"${result.garage_name}" garajına katıldın! 🎉`, { duration: 4000 })
+        toast.success(t('acceptInvite.garaja_katildin', { garageName: result.garage_name }), { duration: 4000 })
       }
 
       // 2 saniye sonra dashboard'a yönlendir + sayfa yenile (yeni veriler yüklensin)

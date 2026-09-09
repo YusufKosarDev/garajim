@@ -25,5 +25,7 @@
     "types": ["vite/client", "vitest/globals", "node"]
   },
   "include": ["src", "vite.config.js", "vitest.config.js"],
-  "exclude": ["node_modules", "dist", "coverage", "cypress"]
+  /* supabase/functions Deno çalışma zamanına ait (Deno.serve, jsr: import'ları).
+     Bu tsconfig tarayıcı/Vite içindir; o dosyalar deno check ile denetlenir. */
+  "exclude": ["node_modules", "dist", "coverage", "cypress", "supabase"]
 }
