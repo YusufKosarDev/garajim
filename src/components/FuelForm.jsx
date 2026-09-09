@@ -21,7 +21,7 @@ const emptyForm = () => ({
 })
 
 export default function FuelForm({ isOpen, onClose, vehicleId, editRecord = null }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
 
   const { addFuel, updateFuel, vehicles, fuelRecords, updateVehicle } = useVehicles()
 
@@ -32,9 +32,12 @@ export default function FuelForm({ isOpen, onClose, vehicleId, editRecord = null
     [fuelRecords, vehicleId]
   )
 
+  // Şema mesajları kurulum anında i18n'den okunuyor; dil değişince yeniden
+  // kurulmalı. eslint i18n.language'ı gövdede görmediği için gereksiz sanıyor.
   const schema = useMemo(
     () => makeFuelSchema({ vehicleFuelRecords, editId: editRecord?.id ?? null }),
-    [vehicleFuelRecords, editRecord]
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bkz. MaintenanceForm
+    [vehicleFuelRecords, editRecord, i18n.language]
   )
 
   const {

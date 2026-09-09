@@ -1,3 +1,4 @@
+import i18n from '../i18n'
 import type { Vehicle, MaintenanceRecord, FuelRecord, ConfirmResult, ValidationResult } from '../types'
 
 // Bir aracın kaydedilmiş en yüksek km değerini bul (araç, bakımlar ve yakıtlardan)
@@ -43,7 +44,10 @@ export const checkMaintenanceKm = (
   if (km < highest) {
     return {
       needsConfirm: true,
-      message: `Girdiğin ${km.toLocaleString('tr-TR')} km, kayıtlardaki en yüksek km'den (${highest.toLocaleString('tr-TR')} km) düşük. Geçmişe dönük kayıt mı ekliyorsun?`,
+      message: i18n.t('kmHelpers.km_dusuk_onay', {
+        km: km.toLocaleString('tr-TR'),
+        highest: highest.toLocaleString('tr-TR'),
+      }),
     }
   }
 
@@ -63,7 +67,7 @@ export const checkFuelKm = (
   if (lastKm > 0 && km <= lastKm) {
     return {
       isValid: false,
-      message: `Son yakıt kaydında km ${lastKm.toLocaleString('tr-TR')}. Yeni kayıt bu değerden büyük olmalı.`,
+      message: i18n.t('kmHelpers.son_yakit_km', { lastKm: lastKm.toLocaleString('tr-TR') }),
     }
   }
 

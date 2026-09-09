@@ -3,7 +3,10 @@ import i18n from '../i18n'
 import { evaluateTire, getSeasonChangeSuggestion } from './tireHelpers'
 import { estimateVehicleValue } from './vehicleValuation'
 import { buildVehicleEvents } from './calendarEvents'
-import type { Vehicle } from '../types'
+import { validatePastDate, validateVehicleYear } from './dateValidation'
+import { checkFuelKm } from './kmHelpers'
+import { makeVehicleSchema, makeMaintenanceSchema } from '../lib/formSchemas'
+import type { Vehicle, FuelRecord } from '../types'
 
 /**
  * Util'lerin döndürdüğü KULLANICIYA GÖRÜNEN metinler aktif dile uyuyor mu?
@@ -107,5 +110,57 @@ describe('calendarEvents — etiketler aktif dilde gelir', () => {
     expect(buildVehicleEvents([vehicle()])[0].label).toBe('Muayene')
     await i18n.changeLanguage('en')
     expect(buildVehicleEvents([vehicle()])[0].label).toBe('Inspection')
+  })
+})
+
+describe('form doğrulama katmanı — hatalar aktif dilde gelir', () => {
+  it('dateValidation: alan adı ve mesaj İngilizce', async () => {
+    await i18n.changeLanguage('en')
+    expect(validatePastDate('2026-06-16', 'Service date').message)
+      .toBe('Service date cannot be in the future')
+    expect(validateVehicleYear(1900).message).toBe('Year cannot be earlier than 1950')
+  })
+
+  it('dateValidation: varsayılan alan adı da çevrilir', async () => {
+    await i18n.changeLanguage('en')
+    // Varsayılan çağrı anında çözülüyor; modül seviyesinde olsaydı 'Tarih' donardı
+    expect(validatePastDate('2026-06-16').message).toBe('Date cannot be in the future')
+  })
+
+  it('kmHelpers: yakıt km hatası İngilizce, sayılar korunur', async () => {
+    await i18n.changeLanguage('en')
+    const records = [{ id: 'f1', vehicleId: 'v1', date: '2026-06-01', km: 50000 }] as FuelRecord[]
+    const result = checkFuelKm(40000, records)
+    expect(result.isValid).toBe(false)
+    expect(result.message).toContain('50.000')
+    expect(result.message).toMatch(/must be higher than that/)
+  })
+
+  it('formSchemas: zorunlu alan hataları İngilizce', async () => {
+    await i18n.changeLanguage('en')
+    const parsed = makeVehicleSchema().safeParse({
+      plate: '', brand: '', model: '', year: '', fuelType: '',
+      currentKm: '', inspectionDate: '', mtvDate: '', insuranceDate: '',
+      kaskoDate: '', notes: '', photos: [],
+    })
+    expect(parsed.success).toBe(false)
+    const messages = parsed.error!.issues.map(i => i.message)
+    expect(messages).toContain('Plate is required')
+    expect(messages).toContain('Brand is required')
+    expect(messages).toContain('Model is required')
+  })
+
+  it('formSchemas: şema HER ÇAĞRIDA kurulur, dile donmaz', async () => {
+    // maintenanceSchema eskiden modül seviyesinde bir sabitti; mesajları
+    // uygulamanın açılış diline donuyordu. Fabrikaya çevrilmesinin sebebi bu.
+    const bos = { type: '', customType: '', date: '', km: '', cost: '', notes: '', photo: null }
+
+    await i18n.changeLanguage('tr')
+    const tr = makeMaintenanceSchema().safeParse(bos)
+    expect(tr.error!.issues.map(i => i.message)).toContain('Tarih zorunlu')
+
+    await i18n.changeLanguage('en')
+    const en = makeMaintenanceSchema().safeParse(bos)
+    expect(en.error!.issues.map(i => i.message)).toContain('Date is required')
   })
 })

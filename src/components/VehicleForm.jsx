@@ -19,14 +19,17 @@ const emptyForm = () => ({
 })
 
 export default function VehicleForm({ isOpen, onClose, editVehicle = null }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
 
   const { addVehicle, updateVehicle, vehicles } = useVehicles()
   const isEdit = !!editVehicle
 
+  // Şema mesajları kurulum anında i18n'den okunuyor; dil değişince yeniden
+  // kurulmalı. eslint i18n.language'ı gövdede görmediği için gereksiz sanıyor.
   const schema = useMemo(
     () => makeVehicleSchema({ vehicles, editId: editVehicle?.id ?? null }),
-    [vehicles, editVehicle]
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bkz. MaintenanceForm
+    [vehicles, editVehicle, i18n.language]
   )
 
   const {

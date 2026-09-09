@@ -13,6 +13,11 @@ import type { Vehicle, FuelRecord, TireSet, Season } from '../types'
  * NOT: Mevcut doğrulayıcılar YENİDEN YAZILMADI. Hepsi `{ isValid, message }`
  * döndürdüğü için superRefine içinden olduğu gibi çağrılıyorlar; böylece tek
  * doğruluk kaynağı korunuyor ve utils testleri geçerliliğini sürdürüyor.
+ *
+ * HEPSİ FABRİKA FONKSİYONU — sabit değil. Zod mesajları şema KURULURKEN
+ * hesaplanır; şema modül seviyesinde bir sabit olsaydı mesajlar uygulamanın
+ * açılış diline donar ve kullanıcı dili değiştirdiğinde form hataları eski
+ * dilde kalırdı. Bileşenler şemayı `useMemo` içinde kuruyor.
  */
 
 // { isValid, message } sözleşmesini zod issue'suna çeviren yardımcı
@@ -27,7 +32,7 @@ interface RefinementCtx {
 
 const uygula = (ctx: RefinementCtx, path: string, result: { isValid: boolean; message?: string }) => {
   if (!result.isValid) {
-    ctx.addIssue({ code: 'custom', path: [path], message: result.message ?? 'Geçersiz değer' })
+    ctx.addIssue({ code: 'custom', path: [path], message: result.message ?? i18n.t('formSchemas.gecersiz_deger') })
   }
 }
 
@@ -41,27 +46,27 @@ const sayi = () => z.string().trim()
 // ============================================================
 export const makeFuelSchema = ({ vehicleFuelRecords = [], editId = null }: { vehicleFuelRecords?: FuelRecord[]; editId?: string | null } = {}) =>
   z.object({
-    date: requiredText('Tarih zorunlu'),
-    km: requiredText('Kilometre zorunlu'),
-    liters: requiredText('Litre zorunlu'),
+    date: requiredText(i18n.t('formSchemas.tarih_zorunlu')),
+    km: requiredText(i18n.t('formSchemas.kilometre_zorunlu')),
+    liters: requiredText(i18n.t('formSchemas.litre_zorunlu')),
     pricePerLiter: sayi(),
-    totalCost: requiredText('Toplam tutar zorunlu'),
+    totalCost: requiredText(i18n.t('formSchemas.toplam_tutar_zorunlu')),
     fullTank: z.boolean(),
     station: z.string(),
     notes: z.string(),
   }).superRefine((val, ctx) => {
-    if (val.date) uygula(ctx, 'date', validatePastDate(val.date, 'Yakıt alım tarihi'))
+    if (val.date) uygula(ctx, 'date', validatePastDate(val.date, i18n.t('formSchemas.field.yakit_alim_tarihi')))
     if (val.km) uygula(ctx, 'km', checkFuelKm(val.km, vehicleFuelRecords, editId))
   })
 
 // ============================================================
 // BAKIM
 // ============================================================
-export const maintenanceSchema = z.object({
+export const makeMaintenanceSchema = () => z.object({
   type: z.string(),
   customType: z.string(),
-  date: requiredText('Tarih zorunlu'),
-  km: requiredText('KM zorunlu'),
+  date: requiredText(i18n.t('formSchemas.tarih_zorunlu')),
+  km: requiredText(i18n.t('formSchemas.km_zorunlu')),
   cost: sayi(),
   notes: z.string(),
   photo: z.any().nullable(),
@@ -69,20 +74,20 @@ export const maintenanceSchema = z.object({
   const isCustom = val.type === 'Diğer'
   const finalType = isCustom ? val.customType.trim() : val.type
   if (!finalType) {
-    ctx.addIssue({ code: 'custom', path: ['type'], message: 'Bakım türü seç veya yaz' })
+    ctx.addIssue({ code: 'custom', path: ['type'], message: i18n.t('formSchemas.bakim_turu_sec_veya_yaz') })
   }
 
-  if (val.date) uygula(ctx, 'date', validatePastDate(val.date, 'Tarih'))
+  if (val.date) uygula(ctx, 'date', validatePastDate(val.date, i18n.t('formSchemas.field.tarih')))
 
   if (val.km) {
     const kmValue = Number(val.km)
     if (Number.isNaN(kmValue) || kmValue < 0) {
-      ctx.addIssue({ code: 'custom', path: ['km'], message: 'Geçerli bir KM gir' })
+      ctx.addIssue({ code: 'custom', path: ['km'], message: i18n.t('formSchemas.gecerli_km_gir') })
     }
   }
 
   if (val.cost && Number(val.cost) < 0) {
-    ctx.addIssue({ code: 'custom', path: ['cost'], message: 'Negatif olamaz' })
+    ctx.addIssue({ code: 'custom', path: ['cost'], message: i18n.t('formSchemas.negatif_olamaz') })
   }
 })
 
@@ -91,9 +96,9 @@ export const maintenanceSchema = z.object({
 // ============================================================
 export const makeVehicleSchema = ({ vehicles = [], editId = null }: { vehicles?: Vehicle[]; editId?: string | null } = {}) =>
   z.object({
-    plate: requiredText('Plaka zorunlu'),
-    brand: requiredText('Marka zorunlu'),
-    model: requiredText('Model zorunlu'),
+    plate: requiredText(i18n.t('formSchemas.plaka_zorunlu')),
+    brand: requiredText(i18n.t('formSchemas.marka_zorunlu')),
+    model: requiredText(i18n.t('formSchemas.model_zorunlu')),
     year: z.string(),
     fuelType: z.string(),
     currentKm: z.string(),
@@ -112,10 +117,10 @@ export const makeVehicleSchema = ({ vehicles = [], editId = null }: { vehicles?:
         // metni migrasyon sırasında değiştirmemek için.
         ctx.addIssue({
           code: 'custom', path: ['plate'],
-          message: 'Geçerli bir plaka formatı gir (örn: 34 ABC 123)',
+          message: i18n.t('formSchemas.gecerli_plaka_formati'),
         })
       } else if (vehicles.some(v => v.id !== editId && platesMatch(v.plate, formatted))) {
-        ctx.addIssue({ code: 'custom', path: ['plate'], message: 'Bu plaka zaten kayıtlı' })
+        ctx.addIssue({ code: 'custom', path: ['plate'], message: i18n.t('formSchemas.plaka_zaten_kayitli') })
       }
     }
 
@@ -124,15 +129,15 @@ export const makeVehicleSchema = ({ vehicles = [], editId = null }: { vehicles?:
     if (val.currentKm) {
       const km = Number(val.currentKm)
       if (Number.isNaN(km) || km < 0) {
-        ctx.addIssue({ code: 'custom', path: ['currentKm'], message: 'Geçerli bir KM gir' })
+        ctx.addIssue({ code: 'custom', path: ['currentKm'], message: i18n.t('formSchemas.gecerli_km_gir') })
       }
     }
 
     for (const [field, label] of [
-      ['inspectionDate', 'Muayene tarihi'],
-      ['mtvDate', 'MTV tarihi'],
-      ['insuranceDate', 'Sigorta tarihi'],
-      ['kaskoDate', 'Kasko tarihi'],
+      ['inspectionDate', i18n.t('formSchemas.field.muayene_tarihi')],
+      ['mtvDate', i18n.t('formSchemas.field.mtv_tarihi')],
+      ['insuranceDate', i18n.t('formSchemas.field.sigorta_tarihi')],
+      ['kaskoDate', i18n.t('formSchemas.field.kasko_tarihi')],
     ]) {
       const value = val[field as keyof typeof val] as string
       if (value) uygula(ctx, field, validateExpiryDate(value, label))
@@ -142,14 +147,14 @@ export const makeVehicleSchema = ({ vehicles = [], editId = null }: { vehicles?:
 // ============================================================
 // LASTİK MEVSİM DEĞİŞİMİ
 // ============================================================
-export const tireChangeSchema = z.object({
-  date: requiredText('Tarih zorunlu'),
+export const makeTireChangeSchema = () => z.object({
+  date: requiredText(i18n.t('formSchemas.tarih_zorunlu')),
   km: z.string(),
   cost: sayi(),
   notes: z.string(),
 }).superRefine((val, ctx) => {
   if (!val.km || Number(val.km) <= 0) {
-    ctx.addIssue({ code: 'custom', path: ['km'], message: 'Geçerli KM gir' })
+    ctx.addIssue({ code: 'custom', path: ['km'], message: i18n.t('formSchemas.gecerli_km_gir_kisa') })
   }
   // Mesaj mevcut davranışla aynı tutuldu
   if (val.date) {
@@ -157,7 +162,7 @@ export const tireChangeSchema = z.object({
     const today = new Date()
     today.setHours(23, 59, 59, 999)
     if (secilen > today) {
-      ctx.addIssue({ code: 'custom', path: ['date'], message: 'Gelecek tarih olamaz' })
+      ctx.addIssue({ code: 'custom', path: ['date'], message: i18n.t('formSchemas.gelecek_tarih_olamaz') })
     }
   }
 })
@@ -168,8 +173,8 @@ export const tireChangeSchema = z.object({
 export const makeTireSetSchema = ({ tireSets = [], vehicleId = null, isEdit = false }: { tireSets?: TireSet[]; vehicleId?: string | null; isEdit?: boolean } = {}) =>
   z.object({
     season: z.string(),
-    brand: requiredText('Marka zorunlu'),
-    size: requiredText('Ebat zorunlu'),
+    brand: requiredText(i18n.t('formSchemas.marka_zorunlu')),
+    size: requiredText(i18n.t('formSchemas.ebat_zorunlu')),
     purchaseDate: z.string(),
     purchasePrice: sayi(),
     hasSpare: z.boolean(),
@@ -196,12 +201,12 @@ export const makeTireSetSchema = ({ tireSets = [], vehicleId = null, isEdit = fa
       if (tire.position === 'S' && !val.hasSpare) return
 
       if (tire.dot && tire.dot.length !== 4) {
-        ctx.addIssue({ code: 'custom', path: ['tires', i, 'dot'], message: 'DOT 4 haneli olmalı' })
+        ctx.addIssue({ code: 'custom', path: ['tires', i, 'dot'], message: i18n.t('formSchemas.dot_4_haneli') })
       }
 
       const treadDepth = Number(tire.treadDepth)
       if (tire.treadDepth && (Number.isNaN(treadDepth) || treadDepth < 0 || treadDepth > 15)) {
-        ctx.addIssue({ code: 'custom', path: ['tires', i, 'treadDepth'], message: '0-15 mm arası' })
+        ctx.addIssue({ code: 'custom', path: ['tires', i, 'treadDepth'], message: i18n.t('formSchemas.tread_0_15_mm') })
       }
     })
   })

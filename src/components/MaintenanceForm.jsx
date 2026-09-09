@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'
 import { useVehicles } from '../context/vehicle-context'
 import { checkMaintenanceKm } from '../utils/kmHelpers'
 import { getTodayString } from '../utils/dateValidation'
-import { maintenanceSchema } from '../lib/formSchemas'
+import { makeMaintenanceSchema } from '../lib/formSchemas'
 import Modal from './Modal'
 import FormField from './FormField'
 import SingleImageUploader from './SingleImageUploader'
@@ -32,7 +32,14 @@ const commonMaintenanceTypes = [
 ]
 
 export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord = null, prefilledType = null }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+
+  // Şema dile bağlı: hata mesajları şema KURULURKEN i18n'den okunuyor, o yüzden
+  // dil değişince şemanın yeniden kurulması gerekiyor. `i18n.language` gövdede
+  // geçmediği için linter onu gereksiz sanıyor; oysa okunan dış değişken durumun
+  // ta kendisi. Kuralı bilerek susturuyoruz.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const schema = useMemo(() => makeMaintenanceSchema(), [i18n.language])
 
   const { addMaintenance, updateMaintenance, vehicles, maintenanceRecords, fuelRecords } = useVehicles()
 
@@ -46,7 +53,7 @@ export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord
     register, handleSubmit, reset, watch, control, setValue,
     formState: { errors },
   } = useForm({
-    resolver: zodResolver(maintenanceSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       type: '', customType: '', date: getTodayString(), km: '',
       cost: '', notes: '', photo: null,

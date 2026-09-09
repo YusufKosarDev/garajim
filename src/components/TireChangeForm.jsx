@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -7,12 +7,16 @@ import toast from 'react-hot-toast'
 import { useVehicles } from '../context/vehicle-context'
 import { SEASONS } from '../utils/tireHelpers'
 import { getTodayString } from '../utils/dateValidation'
-import { tireChangeSchema } from '../lib/formSchemas'
+import { makeTireChangeSchema } from '../lib/formSchemas'
 import Modal from './Modal'
 import FormField from './FormField'
 
 export default function TireChangeForm({ isOpen, onClose, vehicleId, currentSeason, targetSeason }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+
+  // Şema dile bağlı: hata mesajları şema kurulurken i18n'den okunuyor.
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- bkz. MaintenanceForm
+  const schema = useMemo(() => makeTireChangeSchema(), [i18n.language])
 
   const { addTireChange, vehicles } = useVehicles()
 
@@ -23,7 +27,7 @@ export default function TireChangeForm({ isOpen, onClose, vehicleId, currentSeas
     register, handleSubmit, reset,
     formState: { errors },
   } = useForm({
-    resolver: zodResolver(tireChangeSchema),
+    resolver: zodResolver(schema),
     defaultValues: { date: getTodayString(), km: '', cost: '', notes: '' },
     mode: 'onSubmit',
   })

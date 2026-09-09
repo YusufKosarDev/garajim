@@ -18,14 +18,17 @@ const createEmptyTires = () => TIRE_POSITIONS.map(pos => ({
 }))
 
 export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = null }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
 
   const { addTireSet, updateTireSet, tireSets } = useVehicles()
   const isEdit = !!editTireSet
 
+  // Şema mesajları kurulum anında i18n'den okunuyor; dil değişince yeniden
+  // kurulmalı. eslint i18n.language'ı gövdede görmediği için gereksiz sanıyor.
   const schema = useMemo(
     () => makeTireSetSchema({ tireSets, vehicleId, isEdit }),
-    [tireSets, vehicleId, isEdit]
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bkz. MaintenanceForm
+    [tireSets, vehicleId, isEdit, i18n.language]
   )
 
   const {
