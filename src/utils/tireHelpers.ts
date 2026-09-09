@@ -1,3 +1,4 @@
+import i18n from '../i18n'
 import type { Tire, TireSet, TireChange, Season, TireStatus } from '../types'
 
 // Pozisyon etiketleri
@@ -44,6 +45,13 @@ export const calculateTireAge = (dotCode?: string | null): TireAge | null => {
 }
 
 // Lastik durumunu değerlendir
+/**
+ * `message` ÇEVRİLMİŞ metin, anahtar değil — bileşenler onu doğrudan basıyor.
+ * Çeviri burada, üretim anında yapılıyor (bkz. notificationManager ve
+ * formSchemas'taki aynı desen): fonksiyon her çağrıldığında o anki dil geçerli
+ * olur. Sabit Türkçe dizge döndürüldüğü sürece İngilizce arayüzde lastik
+ * uyarıları ve bildirim gövdeleri Türkçe kalıyordu.
+ */
 export interface TireWarning { level: 'critical' | 'danger' | 'warning'; message: string }
 export interface TireEvaluation { status: TireStatus; warnings: TireWarning[]; age: TireAge | null }
 
@@ -54,11 +62,11 @@ export const evaluateTire = (tire: Partial<Tire>): TireEvaluation => {
   const depth = Number(tire.treadDepth) || 0
   if (depth > 0) {
     if (depth < 1.6) {
-      warnings.push({ level: 'critical', message: `Minimum yasal sınırın altında (${depth}mm)` })
+      warnings.push({ level: 'critical', message: i18n.t('tire.warning.yasal_sinir_alti', { depth }) })
     } else if (depth < 3) {
-      warnings.push({ level: 'danger', message: `Kış için yetersiz (${depth}mm)` })
+      warnings.push({ level: 'danger', message: i18n.t('tire.warning.kis_icin_yetersiz', { depth }) })
     } else if (depth < 4) {
-      warnings.push({ level: 'warning', message: `Yakında değişmeli (${depth}mm)` })
+      warnings.push({ level: 'warning', message: i18n.t('tire.warning.yakinda_degismeli', { depth }) })
     }
   }
 
@@ -66,9 +74,9 @@ export const evaluateTire = (tire: Partial<Tire>): TireEvaluation => {
   const ageInfo = calculateTireAge(tire.dot)
   if (ageInfo) {
     if (ageInfo.ageYears >= 10) {
-      warnings.push({ level: 'critical', message: `${ageInfo.ageYears} yaşında — değişmeli` })
+      warnings.push({ level: 'critical', message: i18n.t('tire.warning.yasinda_degismeli', { years: ageInfo.ageYears }) })
     } else if (ageInfo.ageYears >= 6) {
-      warnings.push({ level: 'warning', message: `${ageInfo.ageYears} yaşında — kontrol et` })
+      warnings.push({ level: 'warning', message: i18n.t('tire.warning.yasinda_kontrol_et', { years: ageInfo.ageYears }) })
     }
   }
 
@@ -120,7 +128,7 @@ export const getSeasonChangeSuggestion = (currentSeason: Season | string): Seaso
       return {
         type: 'recommend',
         target: 'winter',
-        message: 'Kış yaklaşıyor — kış lastiklerini hazırla',
+        message: i18n.t('tire.seasonChange.kis_yaklasiyor'),
         urgent: false,
       }
     }
@@ -132,7 +140,7 @@ export const getSeasonChangeSuggestion = (currentSeason: Season | string): Seaso
       return {
         type: 'warning',
         target: 'winter',
-        message: 'Kış lastiği takılmalı — zaman daralıyor',
+        message: i18n.t('tire.seasonChange.kis_takilmali'),
         urgent: true,
       }
     }
@@ -144,7 +152,7 @@ export const getSeasonChangeSuggestion = (currentSeason: Season | string): Seaso
       return {
         type: 'recommend',
         target: 'summer',
-        message: 'Havalar ısınıyor — yazlık lastik zamanı yaklaşıyor',
+        message: i18n.t('tire.seasonChange.havalar_isiniyor'),
         urgent: false,
       }
     }
@@ -156,7 +164,7 @@ export const getSeasonChangeSuggestion = (currentSeason: Season | string): Seaso
       return {
         type: 'warning',
         target: 'summer',
-        message: 'Yazlığa geçmek için ideal zaman',
+        message: i18n.t('tire.seasonChange.yazliga_ideal'),
         urgent: false,
       }
     }

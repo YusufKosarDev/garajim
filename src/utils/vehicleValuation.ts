@@ -16,6 +16,7 @@
  * gösteriliyor — kullanıcı sayıyı yutmak yerine yargılayabilsin.
  */
 
+import i18n from '../i18n'
 import type { Vehicle, MaintenanceRecord } from '../types'
 
 /** Türkiye'de yıllık ortalama kullanım varsayımı */
@@ -115,11 +116,11 @@ export const estimateVehicleValue = (
 
   const actualKm = Number(vehicle.currentKm) || 0
   const kmUnknown = actualKm <= 0
-  if (kmUnknown) warnings.push('Aracın güncel kilometresi girilmemiş; km etkisi hesaba katılmadı.')
+  if (kmUnknown) warnings.push(i18n.t('vehicleValuation.warning.km_girilmemis'))
 
   const ownRecords = maintenanceRecords.filter(r => r.vehicleId === vehicle.id)
   if (ownRecords.length === 0) {
-    warnings.push('Bu araç için bakım kaydı yok; belgesiz geçmiş değeri düşürür.')
+    warnings.push(i18n.t('vehicleValuation.warning.bakim_kaydi_yok'))
   }
 
   const bYas = ageImpact(age)
@@ -135,7 +136,7 @@ export const estimateVehicleValue = (
   if (kmUnknown && ownRecords.length === 0) confidence = 'low'
   if (age > 20) {
     confidence = 'low'
-    warnings.push('20 yaş üstü araçlarda fiyatı model ve durum belirler; yaşa dayalı tahmin zayıftır.')
+    warnings.push(i18n.t('vehicleValuation.warning.yirmi_yas_ustu'))
   }
 
   const fiyat = Number(purchasePrice)
