@@ -323,7 +323,7 @@ export default function SearchNearby() {
                 className={btnClass}
               >
                 <Icon className="w-3.5 h-3.5" />
-                {meta.label} ({categoryCounts[key] || 0})
+                {t(meta.label)} ({categoryCounts[key] || 0})
               </button>
             )
           })}

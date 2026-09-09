@@ -28,7 +28,7 @@ export default function TireDisplay({ tire, showWarning = true }) {
     <div className={`border rounded-lg p-2.5 ${statusColors[evaluation.status]}`}>
       <div className="flex items-center justify-between mb-1.5">
         <div className="text-[10px] font-bold text-slate-400 uppercase">
-          {pos?.label || tire.position}
+          {pos ? t(pos.label) : tire.position}
         </div>
         {showWarning && evaluation.status !== 'ok' && (
           <>

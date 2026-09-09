@@ -226,7 +226,7 @@ export default function Calendar() {
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5" />
-                  {config.label}
+                  {t(config.label)}
                   <span className={`text-[10px] px-1.5 py-0.5 rounded ${isActive ? 'bg-black/20' : 'bg-slate-700/50'}`}>
                     {count}
                   </span>
@@ -346,7 +346,7 @@ export default function Calendar() {
                             <div
                               key={idx}
                               className={`w-1.5 h-1.5 rounded-full ${config.dot}`}
-                              title={`${config.label} - ${e.vehicle.brand} ${e.vehicle.model}`}
+                              title={`${t(config.label)} - ${e.vehicle.brand} ${e.vehicle.model}`}
                             />
                           )
                         })}
@@ -399,7 +399,7 @@ export default function Calendar() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="font-semibold text-sm flex items-center gap-2 flex-wrap">
-                              <span className={config.text}>{config.label}</span>
+                              <span className={config.text}>{t(config.label)}</span>
                               <span className="text-slate-400 font-normal">— {e.label}</span>
                             </div>
                             <div className="text-xs text-slate-400 truncate">
@@ -452,7 +452,7 @@ export default function Calendar() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="font-semibold text-sm flex items-center gap-2 flex-wrap">
-                          <span className={config.text}>{config.label}</span>
+                          <span className={config.text}>{t(config.label)}</span>
                           <span className="text-slate-400 font-normal">— {e.label}</span>
                         </div>
                         <div className="text-xs text-slate-400">

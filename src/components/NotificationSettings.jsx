@@ -261,7 +261,7 @@ export default function NotificationSettings() {
                         const isActive = JSON.stringify(typeSettings.daysBefore) === JSON.stringify(preset.value)
                         return (
                           <button
-                            key={t(preset.label)}
+                            key={preset.value.join('-')}
                             onClick={() => handleThresholdChange(type.key, preset.value)}
                             className={`text-[11px] px-2.5 py-1 rounded font-semibold transition border ${
                               isActive

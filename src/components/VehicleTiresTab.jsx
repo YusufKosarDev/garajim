@@ -259,10 +259,14 @@ export default function VehicleTiresTab({ vehicleId }) {
         title={t('vehicleTiresTab.lastik_setini_sil')}
         message={
           deleteTarget
-            ? `${SEASONS[deleteTarget.season]?.label} lastik seti (${deleteTarget.brand} ${deleteTarget.size}) silinecek.`
+            ? t('vehicleTiresTab.set_silinecek', {
+                season: t(SEASONS[deleteTarget.season]?.label ?? deleteTarget.season),
+                brand: deleteTarget.brand,
+                size: deleteTarget.size,
+              })
             : ''
         }
-        confirmText="Evet, sil"
+        confirmText={t('vehicleTiresTab.evet_sil')}
       />
 
       {/* Değişim sil dialog */}
@@ -271,8 +275,8 @@ export default function VehicleTiresTab({ vehicleId }) {
         onClose={() => setDeleteChangeTarget(null)}
         onConfirm={confirmDeleteChange}
         title={t('vehicleTiresTab.degisim_kaydini_sil')}
-        message="Bu mevsim değişim kaydı silinecek. Lastik setleri etkilenmez."
-        confirmText="Sil"
+        message={t('vehicleTiresTab.degisim_kaydi_silinecek')}
+        confirmText={t('vehicleTiresTab.sil')}
       />
     </div>
   )

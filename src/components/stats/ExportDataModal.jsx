@@ -154,8 +154,8 @@ export default function ExportDataModal({ isOpen, onClose, vehicles, maintenance
                   <div className="flex items-start gap-2">
                     <Icon className="w-4 h-4 mt-0.5 shrink-0" />
                     <div className="min-w-0">
-                      <div className="font-semibold text-sm">{type.label}</div>
-                      <div className="text-[10px] opacity-70 mt-0.5">{type.description}</div>
+                      <div className="font-semibold text-sm">{t(type.label)}</div>
+                      <div className="text-[10px] opacity-70 mt-0.5">{t(type.description)}</div>
                     </div>
                   </div>
                 </button>
@@ -183,7 +183,7 @@ export default function ExportDataModal({ isOpen, onClose, vehicles, maintenance
                       : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
                   }`}
                 >
-                  {range.label}
+                  {t(range.label)}
                 </button>
               ))}
             </div>

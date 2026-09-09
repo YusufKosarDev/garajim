@@ -99,6 +99,53 @@ Cypress.Commands.add('waitForApp', () => {
 })
 
 /**
+ * Ham çeviri anahtarı ekranda görünüyor mu?
+ *
+ * NEDEN VAR: `tr.json`/`en.json` paritesi bir unit testle korunuyor ama o test
+ * anahtarın EKRANA BASILDIĞINI göremez. Sabit bir tabloda `label: 'tire.season.kislik'`
+ * yazıp tüketicide `t()` ile sarmayı unutmak, kullanıcıya düz "tire.season.kislik"
+ * göstermek demektir — ve bu Türkçe modda da bozuktur, yani dil testleri bile yakalamaz.
+ * Tam olarak bu hata 9 yerde birden vardı; kimse fark etmedi çünkü ham anahtar taraması
+ * yalnızca /settings sayfasında yapılıyordu.
+ *
+ * Desen: küçük harfle başlayan, noktayla ayrılmış, boşluk içermeyen tanımlayıcı.
+ * "vercel.app", "demo@garajim.com", "rapor.pdf" gibi gerçek metinler nokta sonrası
+ * en az 5 karakter şartıyla ayıklanıyor.
+ *
+ * @example cy.assertNoRawI18nKeys('/statistics')
+ */
+const RAW_I18N_KEY_PATTERN = /\b[a-z][a-zA-Z]+\.[a-z][a-z0-9_]{4,}\b/
+
+Cypress.Commands.add('assertNoRawI18nKeys', (context = '') => {
+  cy.get('body').invoke('text').then((text) => {
+    const match = text.match(RAW_I18N_KEY_PATTERN)
+    expect(
+      match,
+      `${context} — ekranda ham çeviri anahtarı görünüyor: "${match?.[0]}"`
+    ).to.be.null
+  })
+})
+
+/**
+ * Dili ve onboarding durumunu sayfa açılmadan ÖNCE sabitleyerek ziyaret et.
+ *
+ * i18next dili `localStorage`'dan okuyor (STORAGE_KEY = 'garajim_dil'), o yüzden
+ * arayüzden düğmeye basmak yerine değeri boot'tan önce yazmak hem daha hızlı hem
+ * de tek bir sayfaya bağlı kalmıyor. Tanıtım turu da kapatılıyor: tam ekran katman
+ * koyduğu için tıklamaları engelliyor ve testi diline göre kırılgan yapıyor.
+ *
+ * @example cy.visitInLanguage('/calendar', 'en')
+ */
+Cypress.Commands.add('visitInLanguage', (path, lang) => {
+  cy.visit(path, {
+    onBeforeLoad(win) {
+      win.localStorage.setItem('garajim_dil', lang)
+      win.localStorage.setItem('garajim_onboarding_completed', 'true')
+    },
+  })
+})
+
+/**
  * Toast mesajı kontrol et.
  * react-hot-toast ile gösterilen mesajları kontrol için.
  *
