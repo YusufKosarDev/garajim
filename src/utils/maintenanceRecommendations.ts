@@ -81,7 +81,6 @@ export interface Recommendation {
   kmRemaining: number
   status: RecommendationStatus
   hasHistory: boolean
-  message?: string
 }
 
 export const getMaintenanceRecommendation = (

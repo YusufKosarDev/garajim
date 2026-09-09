@@ -50,10 +50,11 @@ export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   browserNotifications: false,
 }
 
-// Tür için config
+// Tür için config — etiketlerin TEK kaynağı. `label` bir çeviri anahtarı;
+// tüketiciler t() ile çözüyor.
 const TYPE_CONFIG: Record<string, { label: string; icon: string; urgentColor: string }> = {
   inspection: { label: 'notification.type.muayene', icon: '📋', urgentColor: 'red' },
-  mtv: { label: 'MTV', icon: '💳', urgentColor: 'red' },
+  mtv: { label: 'notification.type.mtv', icon: '💳', urgentColor: 'red' },
   insurance: { label: 'notification.type.trafik_sigortasi', icon: '🛡️', urgentColor: 'red' },
   kasko: { label: 'notification.type.kasko', icon: '🛡️', urgentColor: 'orange' },
   maintenance: { label: 'notification.type.bakim', icon: '🔧', urgentColor: 'blue' },
@@ -78,15 +79,19 @@ const buildNotificationId = (type: string, vehicleId: string, targetDate: string
 const generateDateNotifications = (vehicles: Vehicle[], settings: NotificationSettings): AppNotification[] => {
   const notifications: AppNotification[] = []
 
-  const dateFields: { type: NotificationKind; field: keyof Vehicle; label: string }[] = [
-    { type: 'inspection', field: 'inspectionDate', label: 'notification.type.muayene' },
-    { type: 'mtv', field: 'mtvDate', label: 'MTV' },
-    { type: 'insurance', field: 'insuranceDate', label: 'notification.type.trafik_sigortasi' },
-    { type: 'kasko', field: 'kaskoDate', label: 'notification.type.kasko' },
+  // Yalnızca "hangi tarih hangi Vehicle alanından okunuyor" eşlemesi.
+  // Etiket TYPE_CONFIG'den geliyor — bu liste eskiden aynı etiketleri ÜÇÜNCÜ
+  // kez tanımlıyordu ve biri değişince diğerleri sessizce geride kalıyordu.
+  const dateFields: { type: NotificationKind; field: keyof Vehicle }[] = [
+    { type: 'inspection', field: 'inspectionDate' },
+    { type: 'mtv', field: 'mtvDate' },
+    { type: 'insurance', field: 'insuranceDate' },
+    { type: 'kasko', field: 'kaskoDate' },
   ]
 
   vehicles.forEach((vehicle: Vehicle) => {
-    dateFields.forEach(({ type, field, label }) => {
+    dateFields.forEach(({ type, field }) => {
+      const label = TYPE_CONFIG[type].label
       const setting = settings[type] as KindSettings | undefined
       if (!setting || !setting.enabled) return
 
@@ -168,7 +173,10 @@ const generateMaintenanceNotifications = (
       vehicleId: rec.vehicleId,
       maintenanceType: rec.type,
       title: isOverdue ? i18n.t('notification.maintenance.overdue_title', { type: rec.type }) : i18n.t('notification.maintenance.upcoming_title', { type: rec.type }),
-      message: i18n.t('notification.maintenance.message', { vehicleName, plate: vehicle.plate, detail: rec.message || i18n.t('notification.maintenance.interval_due') }),
+      // `rec.message` diye bir alan vardı ama hiçbir yerde atanmıyordu; bu
+      // ifade her zaman fallback'e düşüyordu. Alan Recommendation tipinden
+      // kaldırıldı, fallback tek gerçek dal olarak kaldı.
+      message: i18n.t('notification.maintenance.message', { vehicleName, plate: vehicle.plate, detail: i18n.t('notification.maintenance.interval_due') }),
       date: new Date().toISOString(),
       priority: isOverdue ? 'critical' : 'high',
       actionUrl: `/vehicles/${rec.vehicleId}`,

@@ -10,13 +10,18 @@ import ConfirmDialog from './ConfirmDialog'
 // label ve description'ın ikisi de ÇEVİRİ ANAHTARI. Eskiden karışıktı: bazı
 // satırlar anahtar, bazıları düz Türkçe metin tutuyordu ve description hiç
 // t()'den geçmiyordu — İngilizce arayüzde bu altı açıklama Türkçe kalıyordu.
+//
+// `key` ayarların saklandığı isim (DEFAULT_NOTIFICATION_SETTINGS ile aynı,
+// camelCase). `configKey` yalnızca notificationManager'ın TYPE_CONFIG'inde
+// farklı yazıldığında veriliyor; eskiden bu dönüşüm render içinde satır arası
+// bir koşuldu ve nedeni görünmüyordu.
 const NOTIFICATION_TYPES = [
   { key: 'inspection', label: 'notificationSettings.type.muayene', description: 'notificationSettings.desc.inspection', hasThresholds: true },
   { key: 'mtv', label: 'notificationSettings.type.mtv', description: 'notificationSettings.desc.mtv', hasThresholds: true },
   { key: 'insurance', label: 'notificationSettings.type.trafik_sigortasi', description: 'notificationSettings.desc.insurance', hasThresholds: true },
   { key: 'kasko', label: 'notificationSettings.type.kasko', description: 'notificationSettings.desc.kasko', hasThresholds: true },
   { key: 'maintenance', label: 'notificationSettings.type.bakim_onerileri', description: 'notificationSettings.desc.maintenance', hasThresholds: false },
-  { key: 'tireSeason', label: 'notificationSettings.type.lastik_mevsim_degisimi', description: 'notificationSettings.desc.tireSeason', hasThresholds: false },
+  { key: 'tireSeason', configKey: 'tire-season', label: 'notificationSettings.type.lastik_mevsim_degisimi', description: 'notificationSettings.desc.tireSeason', hasThresholds: false },
 ]
 
 const PRESET_THRESHOLDS = [
@@ -136,7 +141,7 @@ export default function NotificationSettings() {
             </div>
             <div className="min-w-0">
               <div className="font-bold">
-                {settings.enabled ? 'Bildirimler Aktif' : t('notificationSettings.bildirimler_kapali')}
+                {settings.enabled ? t('notificationSettings.bildirimler_aktif') : t('notificationSettings.bildirimler_kapali')}
               </div>
               <div className="text-xs text-slate-400 mt-0.5">
                 {settings.enabled
@@ -220,7 +225,7 @@ export default function NotificationSettings() {
         <div className="space-y-2">
           {NOTIFICATION_TYPES.map(type => {
             const typeSettings = settings[type.key] || { enabled: false, daysBefore: [30, 7, 1] }
-            const config = getTypeConfig(type.key === 'tireSeason' ? 'tire-season' : type.key)
+            const config = getTypeConfig(type.configKey ?? type.key)
 
             return (
               <div
@@ -278,7 +283,7 @@ export default function NotificationSettings() {
                       })}
                     </div>
                     <div className="mt-2 text-[10px] text-slate-500">
-                      Aktif eşikler: {typeSettings.daysBefore.join(', ')} gün
+                      {t('notificationSettings.aktif_esikler', { thresholds: typeSettings.daysBefore.join(', ') })}
                     </div>
                   </div>
                 )}
@@ -304,7 +309,7 @@ export default function NotificationSettings() {
             className="flex items-center gap-1.5 text-xs bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 px-3 py-2 rounded-lg font-semibold transition"
           >
             <Trash2 className="w-3.5 h-3.5" />
-            Tüm Bildirimleri Sil ({notifications.length})
+            {t('notificationSettings.tum_bildirimleri_sil_butonu', { count: notifications.length })}
           </button>
         )}
       </div>
@@ -322,8 +327,8 @@ export default function NotificationSettings() {
         onClose={() => setIsResetOpen(false)}
         onConfirm={handleResetSettings}
         title={t('notificationSettings.ayarlari_varsayilana_dondur')}
-        message="Tüm bildirim türleri ve eşikleri varsayılan değerlere dönecek. Mevcut bildirimler silinmez."
-        confirmText="Evet, sıfırla"
+        message={t('notificationSettings.sifirla_mesaji')}
+        confirmText={t('notificationSettings.evet_sifirla')}
       />
 
       <ConfirmDialog
@@ -331,8 +336,8 @@ export default function NotificationSettings() {
         onClose={() => setIsClearOpen(false)}
         onConfirm={handleClearAll}
         title={t('notificationSettings.tum_bildirimleri_sil')}
-        message={`${notifications.length} bildirim kalıcı olarak silinecek. Geçmiş bilgiler kaybolur ama kriterlere uyan yeni bildirimler tekrar oluşturulabilir.`}
-        confirmText="Evet, hepsini sil"
+        message={t('notificationSettings.hepsini_sil_mesaji', { count: notifications.length })}
+        confirmText={t('notificationSettings.evet_hepsini_sil')}
       />
     </div>
   )
