@@ -13,38 +13,38 @@ import {
 
 const dateRanges = [
   { id: 'all', label: 'stats.exportDataModal.option.tumu' },
-  { id: 'last12', label: 'Son 12 Ay' },
+  { id: 'last12', label: 'stats.exportDataModal.option.son_12_ay' },
   { id: 'year', label: 'stats.exportDataModal.option.bu_yil' },
-  { id: 'quarter', label: 'Son 3 Ay' },
-  { id: 'month', label: 'Bu Ay' },
+  { id: 'quarter', label: 'stats.exportDataModal.option.son_3_ay' },
+  { id: 'month', label: 'stats.exportDataModal.option.bu_ay' },
 ]
 
 const exportTypes = [
   {
     id: 'all',
-    label: 'Hepsi',
-    description: '3 ayrı CSV: araçlar, bakımlar, yakıtlar',
+    label: 'stats.exportDataModal.option.hepsi',
+    description: 'stats.exportDataModal.desc.all',
     icon: FileSpreadsheet,
     color: 'blue',
   },
   {
     id: 'vehicles',
     label: 'stats.exportDataModal.option.sadece_araclar',
-    description: 'Araç bilgileri ve tarihler',
+    description: 'stats.exportDataModal.desc.vehicles',
     icon: Car,
     color: 'purple',
   },
   {
     id: 'maintenance',
     label: 'stats.exportDataModal.option.sadece_bakimlar',
-    description: 'Tüm bakım kayıtları',
+    description: 'stats.exportDataModal.desc.maintenance',
     icon: Wrench,
     color: 'orange',
   },
   {
     id: 'fuel',
     label: 'stats.exportDataModal.option.sadece_yakit',
-    description: 'Tüm yakıt alımları',
+    description: 'stats.exportDataModal.desc.fuel',
     icon: Droplet,
     color: 'green',
   },
@@ -70,27 +70,29 @@ export default function ExportDataModal({ isOpen, onClose, vehicles, maintenance
       switch (exportType) {
         case 'all': {
           const result = exportAllCSV(vehicles, filteredMaintenance, filteredFuel)
-          resultMessage = `${result.vehicles} araç + ${result.maintenance} bakım + ${result.fuel} yakıt kaydı`
+          resultMessage = t('stats.exportDataModal.result.hepsi', {
+            vehicles: result.vehicles, maintenance: result.maintenance, fuel: result.fuel,
+          })
           break
         }
         case 'vehicles': {
           const count = exportVehiclesCSV(vehicles)
-          resultMessage = `${count} araç`
+          resultMessage = t('stats.exportDataModal.result.araclar', { count })
           break
         }
         case 'maintenance': {
           const count = exportMaintenanceCSV(filteredMaintenance, vehicles)
-          resultMessage = `${count} bakım kaydı`
+          resultMessage = t('stats.exportDataModal.result.bakimlar', { count })
           break
         }
         case 'fuel': {
           const count = exportFuelCSV(filteredFuel, vehicles)
-          resultMessage = `${count} yakıt kaydı`
+          resultMessage = t('stats.exportDataModal.result.yakit', { count })
           break
         }
       }
 
-      toast.success(`CSV indirildi: ${resultMessage} 📊`)
+      toast.success(t('stats.exportDataModal.csv_indirildi', { detail: resultMessage }))
       onClose()
     } catch (err) {
       console.error(err)
@@ -107,13 +109,15 @@ export default function ExportDataModal({ isOpen, onClose, vehicles, maintenance
 
     switch (exportType) {
       case 'all':
-        return `${vehicles.length} araç + ${filteredMaintenance.length} bakım + ${filteredFuel.length} yakıt`
+        return t('stats.exportDataModal.preview.hepsi', {
+          vehicles: vehicles.length, maintenance: filteredMaintenance.length, fuel: filteredFuel.length,
+        })
       case 'vehicles':
-        return `${vehicles.length} araç`
+        return t('stats.exportDataModal.result.araclar', { count: vehicles.length })
       case 'maintenance':
-        return `${filteredMaintenance.length} bakım kaydı`
+        return t('stats.exportDataModal.result.bakimlar', { count: filteredMaintenance.length })
       case 'fuel':
-        return `${filteredFuel.length} yakıt kaydı`
+        return t('stats.exportDataModal.result.yakit', { count: filteredFuel.length })
       default:
         return ''
     }

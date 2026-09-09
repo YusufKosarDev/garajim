@@ -26,8 +26,8 @@ import VehicleCostChart from '../components/charts/VehicleCostChart'
 import FuelConsumptionChart from '../components/charts/FuelConsumptionChart'
 
 const tabs = [
-  { id: 'overview', label: 'Genel', icon: BarChart3 },
-  { id: 'time', label: 'Zaman', icon: Calendar },
+  { id: 'overview', label: 'statistics.tab.genel', icon: BarChart3 },
+  { id: 'time', label: 'statistics.tab.zaman', icon: Calendar },
   { id: 'vehicles', label: 'statistics.tab.araclar', icon: Car },
   { id: 'fuel', label: 'statistics.tab.yakit', icon: Droplet },
 ]

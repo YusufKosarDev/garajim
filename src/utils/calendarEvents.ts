@@ -10,6 +10,7 @@
  * Yeni şekilde `type` her zaman makine anahtarı, `label` her zaman insan metni.
  */
 
+import i18n from '../i18n'
 import { daysUntil, getDateStatus } from './dateHelpers'
 import type { Vehicle, MaintenanceRecord, FuelRecord, DateStatus } from '../types'
 
@@ -34,11 +35,17 @@ export interface TakvimEtkinligi {
  * Araca ait yasal tarihler. Sıra Dashboard'daki eski listeyle aynı tutuldu ki
  * kullanıcı alıştığı sıralamayı kaybetmesin.
  */
-const ARAC_TARIHLERI: Array<{ field: keyof Vehicle; type: CalendarEventType; label: string }> = [
-  { field: 'inspectionDate', type: 'inspection', label: 'Muayene' },
-  { field: 'mtvDate', type: 'mtv', label: 'MTV' },
-  { field: 'insuranceDate', type: 'insurance', label: 'Sigorta' },
-  { field: 'kaskoDate', type: 'kasko', label: 'Kasko' },
+/**
+ * `labelKey` ÇEVİRİ ANAHTARI, çevrilmiş metin değil: `i18n.t()` modül yüklenirken
+ * değil, etkinlik üretilirken çağrılmalı. Modül seviyesinde çağrılsaydı etiketler
+ * uygulamanın açılış diline sabitlenir, kullanıcı dili değiştirdiğinde takvim ve
+ * .ics çıktısı eski dilde kalırdı.
+ */
+const ARAC_TARIHLERI: Array<{ field: keyof Vehicle; type: CalendarEventType; labelKey: string }> = [
+  { field: 'inspectionDate', type: 'inspection', labelKey: 'calendarEvent.muayene' },
+  { field: 'mtvDate', type: 'mtv', labelKey: 'calendarEvent.mtv' },
+  { field: 'insuranceDate', type: 'insurance', labelKey: 'calendarEvent.sigorta' },
+  { field: 'kaskoDate', type: 'kasko', labelKey: 'calendarEvent.kasko' },
 ]
 
 export interface CalendarEventOptions {
@@ -55,11 +62,11 @@ export const buildVehicleEvents = (
   const events: TakvimEtkinligi[] = []
 
   for (const vehicle of vehicles) {
-    for (const { field, type, label } of ARAC_TARIHLERI) {
+    for (const { field, type, labelKey } of ARAC_TARIHLERI) {
       const date = vehicle[field]
       if (typeof date !== 'string' || !date) continue
       events.push({
-        type, label, date, vehicle,
+        type, label: i18n.t(labelKey), date, vehicle,
         days: daysUntil(date),
         status: getDateStatus(date),
       })
@@ -85,7 +92,13 @@ export const buildVehicleEvents = (
       const tutar = Number(r.totalCost) || 0
       events.push({
         type: 'fuel',
-        label: `${r.liters} L - ${tutar.toLocaleString('tr-TR')} ₺`,
+        // Para birimi ve sayı gruplaması kasıtlı olarak tr-TR: tutarlar Türk
+        // Lirası cinsinden ve arayüz dili İngilizce olsa da öyle kalmalı.
+        // Çevrilen şey etiket; para birimi bir veri özelliği.
+        label: i18n.t('calendarEvent.yakit_ozet', {
+          liters: r.liters,
+          amount: tutar.toLocaleString('tr-TR'),
+        }),
         date: r.date, vehicle,
         days: daysUntil(r.date), status: getDateStatus(r.date), record: r,
       })

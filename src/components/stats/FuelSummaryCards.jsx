@@ -23,30 +23,32 @@ export default function FuelSummaryCards({ fuelRecords = [] }) {
 
   const cards = [
     {
-      label: 'Toplam Harcama',
+      label: 'stats.fuelSummaryCards.toplam_harcama',
       value: `${stats.totalCost.toLocaleString('tr-TR')} ₺`,
-      sub: `${stats.recordCount} yakıt alımı`,
+      sub: t('stats.fuelSummaryCards.sub.yakit_alimi', { count: stats.recordCount }),
       icon: DollarSign,
       color: 'green',
     },
     {
-      label: 'Toplam Litre',
+      label: 'stats.fuelSummaryCards.toplam_litre',
       value: `${stats.totalLiters.toFixed(1)} L`,
-      sub: stats.totalLiters >= 1000 ? `${(stats.totalLiters / 1000).toFixed(2)} bin litre` : '—',
+      sub: stats.totalLiters >= 1000
+        ? t('stats.fuelSummaryCards.sub.bin_litre', { value: (stats.totalLiters / 1000).toFixed(2) })
+        : '—',
       icon: Droplet,
       color: 'orange',
     },
     {
-      label: 'Ortalama ₺/L',
+      label: 'stats.fuelSummaryCards.ortalama_l',
       value: stats.avgPrice ? `${stats.avgPrice.toFixed(2)} ₺` : '—',
-      sub: 'Tüm zamanlar ortalaması',
+      sub: t('stats.fuelSummaryCards.sub.tum_zamanlar'),
       icon: TrendingUp,
       color: 'blue',
     },
     {
       label: 'stats.fuelSummaryCards.ort_tuketim',
       value: stats.avgConsumption ? `${stats.avgConsumption.toFixed(1)}` : '—',
-      sub: stats.avgConsumption ? 'L/100km' : 'Veri yetersiz',
+      sub: stats.avgConsumption ? 'L/100km' : t('stats.fuelSummaryCards.sub.veri_yetersiz'),
       icon: Gauge,
       color: 'purple',
     },

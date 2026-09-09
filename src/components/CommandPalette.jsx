@@ -176,14 +176,17 @@ export default function CommandPalette({ isOpen, onClose, onNewVehicle, onNewMai
       const recents = filteredItems.filter(i => i.section === 'recent')
       const defaults = filteredItems.filter(i => i.section === 'default')
       return [
-        ...(recents.length > 0 ? [{ label: 'Son Aramalar', items: recents }] : []),
-        { label: t('commandPalette.hizli_erisim'), items: defaults },
+        // `id` çevrilmeyen kararlı bir işaret: aşağıda saat ikonunu göstermek için
+        // eskiden başlık metni 'Son Aramalar' ile karşılaştırılıyordu, bu da
+        // İngilizce arayüzde hiçbir zaman eşleşmiyordu.
+        ...(recents.length > 0 ? [{ id: 'recent', label: t('commandPalette.son_aramalar'), items: recents }] : []),
+        { id: 'default', label: t('commandPalette.hizli_erisim'), items: defaults },
       ]
     }
 
     const groups = {
-      page: { label: 'Sayfalar', items: [] },
-      action: { label: 'Eylemler', items: [] },
+      page: { label: t('commandPalette.sayfalar'), items: [] },
+      action: { label: t('commandPalette.eylemler'), items: [] },
       vehicle: { label: t('commandPalette.araclar'), items: [] },
       maintenance: { label: t('commandPalette.bakim_kayitlari'), items: [] },
       fuel: { label: t('commandPalette.yakit_kayitlari'), items: [] },
@@ -267,8 +270,8 @@ export default function CommandPalette({ isOpen, onClose, onNewVehicle, onNewMai
 
   // Tür başına renk ve emoji
   const typeConfig = {
-    page: { color: 'text-blue-400', label: 'Sayfa' },
-    action: { color: 'text-green-400', label: 'Eylem' },
+    page: { color: 'text-blue-400', label: t('commandPalette.sayfa') },
+    action: { color: 'text-green-400', label: t('commandPalette.eylem') },
     vehicle: { color: 'text-purple-400', label: t('commandPalette.arac') },
     maintenance: { color: 'text-orange-400', label: t('commandPalette.bakim') },
     fuel: { color: 'text-cyan-400', label: t('commandPalette.yakit') },
@@ -333,9 +336,9 @@ export default function CommandPalette({ isOpen, onClose, onNewVehicle, onNewMai
                     }
 
                     return (
-                      <div key={group.label}>
+                      <div key={group.id ?? group.label}>
                         <div className="px-4 py-1.5 text-[10px] font-semibold text-slate-500 uppercase tracking-wide flex items-center gap-2">
-                          {group.label === 'Son Aramalar' && <Clock className="w-3 h-3" />}
+                          {group.id === 'recent' && <Clock className="w-3 h-3" />}
                           {group.label}
                         </div>
                         {group.items.map((item, iIdx) => {

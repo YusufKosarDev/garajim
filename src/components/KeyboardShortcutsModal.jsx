@@ -4,36 +4,36 @@ import Modal from './Modal'
 
 const shortcutGroups = [
   {
-    title: 'Arama',
+    title: 'keyboardShortcutsModal.arama',
     shortcuts: [
-      { keys: ['Ctrl', 'K'], altKeys: ['⌘', 'K'], description: 'Global arama (her şey)' },
-      { keys: ['/'], description: 'Sayfa araması' },
+      { keys: ['Ctrl', 'K'], altKeys: ['⌘', 'K'], description: 'keyboardShortcutsModal.desc.global_arama' },
+      { keys: ['/'], description: 'keyboardShortcutsModal.desc.sayfa_aramasi' },
     ],
   },
   {
-    title: 'Navigasyon',
+    title: 'keyboardShortcutsModal.navigasyon',
     shortcuts: [
-      { keys: ['G', 'D'], description: 'Dashboard' },
-      { keys: ['G', 'V'], description: 'Araçlarım' },
-      { keys: ['G', 'C'], description: 'Takvim' },
-      { keys: ['G', 'S'], description: 'İstatistikler' },
-      { keys: ['G', ','], description: 'Ayarlar' },
+      { keys: ['G', 'D'], description: 'keyboardShortcutsModal.desc.dashboard' },
+      { keys: ['G', 'V'], description: 'keyboardShortcutsModal.desc.araclarim' },
+      { keys: ['G', 'C'], description: 'keyboardShortcutsModal.desc.takvim' },
+      { keys: ['G', 'S'], description: 'keyboardShortcutsModal.desc.istatistikler' },
+      { keys: ['G', ','], description: 'keyboardShortcutsModal.desc.ayarlar' },
     ],
   },
   {
     title: 'keyboardShortcutsModal.hizli_ekleme',
     shortcuts: [
-      { keys: ['N', 'V'], description: 'Yeni araç' },
-      { keys: ['N', 'M'], description: 'Yeni bakım (araç detayında)' },
-      { keys: ['N', 'F'], description: 'Yeni yakıt (araç detayında)' },
+      { keys: ['N', 'V'], description: 'keyboardShortcutsModal.desc.yeni_arac' },
+      { keys: ['N', 'M'], description: 'keyboardShortcutsModal.desc.yeni_bakim' },
+      { keys: ['N', 'F'], description: 'keyboardShortcutsModal.desc.yeni_yakit' },
     ],
   },
   {
-    title: 'Genel',
+    title: 'keyboardShortcutsModal.genel',
     shortcuts: [
-      { keys: ['?'], description: 'Bu kısayol rehberini aç' },
-      { keys: ['Esc'], description: 'Modal / dialog kapat' },
-      { keys: ['Tab'], description: 'Sonraki alana geç (modal içinde döner)' },
+      { keys: ['?'], description: 'keyboardShortcutsModal.desc.kisayol_rehberi' },
+      { keys: ['Esc'], description: 'keyboardShortcutsModal.desc.modal_kapat' },
+      { keys: ['Tab'], description: 'keyboardShortcutsModal.desc.sonraki_alan' },
     ],
   },
 ]

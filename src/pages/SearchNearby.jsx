@@ -53,7 +53,7 @@ const CATEGORIES = {
     textClass: 'text-green-400',
   },
   service: {
-    label: 'Oto Servis',
+    label: 'searchNearby.category.oto_servis',
     icon: Wrench,
     bgClass: 'bg-orange-500/10 border-orange-500/30',
     textClass: 'text-orange-400',

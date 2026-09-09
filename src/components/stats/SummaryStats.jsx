@@ -8,33 +8,50 @@ export default function SummaryStats({ maintenanceRecords, fuelRecords }) {
   const yearData = getYearComparison(maintenanceRecords, fuelRecords)
 
   const stats = [
+    // `label` her satırda ÇEVİRİ ANAHTARI; parametre gerekenler `labelParams`
+    // veriyor. Eskiden iki satır anahtar, iki satır önceden çevrilmiş metin
+    // tutuyordu ve tüketici ikisine birden t() uyguluyordu.
     {
-      label: 'Bu Ay',
+      label: 'stats.summaryStats.bu_ay',
       value: `${currentMonth.total.toLocaleString('tr-TR')} ₺`,
-      sub: `Bakım: ${currentMonth.maintenance.toLocaleString('tr-TR')} + Yakıt: ${currentMonth.fuel.toLocaleString('tr-TR')}`,
+      sub: t('stats.summaryStats.sub.bakim_yakit', {
+        maintenance: currentMonth.maintenance.toLocaleString('tr-TR'),
+        fuel: currentMonth.fuel.toLocaleString('tr-TR'),
+      }),
       icon: Calendar,
       color: 'blue',
     },
     {
-      label: t('stats.summaryStats.bu_yil', { year: yearData.currentYear }),
+      label: 'stats.summaryStats.bu_yil',
+      labelParams: { year: yearData.currentYear },
       value: `${yearData.current.total.toLocaleString('tr-TR')} ₺`,
-      sub: `${maintenanceRecords.filter(r => new Date(r.date).getFullYear() === yearData.currentYear).length + fuelRecords.filter(r => new Date(r.date).getFullYear() === yearData.currentYear).length} kayıt`,
+      sub: t('stats.summaryStats.sub.kayit', {
+        count: maintenanceRecords.filter(r => new Date(r.date).getFullYear() === yearData.currentYear).length
+          + fuelRecords.filter(r => new Date(r.date).getFullYear() === yearData.currentYear).length,
+      }),
       icon: DollarSign,
       color: 'green',
     },
     {
-      label: t('stats.summaryStats.gecen_yil', { year: yearData.previousYear }),
+      label: 'stats.summaryStats.gecen_yil',
+      labelParams: { year: yearData.previousYear },
       value: `${yearData.previous.total.toLocaleString('tr-TR')} ₺`,
       sub: yearData.percentChange !== null
-        ? `${yearData.percentChange > 0 ? '+' : ''}${yearData.percentChange}% değişim`
-        : 'Veri yok',
+        ? t('stats.summaryStats.sub.degisim', {
+            sign: yearData.percentChange > 0 ? '+' : '',
+            percent: yearData.percentChange,
+          })
+        : t('stats.summaryStats.sub.veri_yok'),
       icon: TrendingUp,
       color: yearData.percentChange > 0 ? 'red' : yearData.percentChange < 0 ? 'green' : 'slate',
     },
     {
       label: 'stats.summaryStats.toplam_kayit',
       value: maintenanceRecords.length + fuelRecords.length,
-      sub: `🔧 ${maintenanceRecords.length} bakım • ⛽ ${fuelRecords.length} yakıt`,
+      sub: t('stats.summaryStats.sub.bakim_yakit_sayi', {
+        maintenance: maintenanceRecords.length,
+        fuel: fuelRecords.length,
+      }),
       icon: Wrench,
       color: 'purple',
     },
@@ -57,7 +74,7 @@ export default function SummaryStats({ maintenanceRecords, fuelRecords }) {
           </div>
           <div className="text-xl font-bold text-white mb-1">{stat.value}</div>
           <div className="text-[10px] opacity-80 uppercase tracking-wide font-semibold">
-            {t(stat.label)}
+            {t(stat.label, stat.labelParams)}
           </div>
           <div className="text-xs text-slate-500 mt-1 truncate" title={stat.sub}>
             {stat.sub}

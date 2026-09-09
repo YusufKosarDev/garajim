@@ -11,9 +11,9 @@ import { captureError } from '../lib/errorTracking'
 const LOW_CONFIDENCE = 60
 
 const FIELDS = [
-  { key: 'amount', label: 'Maliyet', format: v => `${v.toLocaleString('tr-TR')} ₺` },
-  { key: 'date', label: 'Tarih', format: v => v },
-  { key: 'km', label: 'KM', format: v => v.toLocaleString('tr-TR') },
+  { key: 'amount', label: 'receiptScanner.field.maliyet', format: v => `${v.toLocaleString('tr-TR')} ₺` },
+  { key: 'date', label: 'receiptScanner.field.tarih', format: v => v },
+  { key: 'km', label: 'receiptScanner.field.km', format: v => v.toLocaleString('tr-TR') },
 ]
 
 /**

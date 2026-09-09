@@ -14,10 +14,10 @@ function VehicleCard({ vehicle, onEdit, onDelete }) {
 
   // En kritik tarih (kart üstüne rozet için)
   const criticalDates = [
-    { label: 'Muayene', date: vehicle.inspectionDate },
-    { label: 'MTV', date: vehicle.mtvDate },
-    { label: 'Sigorta', date: vehicle.insuranceDate },
-    { label: 'Kasko', date: vehicle.kaskoDate },
+    { label: 'vehicleCard.muayene', date: vehicle.inspectionDate },
+    { label: 'vehicleCard.mtv', date: vehicle.mtvDate },
+    { label: 'vehicleCard.sigorta', date: vehicle.insuranceDate },
+    { label: 'vehicleCard.kasko', date: vehicle.kaskoDate },
   ]
     .filter(d => d.date)
     .map(d => ({
@@ -104,12 +104,12 @@ function VehicleCard({ vehicle, onEdit, onDelete }) {
                 : 'bg-yellow-500/90 text-yellow-950'
             }`}>
               <AlertTriangle className="w-3 h-3" />
-              {mostUrgent.label}: {
+              {t(mostUrgent.label)}: {
                 mostUrgent.days < 0
-                  ? `${Math.abs(mostUrgent.days)}g geçti`
+                  ? t('vehicleCard.gun_gecti', { days: Math.abs(mostUrgent.days) })
                   : mostUrgent.days === 0
                   ? t('vehicleCard.bugun')
-                  : `${mostUrgent.days}g`
+                  : t('vehicleCard.gun_kaldi', { days: mostUrgent.days })
               }
             </div>
           )}

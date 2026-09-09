@@ -20,10 +20,10 @@ const weekDaysFull = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', '
 
 // Olay tipleri ve özellikleri
 const eventTypeConfig = {
-  inspection: { label: 'Muayene', icon: FileCheck, color: 'blue', dot: 'bg-blue-400', text: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/30' },
-  mtv: { label: 'MTV', icon: Receipt, color: 'purple', dot: 'bg-purple-400', text: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/30' },
-  insurance: { label: 'Sigorta', icon: Shield, color: 'cyan', dot: 'bg-cyan-400', text: 'text-cyan-400', bg: 'bg-cyan-500/10', border: 'border-cyan-500/30' },
-  kasko: { label: 'Kasko', icon: Shield, color: 'indigo', dot: 'bg-indigo-400', text: 'text-indigo-400', bg: 'bg-indigo-500/10', border: 'border-indigo-500/30' },
+  inspection: { label: 'calendar.filter.muayene', icon: FileCheck, color: 'blue', dot: 'bg-blue-400', text: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/30' },
+  mtv: { label: 'calendar.filter.mtv', icon: Receipt, color: 'purple', dot: 'bg-purple-400', text: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/30' },
+  insurance: { label: 'calendar.filter.sigorta', icon: Shield, color: 'cyan', dot: 'bg-cyan-400', text: 'text-cyan-400', bg: 'bg-cyan-500/10', border: 'border-cyan-500/30' },
+  kasko: { label: 'calendar.filter.kasko', icon: Shield, color: 'indigo', dot: 'bg-indigo-400', text: 'text-indigo-400', bg: 'bg-indigo-500/10', border: 'border-indigo-500/30' },
   maintenance: { label: 'calendar.filter.bakim', icon: Wrench, color: 'orange', dot: 'bg-orange-400', text: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/30' },
   fuel: { label: 'calendar.filter.yakit', icon: Droplet, color: 'green', dot: 'bg-green-400', text: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/30' },
 }

@@ -8,29 +8,29 @@ const statusConfig = {
     icon: AlertTriangle,
     bg: 'bg-red-500/10 border-red-500/30',
     text: 'text-red-400',
-    label: 'Gecikti',
-    getMessage: (km) => `${Math.abs(km).toLocaleString('tr-TR')} km gecikti`,
+    label: 'maintenanceRecommendationCard.gecikti',
+    messageKey: 'maintenanceRecommendationCard.km_gecikti',
   },
   urgent: {
     icon: AlertTriangle,
     bg: 'bg-orange-500/10 border-orange-500/30',
     text: 'text-orange-400',
-    label: 'Acil',
-    getMessage: (km) => `${km.toLocaleString('tr-TR')} km kaldı`,
+    label: 'maintenanceRecommendationCard.acil',
+    messageKey: 'maintenanceRecommendationCard.km_kaldi',
   },
   soon: {
     icon: Clock,
     bg: 'bg-yellow-500/10 border-yellow-500/30',
     text: 'text-yellow-400',
     label: 'maintenanceRecommendationCard.yaklasiyor',
-    getMessage: (km) => `${km.toLocaleString('tr-TR')} km kaldı`,
+    messageKey: 'maintenanceRecommendationCard.km_kaldi',
   },
   ok: {
     icon: Wrench,
     bg: 'bg-green-500/10 border-green-500/30',
     text: 'text-green-400',
     label: 'maintenanceRecommendationCard.guvenli',
-    getMessage: (km) => `${km.toLocaleString('tr-TR')} km sonra`,
+    messageKey: 'maintenanceRecommendationCard.km_sonra',
   },
 }
 
@@ -65,13 +65,16 @@ function MaintenanceRecommendationCard({ recommendation, onQuickAdd, showVehicle
               {' • '}
             </>
           )}
-          Son: {recommendation.lastKm.toLocaleString('tr-TR')} km • Hedef: {recommendation.nextDueKm.toLocaleString('tr-TR')} km
+          {t('maintenanceRecommendationCard.son_hedef', {
+            last: recommendation.lastKm.toLocaleString('tr-TR'),
+            target: recommendation.nextDueKm.toLocaleString('tr-TR'),
+          })}
         </div>
       </div>
 
       <div className="flex items-center gap-2 shrink-0">
         <div className={`text-xs font-semibold ${config.text} text-right hidden sm:block`}>
-          {config.getMessage(recommendation.kmRemaining)}
+          {t(config.messageKey, { km: Math.abs(recommendation.kmRemaining).toLocaleString('tr-TR') })}
         </div>
         {onQuickAdd && (
           <button

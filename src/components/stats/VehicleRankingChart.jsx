@@ -4,10 +4,10 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 import { getVehicleCostAnalysis } from '../../utils/statisticsHelpers'
 
 const metrics = [
-  { id: 'totalCost', label: 'Toplam Harcama', unit: '₺', color: '#22c55e' },
+  { id: 'totalCost', label: 'stats.vehicleRankingChart.toplam_harcama', unit: '₺', color: '#22c55e' },
   { id: 'costPerKm', label: 'stats.vehicleRankingChart.km_basina_maliyet', unit: '₺/km', color: '#3b82f6' },
   { id: 'recordCount', label: 'stats.vehicleRankingChart.kayit_sayisi', unit: '', color: '#a855f7' },
-  { id: 'kmRange', label: 'Kat Edilen KM', unit: 'km', color: '#f97316' },
+  { id: 'kmRange', label: 'stats.vehicleRankingChart.kat_edilen_km', unit: 'km', color: '#f97316' },
 ]
 
 export default function VehicleRankingChart({ vehicles = [], maintenanceRecords = [], fuelRecords = [] }) {

@@ -7,13 +7,16 @@ import { requestBrowserPermission, DEFAULT_NOTIFICATION_SETTINGS, getTypeConfig 
 import { isHapticSupported, isHapticEnabled, setHapticEnabled, hapticMedium } from '../utils/hapticFeedback'
 import ConfirmDialog from './ConfirmDialog'
 
+// label ve description'ın ikisi de ÇEVİRİ ANAHTARI. Eskiden karışıktı: bazı
+// satırlar anahtar, bazıları düz Türkçe metin tutuyordu ve description hiç
+// t()'den geçmiyordu — İngilizce arayüzde bu altı açıklama Türkçe kalıyordu.
 const NOTIFICATION_TYPES = [
-  { key: 'inspection', label: 'Muayene', description: 'Araç muayene tarihleri', hasThresholds: true },
-  { key: 'mtv', label: 'MTV', description: 'Motorlu Taşıt Vergisi son ödeme', hasThresholds: true },
-  { key: 'insurance', label: 'notificationSettings.type.trafik_sigortasi', description: 'Sigorta yenileme tarihleri', hasThresholds: true },
-  { key: 'kasko', label: 'Kasko', description: 'Kasko yenileme tarihleri', hasThresholds: true },
-  { key: 'maintenance', label: 'notificationSettings.type.bakim_onerileri', description: 'Yağ değişimi, balata vb.', hasThresholds: false },
-  { key: 'tireSeason', label: 'notificationSettings.type.lastik_mevsim_degisimi', description: 'Yazlık/kışlık geçiş uyarısı', hasThresholds: false },
+  { key: 'inspection', label: 'notificationSettings.type.muayene', description: 'notificationSettings.desc.inspection', hasThresholds: true },
+  { key: 'mtv', label: 'notificationSettings.type.mtv', description: 'notificationSettings.desc.mtv', hasThresholds: true },
+  { key: 'insurance', label: 'notificationSettings.type.trafik_sigortasi', description: 'notificationSettings.desc.insurance', hasThresholds: true },
+  { key: 'kasko', label: 'notificationSettings.type.kasko', description: 'notificationSettings.desc.kasko', hasThresholds: true },
+  { key: 'maintenance', label: 'notificationSettings.type.bakim_onerileri', description: 'notificationSettings.desc.maintenance', hasThresholds: false },
+  { key: 'tireSeason', label: 'notificationSettings.type.lastik_mevsim_degisimi', description: 'notificationSettings.desc.tireSeason', hasThresholds: false },
 ]
 
 const PRESET_THRESHOLDS = [
@@ -238,7 +241,7 @@ export default function NotificationSettings() {
                         {t(type.label)}
                       </div>
                       <div className="text-xs text-slate-500">
-                        {type.description}
+                        {t(type.description)}
                       </div>
                     </div>
                   </div>
