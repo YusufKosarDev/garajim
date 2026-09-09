@@ -167,7 +167,8 @@ export default function Dashboard({ globalActionsRef }) {
         <div>
           <h1 className="text-3xl font-bold">{t('dashboard.dashboard')}</h1>
           <p className="text-slate-400 text-sm mt-1">
-            {vehicles.length} araç • Toplam harcama: <span className="text-green-400 font-semibold">{totalCost.toLocaleString('tr-TR')} ₺</span>
+            {t('dashboard.arac_sayisi_ve_harcama', { count: vehicles.length })}{' '}
+            <span className="text-green-400 font-semibold">{totalCost.toLocaleString('tr-TR')} ₺</span>
           </p>
         </div>
 

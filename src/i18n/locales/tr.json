@@ -157,6 +157,7 @@
   "ctx.vehicleContext.yakit_silinemedi": "Yakıt silinemedi:",
   "dashboard.akilli_bakim_onerileri": "🧠 Akıllı Bakım Önerileri",
   "dashboard.akilli_bildirim": "Akıllı Bildirim",
+  "dashboard.arac_sayisi_ve_harcama": "{{count}} araç • Toplam harcama:",
   "dashboard.aracini_takip_etmeye_basla": "Aracını Takip Etmeye Başla 🚗",
   "dashboard.araclar": "Araçlar",
   "dashboard.araclarina_henuz_tarih_bilgisi_girmedin": "Araçlarına henüz tarih bilgisi girmedin.",

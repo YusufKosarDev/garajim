@@ -157,6 +157,7 @@
   "ctx.vehicleContext.yakit_silinemedi": "Couldn't delete the fuel record:",
   "dashboard.akilli_bakim_onerileri": "🧠 Smart Maintenance Suggestions",
   "dashboard.akilli_bildirim": "Smart Reminder",
+  "dashboard.arac_sayisi_ve_harcama": "{{count}} vehicles • Total spending:",
   "dashboard.aracini_takip_etmeye_basla": "Start Tracking Your Car 🚗",
   "dashboard.araclar": "Vehicles",
   "dashboard.araclarina_henuz_tarih_bilgisi_girmedin": "You haven't entered any dates for your vehicles yet.",

@@ -35,11 +35,18 @@ export const useKeyboardShortcuts = ({
   onNewMaintenance,
   onNewFuel,
   onFocusSearch,
+  enabled = true,
 }: ShortcutOptions) => {
   const navigate = useNavigate()
   const sequenceRef = useRef<{ key: string | null; timestamp: number }>({ key: null, timestamp: 0 })
 
   useEffect(() => {
+    // `enabled` arayüzde tanımlıydı ve App.jsx onu `!isMinimalLayout` olarak
+    // GEÇİYORDU, ama hook hiç okumuyordu: kısayollar giriş, kayıt ve paylaşım
+    // sayfalarında da dinleniyordu. Paylaşılan bir raporu açan ziyaretçi "g d"
+    // yazdığında korumalı bir rotaya yönlendirilip login'e atılıyordu.
+    if (!enabled) return
+
     const handleKeyDown = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase()
 
@@ -118,5 +125,5 @@ export const useKeyboardShortcuts = ({
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [navigate, onShowHelp, onShowCommandPalette, onNewVehicle, onNewMaintenance, onNewFuel, onFocusSearch])
+  }, [enabled, navigate, onShowHelp, onShowCommandPalette, onNewVehicle, onNewMaintenance, onNewFuel, onFocusSearch])
 }
