@@ -9,8 +9,14 @@ import ErrorBoundary from './components/ErrorBoundary'
 import ConfigMissing from './components/ConfigMissing'
 import { isSupabaseConfigured } from './lib/supabase'
 import { initErrorTracking, registerGlobalHandlers } from './lib/errorTracking'
+import { i18nHazir } from './i18n'
 import App from './App.jsx'
 import './index.css'
+
+// Sözlükler dinamik yüklendiği için ilk render'dan ÖNCE beklenmeleri gerekiyor;
+// aksi halde t() henüz veri bulamaz ve ekranda ham çeviri anahtarları görünür.
+// Vite/ESM'de üst düzey await destekli.
+await i18nHazir
 
 // VITE_SENTRY_DSN yoksa ikisi de sessizce no-op
 initErrorTracking()

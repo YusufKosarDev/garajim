@@ -104,5 +104,32 @@ export default defineConfig({
     // Hata izleme servisine (Sentry) yüklenmeleri için üretilmeye devam eder;
     // deploy adımında dist'ten silinmeleri gerekir ki public olarak sunulmasınlar.
     sourcemap: 'hidden',
+
+    rolldownOptions: {
+      output: {
+        /**
+         * Satıcı kodunu birkaç kararlı gruba topluyoruz.
+         *
+         * NEDEN: sözlükler dinamik import'a alınınca (bkz. src/i18n/index.ts)
+         * bundler async sınırlar yüzünden grafiği çok daha ince parçalara
+         * bölmeye başladı — ilk yükte 9 dosya yerine 44 dosya isteniyordu.
+         * Toplam boyut düşmüştü ama istek sayısı gereksiz yere artmıştı.
+         *
+         * Gruplar kütüphane bazında ayrılıyor ki biri güncellendiğinde
+         * diğerlerinin tarayıcı önbelleği geçersizleşmesin.
+         */
+        codeSplitting: {
+          groups: [
+            { name: 'vendor-react', test: /node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler)[\\/]/ },
+            { name: 'vendor-supabase', test: /node_modules[\\/]@supabase[\\/]/ },
+            { name: 'vendor-i18n', test: /node_modules[\\/](i18next|react-i18next|i18next-browser-languagedetector)[\\/]/ },
+            { name: 'vendor-icons', test: /node_modules[\\/]lucide-react[\\/]/ },
+            // Catch-all bir `vendor` grubu YOK: jspdf, recharts, leaflet ve
+            // tesseract yalnızca ilgili rota açılınca inmeli. Hepsini tek
+            // gruba toplamak ilk yükü 313 kB'dan 739 kB gzip'e çıkarıyordu.
+          ],
+        },
+      },
+    },
   },
 })

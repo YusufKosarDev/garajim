@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Languages } from 'lucide-react'
-import { LANGUAGES } from '../i18n'
+import { LANGUAGES, dilDegistir } from '../i18n'
 
 /**
  * Dil seçici (madde 29).
@@ -32,7 +32,10 @@ export default function LanguageSwitcher() {
             <button
               key={kod}
               type="button"
-              onClick={() => i18n.changeLanguage(kod)}
+              // dilDegistir: sözlük dinamik yüklendiği için önce indirilip
+              // sonra dil değiştiriliyor. Doğrudan changeLanguage çağrılsaydı
+              // kullanıcı bir an ham çeviri anahtarları görürdü.
+              onClick={() => { void dilDegistir(kod) }}
               aria-pressed={secili}
               className={`px-4 py-2 rounded-lg text-sm font-semibold transition border ${
                 secili
@@ -45,11 +48,6 @@ export default function LanguageSwitcher() {
           )
         })}
       </div>
-
-      {/* İngilizce çeviri kısmi; kapsam gizlenmiyor */}
-      <p className="text-[11px] text-slate-500 mt-3">
-        {t('languageSwitcher.kismi_ceviri_notu')}
-      </p>
     </div>
   )
 }
