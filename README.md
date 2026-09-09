@@ -17,6 +17,11 @@
 [![Cypress](https://img.shields.io/badge/Cypress-E2E_Tested-17202C?logo=cypress&logoColor=white)](https://cypress.io)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
+[![CI](https://github.com/YusufKosarDev/garajim/actions/workflows/ci.yml/badge.svg)](https://github.com/YusufKosarDev/garajim/actions/workflows/ci.yml)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](tsconfig.json)
+[![Tests](https://img.shields.io/badge/tests-466_unit_%2B_50_E2E-brightgreen)](#-testing)
+[![i18n](https://img.shields.io/badge/i18n-tr_%2B_en-orange)](src/i18n)
+
 </div>
 
 ---
@@ -45,6 +50,17 @@
 
 </details>
 
+### 📱 Mobil
+
+Mobile-first tasarlandı; PWA olarak ana ekrana eklenip native gibi çalışıyor.
+
+<p>
+  <img src="docs/screenshots/mobile/01-dashboard.png" alt="Dashboard - Mobil" width="200" />
+  <img src="docs/screenshots/mobile/02-vehicles.png" alt="Araçlarım - Mobil" width="200" />
+  <img src="docs/screenshots/mobile/03-maintenance.png" alt="Bakım - Mobil" width="200" />
+  <img src="docs/screenshots/mobile/04-stats.png" alt="İstatistikler - Mobil" width="200" />
+</p>
+
 ---
 
 ## 🌟 Hakkında
@@ -55,7 +71,9 @@
 
 🔥 **Ne Yapar?** Yaklaşan bakımları hatırlatır, yıllık masrafını gösterir, yakıt tüketimini hesaplar, lastik diş derinliğini takip eder, **yakındaki servisleri haritada bulur**.
 
-⚡ **Production-grade fullstack:** Supabase tabanlı (PostgreSQL + RLS + Storage + Edge Functions), real-time multi-device & multi-user senkron, otomatik email hatırlatmaları (cron + Resend), Google OAuth, PWA, **multi-tenancy workspace pattern**, **Cypress E2E test coverage**.
+⚡ **Production-grade fullstack:** Supabase tabanlı (PostgreSQL + RLS + Storage + Edge Functions), real-time multi-device & multi-user senkron, otomatik email hatırlatmaları (cron + Resend), Google OAuth, PWA, **multi-tenancy workspace pattern**.
+
+🧰 **Mühendislik tarafı:** TypeScript (`strict`, CI'da bloklayan `tsc --noEmit`), **466 unit + 50 E2E test**, iki dil (tr/en — sözlük paritesi testle korunuyor), react-hook-form + Zod form doğrulama, TanStack Query okuma katmanı, çevrimdışı mutasyon kuyruğu, güvenlik başlıklarının tek kaynaktan yönetimi.
 
 ---
 
@@ -156,24 +174,43 @@
 - ✅ **Bottom navigation** — Mobile için optimize
 
 ### 🔐 Güvenlik
-- ✅ **Row Level Security** — PostgreSQL seviyesinde 30+ policy
-- ✅ **Storage RLS** — User bazlı klasör izolasyonu
+- ✅ **Row Level Security** — Workspace pattern ile veri izolasyonu (`user_garage_ids()` helper, `docs/database/policies.sql`)
+- ✅ **Storage RLS** — Kullanıcı bazlı klasör izolasyonu (`{userId}/{dosya}`)
+- ✅ **Güvenlik başlıkları tek kaynaktan** — CSP, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`. `vercel.json`'da tanımlı ve `vite.config.js` onu okuyup **`npm run preview`'a da uyguluyor** — böylece CSP ihlalleri deploy sonrası değil geliştirme sırasında yakalanıyor
 - ✅ **JWT token auth** — Supabase managed
 - ✅ **Re-authentication** — Hassas işlemlerde mevcut şifre doğrulama
-- ✅ **Workspace pattern** — Multi-tenant veri izolasyonu (`user_garage_ids()`)
+- ✅ **Paylaşım linki doğrulaması** — `/share/:data` kimlik doğrulaması olmayan tek rota; yükü Zod şemasıyla doğrulanıyor
 - ✅ **Vault** — Service role key güvenli saklama
+- ✅ **Kaynak haritaları** — `hidden` üretiliyor ve deploy adımında `dist`'ten siliniyor (public sunulmuyor)
 - ✅ **HTTPS** — Otomatik SSL (Vercel)
 
 ### 📱 PWA
 - ✅ **Yüklenebilir** — Ana ekrana ekle, native gibi çalış
+- ✅ **Özel service worker** — `injectManifest` modu; `generateSW`'de push ve `notificationclick` handler'ı yazacak yer yoktu (bkz. `src/sw.js`)
 - ✅ **Offline cache** — İnternet olmadan da temel özellikler
+- ✅ **Çevrimdışı mutasyon kuyruğu** — Bağlantı yokken yapılan değişiklikler kuyruğa alınıp bağlantı gelince gönderiliyor (`src/lib/offlineQueue.ts`)
 - ✅ **Otomatik güncelleme** — Workbox ile
-- ✅ **Push notifications ready** — Browser API entegrasyon
+
+### 🌍 Çoklu Dil (tr / en)
+- ✅ **Tam çeviri** — İki sözlükte de 1261 anahtar; **anahtar kümelerinin birebir aynı olması testle zorunlu** (`src/i18n/i18n.test.ts`)
+- ✅ **Veritabanı değerleri çevrilmez** — "Yağ Değişimi" ekranda etiket gibi görünür ama `maintenance_records.type` sütununda duran bir VERİ. Çevrilirse bakım öneri motoru eşleşmeyi kaybeder; bu kural ayrı bir testle çitlenmiş
+- ✅ **Talep üzerine yükleme** — Sözlükler dinamik chunk; yalnızca aktif dil iniyor
+- ✅ **`<html lang>` senkronu** — Ekran okuyucu ve tarayıcı çevirisi doğru dili görüyor
+- ✅ **Ham anahtar taraması** — 6 rota × 2 dil E2E kontrolü: ekranda hiç `foo.bar` biçimi görünmemeli
+- ✅ **Envanter aracı** — `npm run i18n:audit` t() dışında kalmış Türkçe metinleri listeler
+
+### 🧰 Kod Kalitesi
+- ✅ **TypeScript** — `strict`; utils, lib, hooks, context ve ortak bileşenler TS'te (58 dosya). CI'da `tsc --noEmit` **bloklayıcı**
+- ✅ **Lint** — 0 hata politikası; `react-hooks` kuralları açık
+- ✅ **Form doğrulama** — react-hook-form + Zod; mevcut doğrulayıcılar yeniden yazılmadı, `superRefine` içinden çağrılıyor (tek doğruluk kaynağı)
+- ✅ **Okuma katmanı** — TanStack Query: retry + backoff, sekmeye dönünce tazeleme, istek birleştirme
+- ✅ **Hata izleme** — Sentry, varsayılan **kapalı**; `VITE_SENTRY_DSN` yoksa hiç yüklenmiyor
+- ✅ **Dependabot** — Minor/patch gruplu, major ayrı
 
 ### 🆕 🧪 Test Coverage
-- ✅ **Unit tests** — Vitest ile 215 test (saf mantık: tarih, km, yakıt, lastik, istatistik, mapper'lar)
+- ✅ **Unit tests** — Vitest ile **466 test / 32 dosya** (saf mantık, context, bileşenler, i18n sözleşmeleri)
 - ✅ **Component tests** — React Testing Library ile form render + validasyon
-- ✅ **E2E tests** — Cypress ile 12 test (login, vehicles, statistics, nearby)
+- ✅ **E2E tests** — Cypress ile **50 test / 10 suite** (login, araçlar, istatistik, takvim, dil, 404, paylaşılan rapor)
 - ✅ **Sabit zaman** — `vi.setSystemTime()` ile takvime bağlı testler deterministik
 - ✅ **Session caching** — `cy.session({ cacheAcrossSpecs })` ile spec'ler arası tek login
 - ✅ **Custom commands** — `cy.login()`, `cy.logout()`, `cy.checkToast()`
@@ -184,29 +221,35 @@
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **React 18** — UI library
+- **React 19** — UI library
+- **TypeScript 6** — `strict`; utils/lib/hooks/context tamamen TS
 - **Vite 8** — Build tool (HMR, hızlı build)
 - **React Router v7** — Client-side routing
 - **Tailwind CSS v4** — Utility-first styling
+- **TanStack Query v5** — Sunucu durumu: cache, retry + backoff, yeniden doğrulama
+- **react-hook-form + Zod** — Form durumu ve şema doğrulama
+- **i18next + react-i18next** — tr/en çoklu dil (talep üzerine yüklenen sözlükler)
 - **Lucide React** — Modern ikonlar
 - **Framer Motion** — Animasyonlar
 - **Recharts** — Grafik ve istatistikler
 - **Leaflet + react-leaflet** — Harita render (OpenStreetMap tile)
+- **Tesseract.js** — Fişten OCR ile tutar/tarih/km okuma
 - **react-hot-toast** — Toast bildirimleri
 - **date-fns** — Tarih işlemleri
-- **jsPDF + autoTable** — PDF rapor üretimi
+- **jsPDF + autoTable** — PDF rapor üretimi (Türkçe/İngilizce, Roboto gömülü)
 - **lz-string** — URL'de paylaşım için sıkıştırma
 - **qrcode.react** — QR kod üretimi
-- **Vite PWA Plugin** — Service Worker, manifest
+- **Vite PWA Plugin** — Özel service worker (`injectManifest`), manifest
+- **@sentry/react** — Hata izleme (opsiyonel, varsayılan kapalı)
 - **@supabase/supabase-js** — Supabase client + real-time
 
 ### Backend (Supabase)
-- **PostgreSQL** — Database (11 tablo, 12+ FK, 13+ index)
-- **Row Level Security** — 30+ policy (workspace pattern)
+- **PostgreSQL** — Database (şema: `docs/database/schema.sql`)
+- **Row Level Security** — workspace pattern (`docs/database/policies.sql`)
 - **Supabase Auth** — Email/Password + Google OAuth + email confirmation
-- **Supabase Storage** — Fotoğraf yönetimi (2 bucket, 8 RLS policy, CDN)
+- **Supabase Storage** — Fotoğraf yönetimi (2 bucket, kullanıcı bazlı klasör izolasyonu, CDN)
 - **Real-time** — postgres_changes WebSocket (multi-cihaz + multi-user sync)
-- **Edge Functions** — 5 Deno serverless function:
+- **Edge Functions** — 4 Deno serverless function (kaynaklar: `supabase/functions/`):
   - `send-reminder-emails` — Cron tetiklemeli email reminder
   - `delete-account` — KVKK uyumlu hesap silme + Storage cleanup
   - `invite-member` — Garaja üye davet sistemi
@@ -225,14 +268,18 @@
 - **Browser Geolocation API** — Konum izni
 
 ### Testing
+- **Vitest 5** — Unit + bileşen testleri (jsdom), v8 coverage
+- **React Testing Library** — Bileşen render ve etkileşim
 - **Cypress 15** — End-to-End testing framework
-- **Custom commands** — Reusable test helpers (`cy.login()`)
-- **Session caching** — `cy.session()` ile performance optimizasyonu
+- **Custom commands** — `cy.login()`, `cy.visitInLanguage()`, `cy.assertNoRawI18nKeys()`
+- **Session caching** — `cy.session({ cacheAcrossSpecs })` ile spec'ler arası tek login
 
 ### DevOps
-- **GitHub** — Source control
+- **GitHub Actions** — lint → typecheck → unit test → build, ardından E2E
+- **Dependabot** — Haftalık npm, aylık actions; minor/patch gruplu
 - **Vercel** — Hosting + CI/CD (otomatik deploy on push)
-- **`.npmrc`** — `legacy-peer-deps` ile React 18/19 uyumluluğu
+- **`.npmrc`** — `legacy-peer-deps` ile peer dependency uyumluluğu
+- **`.gitattributes`** — Satır sonları depoda LF
 
 ---
 
@@ -243,7 +290,7 @@
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                       Garajım PWA                            │
-│              (React 18 + Vite + Tailwind v4)                 │
+│              (React 19 + Vite 8 + Tailwind v4)               │
 └─────────────────┬───────────────────────────────────────────┘
                   │
                   │ HTTPS / WebSocket
@@ -309,7 +356,7 @@ USING (garage_id IN (SELECT user_garage_ids()));
 ## 🚀 Kurulum
 
 ### Gereksinimler
-- Node.js 20+
+- Node.js 22+ (CI Node 22 kullanıyor)
 - npm 10+
 - Supabase hesabı (free tier yeterli)
 - Resend hesabı (opsiyonel — email bildirimleri için)
@@ -342,18 +389,30 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 
 Supabase projesi oluştur ve aşağıdaki adımları uygula:
 
-1. **Database schema** — `docs/database/schema.sql` çalıştır
-2. **RLS policies** — `docs/database/policies.sql` çalıştır
-3. **Storage buckets** — `vehicle-photos` ve `maintenance-photos` (public, 50MB limit)
-4. **Edge Functions deploy** — `supabase/functions/` altındaki tüm fonksiyonları deploy et:
-   - `send-reminder-emails`
-   - `delete-account`
-   - `invite-member`
-   - `accept-invitation`
+> ⚠️ **`docs/database/` altındaki SQL, client kodundan TÜRETİLMİŞTİR** — production
+> dump'ı değil. Tablo ve sütun adları güvenilir; RLS policy gövdeleri, `garage_id`
+> trigger'ı ve indeksler yeniden kurgulanmıştır ve `-- KURGU` ile işaretlidir.
+> Neyin kanıtlı neyin tahmin olduğu **[`docs/database/README.md`](docs/database/README.md)**
+> içinde madde madde yazıyor. Olduğu gibi çalıştırmak çalışan bir kopya vermez.
+
+1. **Database schema** — [`docs/database/schema.sql`](docs/database/schema.sql) çalıştır
+2. **RLS policies** — [`docs/database/policies.sql`](docs/database/policies.sql) çalıştır
+3. **Storage buckets** — `vehicle-photos` ve `maintenance-photos` (public). Dosya
+   yolu deseni `{userId}/{dosyaAdı}` — storage policy'leri buna dayanıyor
+4. **Edge Functions deploy** — [`supabase/functions/`](supabase/functions) altındaki 4 fonksiyon:
+   - `invite-member` — garaja üye daveti (Resend ile e-posta)
+   - `accept-invitation` — davet kabulü (idempotent)
+   - `delete-account` — KVKK uyumlu silme + Storage temizliği
+   - `send-reminder-emails` — pg_cron tetiklemeli hatırlatma e-postaları
+   ```bash
+   supabase functions deploy invite-member accept-invitation delete-account send-reminder-emails
+   ```
 5. **Email Confirmation** — Auth → Settings'de aktif et
 6. **Google OAuth** (opsiyonel) — Auth → Providers → Google
-7. **Resend API key** — Supabase Secrets'a `RESEND_API_KEY` ekle
+7. **Secrets** — Supabase Secrets'a `RESEND_API_KEY`, `SITE_URL` ve
+   (opsiyonel) `RESEND_FROM` ekle
 8. **pg_cron schedule** — Her gün 09:00'da `send-reminder-emails` tetikle
+   (taslak: `docs/database/policies.sql`'in sonu)
 
 ### 5. Geliştirme Sunucusu
 
@@ -390,7 +449,7 @@ Vercel ile otomatik deploy:
 
 ### Test Coverage
 
-**Unit (Vitest) — 11 dosya, 215 test:**
+**Unit (Vitest) — 32 dosya, 466 test:**
 
 | Modül | İçerik |
 |-------|--------|
@@ -404,32 +463,68 @@ Vercel ile otomatik deploy:
 | `statisticsHelpers` | Aylık/yıllık harcama, araç ve istasyon analizi |
 | `fuzzySearch` | Türkçe karakter normalizasyonu, fuzzy eşleşme |
 | `supabaseMappers` | DB ↔ frontend dönüşümleri |
-| `FuelForm` | Form render, validasyon ve submit akışı (React Testing Library) |
+| `vehicleValuation` | Araç değer tahmini: yaş/km/bakım etkisi, güven seviyesi |
+| `fuelPriceAnalysis` | Zaman farkındalıklı fiyat analizi, tasarruf içgörüsü |
+| `receiptParser` | Fişten tutar/tarih/km ayrıştırma |
+| `icsExport` | Takvim dışa aktarımı, kaçış karakterleri, satır katlama |
+| `offlineQueue` | Çevrimdışı mutasyon kuyruğu |
+| `shareHelpers` | Paylaşım yükü gidiş-dönüşü **ve güvensiz girdinin reddi** |
+| `pdfGenerator` | Dinamik import + rapor başlıklarının aktif dilde üretilmesi |
+| `utilMessages` | Util'lerin döndürdüğü metinlerin **İngilizce modda gerçekten İngilizce** olması |
+| `i18n` | 11 sözleşme: tr/en paritesi, DB değerlerinin çeviriye girmemesi, dil davranışı |
+| `VehicleContext` | Mutasyon güvenlik ağı (24 test) |
+| `useKeyboardShortcuts` | Tek tuş, iki tuşlu diziler, input/modal bastırması, `enabled` |
+| `ProtectedRoute` | Yükleme sırasında sızıntı yok, yönlendirme, `state.from` |
+| `Dashboard` | Karşılama ekranı, 60 gün eşiği, sıralama, toplam harcama |
+| Form bileşenleri | `FuelForm`, `MaintenanceForm`, `VehicleForm`, `TireForm`, `TireChangeForm` |
+| `TireDisplay` | Pozisyon/sezon etiketlerinin ham anahtar basmaması |
 
 > Zamana bağlı fonksiyonlar `vi.setSystemTime()` ile sabit tarihte koşar; aksi halde testler takvime göre kırılırdı.
+>
+> Testler dili açıkça `tr`'ye sabitler (`src/test/setup.js`). Bunun bir sonucu var: Türkçe koşan bir test, "İngilizce çeviri eksik" hatasını yapısal olarak göremez. O yüzden `utilMessages.test.ts` dili açıkça `en`'e alıp ayrıca kontrol eder.
 
-**E2E (Cypress) — 4 suite, 12 test:**
+**E2E (Cypress) — 10 suite, 50 test:**
 
-| Suite | Test Sayısı | İçerik |
-|-------|-------------|--------|
+| Suite | Test | İçerik |
+|-------|------|--------|
 | `login.cy.js` | 4 | Login UI, geçerli credentials, yanlış şifre, auth redirect |
 | `vehicles.cy.js` | 3 | Sayfa render, araç listesi, detay sayfasına geçiş |
 | `statistics.cy.js` | 3 | Sayfa render, tab navigation, CSV İndir modali |
-| `nearby.cy.js` | 2 | Lazy route çözümü, konum izni ekranı, izin reddi |
+| `calendar.cy.js` | 4 | Takvim görünümü, olay listesi |
+| `command-palette.cy.js` | 5 | Ctrl+K, arama, gezinme |
+| `language.cy.js` | 5 | Dil değiştirme, kalıcılık, ham anahtar sızmaması |
+| `i18n-raw-keys.cy.js` | 16 | **6 rota × 2 dil** + araç detayı + CSV modali ham anahtar taraması |
+| `not-found.cy.js` | 4 | 404 içeriği, iki dil, catch-all'ın gerçek rotaları gölgelememesi |
+| `shared-report.cy.js` | 4 | Herkese açık rota: geçerli yük, bozuk yük, yanlış tip, versiyon |
+| `nearby.cy.js` | 2 | Lazy route çözümü, konum izni ekranı |
 
 ### Komutlar
 
 ```bash
+# Hepsi bir arada (CI ile aynı kapı)
+npm run verify          # lint + typecheck + unit test + build
+
 # Unit testler
 npm test
 npm run test:watch
 npm run test:coverage
 
+# Tip kontrolü ve lint
+npm run typecheck
+npm run lint
+
+# i18n envanteri (t() dışında kalmış Türkçe metinler)
+npm run i18n:audit
+npm run i18n:audit -- --say   # yalnızca sayı
+
 # E2E — interactive mode (Cypress GUI)
 npm run cypress:open
 
-# E2E — headless mode (terminalde, CI için)
+# E2E — dev sunucusuna karşı (5173)
 npm run test:e2e
+
+# E2E — ÜRETİM bundle una karşı (4173) — build + preview gerekir
+npm run test:e2e:preview
 ```
 
 > 💡 E2E testleri çalıştırmadan önce `npm run dev` ile dev server'ı başlat — Cypress `localhost:5173`'e bağlanır. Unit testler dev server gerektirmez.
@@ -440,25 +535,46 @@ Sentry entegrasyonu hazır ama **varsayılan olarak kapalı**. `.env` dosyasına
 `VITE_SENTRY_DSN` eklemezsen Sentry hiç yüklenmez — dinamik import olduğu için
 Rollup onu tamamen eleme yapar, ne ağ isteği ne bundle maliyeti kalır.
 
-| | Sentry chunk | Toplam chunk |
-|---|---|---|
-| DSN tanımlı | 151 kB gzip (lazy) | 67 |
-| DSN yok | yok | 65 |
-
 Açıldığında `ErrorBoundary`, veri yükleme hataları ve global yakalanmamış
-hatalar (`unhandledrejection`, `window.error`) raporlanır.
+hatalar (`unhandledrejection`, `window.error`) raporlanır. Context anahtarları
+(`where`, `kind`) **çevrilmez** — telemetri kullanıcının arayüz diline göre
+değişmemeli.
 
 > Kaynak haritaları `hidden` üretiliyor; okunabilir stack trace için Sentry'ye
 > ayrıca yüklenmeleri gerekir.
+
+### Paket Boyutu
+
+Sözlükler statik import edildiğinde ikisi birden ana chunk'ta ~167 kB (45 kB
+gzip) yer kaplıyordu, oysa kullanıcı her zaman yalnızca birini okuyor. Dinamik
+import'a alındı ve satıcı kodu kütüphane bazında gruplandı:
+
+| İlk yük (index.html'in istediği her şey) | Dosya | Raw | **gzip** |
+|---|---|---|---|
+| Öncesi | 9 | 1.222.766 B | **345.749 B** |
+| Sonrası | 22 | 1.081.889 B | **311.036 B** |
+
+Ana chunk 911 kB → 122 kB raw (264 → 31 kB gzip). Ağır kütüphaneler rota
+chunk'larında kalıyor: `pdfGenerator` (136 kB gzip) yalnızca PDF indirilirken,
+`recharts` istatistiklerde, `leaflet` haritada, `tesseract` fiş okumada iniyor.
+
+> Denenip **geri alınan** bir yaklaşım: tüm `node_modules`'ü tek `vendor`
+> chunk'ında toplamak. jspdf/recharts/leaflet/tesseract'ı eager hâle getirdiği
+> için ilk yükü 739 kB gzip'e çıkardı.
 
 ### CI
 
 `.github/workflows/ci.yml` her push ve PR'da çalışır:
 
-- **quality** — lint → unit test → build. Dış bağımlılık yok, her zaman koşar.
+- **quality** — lint → **typecheck** → unit test → build. Dış bağımlılık yok, her zaman koşar. `tsc --noEmit` bloklayıcıdır.
 - **e2e** — Cypress. Gerçek bir Supabase projesi gerektirdiği için `VITE_SUPABASE_URL` ve `VITE_SUPABASE_ANON_KEY` secret'ları tanımlı değilse (örn. fork PR'ları) sessizce atlanır.
+- **i18n envanteri** — `npm run i18n:audit` raporu. **Bloklamaz**: sezgisel bir tarama olduğu ve yanlış pozitif üretebildiği için CI'ı kırmaması kasıtlı.
 
-> 💡 Test çalıştırmadan önce `npm run dev` ile dev server'ı başlatmayı unutma — Cypress `localhost:5173`'e bağlanır.
+Yerelde hepsini tek komutta koşmak için: `npm run verify`
+
+> 💡 E2E'yi yerelde koşarken önce bir sunucu gerekiyor: `npm run dev` (5173) ya
+> da üretim bundle'ına karşı `npm run build && npm run preview` +
+> `npm run test:e2e:preview` (4173).
 
 ### Custom Commands
 
@@ -526,8 +642,18 @@ Demo hesabında 2 araç (BMW + Audi), bakım kayıtları, yakıt kayıtları ve 
 - [x] Predictive analytics (yıl sonu tahmini)
 - [x] Yakındaki servisler (OpenStreetMap)
 - [x] Cypress E2E test coverage
-- [x] Vitest unit test katmanı (215 test)
-- [x] GitHub Actions CI (lint → test → build → E2E)
+- [x] Vitest unit test katmanı (466 test)
+- [x] GitHub Actions CI (lint → typecheck → test → build → E2E)
+- [x] TypeScript geçişi (utils, lib, hooks, context, ortak bileşenler)
+- [x] Çoklu dil (tr/en) — sözlük paritesi testle korunuyor
+- [x] react-hook-form + Zod form doğrulama
+- [x] TanStack Query okuma katmanı
+- [x] Çevrimdışı mutasyon kuyruğu
+- [x] Fişten OCR (Tesseract.js)
+- [x] Araç değer tahmini
+- [x] .ics takvim dışa aktarımı
+- [x] Güvenlik başlıkları (CSP dahil) tek kaynaktan
+- [x] Sentry hata izleme (opsiyonel, varsayılan kapalı)
 
 ### 🔮 Gelecek Özellikler
 - [ ] Bildirimler için PWA push notifications

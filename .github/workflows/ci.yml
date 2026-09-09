@@ -30,6 +30,13 @@ jobs:
       - name: Unit testler
         run: npm test
 
+      # Sezgisel bir tarama: t() dışında kalmış olabilecek Türkçe metinleri
+      # listeler ve yanlış pozitif üretebilir. Bu yüzden BLOKLAMIYOR — envanter
+      # aracı olarak PR çıktısında görünüyor, eşiği yok (bkz. scripts/i18n-audit.mjs).
+      - name: i18n envanteri (bloklamaz)
+        run: npm run i18n:audit
+        continue-on-error: true
+
       # Build, .env olmadan da geçmeli: supabase.js artık modül seviyesinde
       # throw etmiyor, yapılandırma eksikse uygulama kurulum ekranı gösteriyor.
       - name: Build
