@@ -108,6 +108,13 @@ export const i18nHazir: Promise<void> = initPromise
   .then(() => bundleYukle(i18n.resolvedLanguage ?? i18n.language))
   .then(() => {
     const aktif = normalize(i18n.resolvedLanguage ?? i18n.language)
+    // <html lang> BURADA uygulanıyor, modül yüklenirken değil. init() asenkron
+    // olduğu için modül seviyesinde `resolvedLanguage` henüz tanımsız oluyor ve
+    // etiket yedek dile ('tr') sabitleniyordu. Sonucu görünürdü: İngilizce
+    // arayüzde CSS `text-transform: uppercase` Türkçe kuralını uygulayıp
+    // "TOTAL SPENDING" yerine "TOTAL SPENDİNG" üretiyordu — ekran okuyucu da
+    // İngilizce metni Türkçe telaffuzla okuyordu.
+    dilEtiketiniUygula(aktif)
     if (aktif !== FALLBACK) void bundleYukle(FALLBACK)
   })
 
@@ -134,11 +141,12 @@ i18n.on('languageChanged', (lng) => { void bundleYukle(lng) })
  * telaffuz kurallarıyla okuyor, ve tarayıcının çeviri önerisi yanlış dili
  * varsayıyor. Tek satırlık bir düzeltme ama a11y açısından gerçek bir hata.
  */
-const dilEtiketiniUygula = (lng: string) => {
+function dilEtiketiniUygula(lng: string) {
   if (typeof document !== 'undefined') document.documentElement.lang = normalize(lng)
 }
 
-dilEtiketiniUygula(i18n.resolvedLanguage ?? FALLBACK)
+// İlk değer i18nHazir içinde, init çözüldükten SONRA uygulanıyor (yukarı bak).
+// Burada yalnızca sonraki değişiklikler dinleniyor.
 i18n.on('languageChanged', dilEtiketiniUygula)
 
 export default i18n

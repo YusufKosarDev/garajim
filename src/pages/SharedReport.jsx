@@ -77,10 +77,10 @@ export default function SharedReport() {
 
   // Tarihler
   const dates = [
-    { label: 'Muayene', date: vehicle.inspectionDate },
+    { label: t('sharedReport.muayene'), date: vehicle.inspectionDate },
     { label: t('sharedReport.mtv_son_odeme'), date: vehicle.mtvDate },
     { label: t('sharedReport.trafik_sigortasi'), date: vehicle.insuranceDate },
-    { label: 'Kasko', date: vehicle.kaskoDate },
+    { label: t('sharedReport.kasko'), date: vehicle.kaskoDate },
   ].filter(d => d.date)
 
   const statusColors = {
@@ -135,7 +135,7 @@ export default function SharedReport() {
             {sharedAt && (
               <p className="text-slate-500 mt-1 flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                Paylaşım Tarihi: {formatDateTime(sharedAt)}
+                {t('sharedReport.paylasim_tarihi', { date: formatDateTime(sharedAt) })}
               </p>
             )}
           </div>
@@ -226,7 +226,9 @@ export default function SharedReport() {
                       </div>
                       {days !== null && (
                         <div className="text-sm font-bold">
-                          {days < 0 ? `${Math.abs(days)} gün geçti` : `${days} gün kaldı`}
+                          {days < 0
+                            ? t('sharedReport.gun_gecti', { days: Math.abs(days) })
+                            : t('sharedReport.gun_kaldi', { days })}
                         </div>
                       )}
                     </div>
@@ -244,7 +246,7 @@ export default function SharedReport() {
               <Wrench className="w-5 h-5 text-blue-400" />
               {t('sharedReport.bakim_kayitlari')}
               <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-normal">
-                {maintenance.length} kayıt
+                {t('sharedReport.kayit_sayisi', { count: maintenance.length })}
               </span>
             </h2>
             <div className="space-y-2">
@@ -277,7 +279,7 @@ export default function SharedReport() {
               <Droplet className="w-5 h-5 text-green-400" />
               {t('sharedReport.yakit_kayitlari')}
               <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-normal">
-                {fuel.length} kayıt
+                {t('sharedReport.kayit_sayisi', { count: fuel.length })}
               </span>
             </h2>
             <div className="space-y-2">
@@ -289,7 +291,7 @@ export default function SharedReport() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold">{r.liters} L</span>
                     {r.fullTank && (
-                      <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded">DOLU</span>
+                      <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded">{t('sharedReport.dolu')}</span>
                     )}
                     {r.station && <span className="text-xs text-slate-400">• {r.station}</span>}
                   </div>

@@ -56,6 +56,17 @@ describe('Ham çeviri anahtarı ekranda görünmüyor', () => {
         cy.assertNoRawI18nKeys(`Lastikler sekmesi [${lang}]`)
       })
 
+      it(`<html lang> AÇILIŞTA aktif dili gösterir (${lang})`, () => {
+        // Mevcut dil testleri changeLanguage sonrasını sınıyordu; AÇILIŞ değeri
+        // kimsenin bakmadığı bir boşluktu. Sözlükler dinamik yüklemeye
+        // geçirilince init asenkron oldu ve etiket yedek dile ('tr') donmaya
+        // başladı. Görünür sonucu: CSS text-transform:uppercase Türkçe kuralını
+        // uygulayıp İngilizce arayüzde "TOTAL SPENDİNG" üretiyordu.
+        cy.visitInLanguage('/', lang)
+        cy.get('main, body', { timeout: 15000 }).should('be.visible')
+        cy.document().its('documentElement.lang').should('eq', lang)
+      })
+
       it(`CSV dışa aktarma modali (${lang})`, () => {
         cy.visitInLanguage('/statistics', lang)
         // ExportDataModal'ın seçenek etiketleri ham anahtardı; modal açılmadan

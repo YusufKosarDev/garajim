@@ -19,7 +19,7 @@
 
 [![CI](https://github.com/YusufKosarDev/garajim/actions/workflows/ci.yml/badge.svg)](https://github.com/YusufKosarDev/garajim/actions/workflows/ci.yml)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](tsconfig.json)
-[![Tests](https://img.shields.io/badge/tests-466_unit_%2B_50_E2E-brightgreen)](#-testing)
+[![Tests](https://img.shields.io/badge/tests-470_unit_%2B_52_E2E-brightgreen)](#-testing)
 [![i18n](https://img.shields.io/badge/i18n-tr_%2B_en-orange)](src/i18n)
 
 </div>
@@ -73,7 +73,7 @@ Mobile-first tasarlandı; PWA olarak ana ekrana eklenip native gibi çalışıyo
 
 ⚡ **Production-grade fullstack:** Supabase tabanlı (PostgreSQL + RLS + Storage + Edge Functions), real-time multi-device & multi-user senkron, otomatik email hatırlatmaları (cron + Resend), Google OAuth, PWA, **multi-tenancy workspace pattern**.
 
-🧰 **Mühendislik tarafı:** TypeScript (`strict`, CI'da bloklayan `tsc --noEmit`), **466 unit + 50 E2E test**, iki dil (tr/en — sözlük paritesi testle korunuyor), react-hook-form + Zod form doğrulama, TanStack Query okuma katmanı, çevrimdışı mutasyon kuyruğu, güvenlik başlıklarının tek kaynaktan yönetimi.
+🧰 **Mühendislik tarafı:** TypeScript (`strict`, CI'da bloklayan `tsc --noEmit`), **470 unit + 52 E2E test**, iki dil (tr/en — sözlük paritesi testle korunuyor), react-hook-form + Zod form doğrulama, TanStack Query okuma katmanı, çevrimdışı mutasyon kuyruğu, güvenlik başlıklarının tek kaynaktan yönetimi.
 
 ---
 
@@ -208,9 +208,9 @@ Mobile-first tasarlandı; PWA olarak ana ekrana eklenip native gibi çalışıyo
 - ✅ **Dependabot** — Minor/patch gruplu, major ayrı
 
 ### 🆕 🧪 Test Coverage
-- ✅ **Unit tests** — Vitest ile **466 test / 32 dosya** (saf mantık, context, bileşenler, i18n sözleşmeleri)
+- ✅ **Unit tests** — Vitest ile **470 test / 32 dosya** (saf mantık, context, bileşenler, i18n sözleşmeleri)
 - ✅ **Component tests** — React Testing Library ile form render + validasyon
-- ✅ **E2E tests** — Cypress ile **50 test / 10 suite** (login, araçlar, istatistik, takvim, dil, 404, paylaşılan rapor)
+- ✅ **E2E tests** — Cypress ile **52 test / 10 suite** (login, araçlar, istatistik, takvim, dil, 404, paylaşılan rapor)
 - ✅ **Sabit zaman** — `vi.setSystemTime()` ile takvime bağlı testler deterministik
 - ✅ **Session caching** — `cy.session({ cacheAcrossSpecs })` ile spec'ler arası tek login
 - ✅ **Custom commands** — `cy.login()`, `cy.logout()`, `cy.checkToast()`
@@ -449,7 +449,7 @@ Vercel ile otomatik deploy:
 
 ### Test Coverage
 
-**Unit (Vitest) — 32 dosya, 466 test:**
+**Unit (Vitest) — 32 dosya, 470 test:**
 
 | Modül | İçerik |
 |-------|--------|
@@ -483,7 +483,7 @@ Vercel ile otomatik deploy:
 >
 > Testler dili açıkça `tr`'ye sabitler (`src/test/setup.js`). Bunun bir sonucu var: Türkçe koşan bir test, "İngilizce çeviri eksik" hatasını yapısal olarak göremez. O yüzden `utilMessages.test.ts` dili açıkça `en`'e alıp ayrıca kontrol eder.
 
-**E2E (Cypress) — 10 suite, 50 test:**
+**E2E (Cypress) — 10 suite, 52 test:**
 
 | Suite | Test | İçerik |
 |-------|------|--------|
@@ -493,7 +493,7 @@ Vercel ile otomatik deploy:
 | `calendar.cy.js` | 4 | Takvim görünümü, olay listesi |
 | `command-palette.cy.js` | 5 | Ctrl+K, arama, gezinme |
 | `language.cy.js` | 5 | Dil değiştirme, kalıcılık, ham anahtar sızmaması |
-| `i18n-raw-keys.cy.js` | 16 | **6 rota × 2 dil** + araç detayı + CSV modali ham anahtar taraması |
+| `i18n-raw-keys.cy.js` | 18 | **6 rota × 2 dil** + araç detayı + CSV modali ham anahtar taraması |
 | `not-found.cy.js` | 4 | 404 içeriği, iki dil, catch-all'ın gerçek rotaları gölgelememesi |
 | `shared-report.cy.js` | 4 | Herkese açık rota: geçerli yük, bozuk yük, yanlış tip, versiyon |
 | `nearby.cy.js` | 2 | Lazy route çözümü, konum izni ekranı |
@@ -642,7 +642,7 @@ Demo hesabında 2 araç (BMW + Audi), bakım kayıtları, yakıt kayıtları ve 
 - [x] Predictive analytics (yıl sonu tahmini)
 - [x] Yakındaki servisler (OpenStreetMap)
 - [x] Cypress E2E test coverage
-- [x] Vitest unit test katmanı (466 test)
+- [x] Vitest unit test katmanı (470 test)
 - [x] GitHub Actions CI (lint → typecheck → test → build → E2E)
 - [x] TypeScript geçişi (utils, lib, hooks, context, ortak bileşenler)
 - [x] Çoklu dil (tr/en) — sözlük paritesi testle korunuyor

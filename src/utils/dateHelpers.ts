@@ -2,6 +2,21 @@
 // TARİH FORMATLAMA FONKSİYONLARI
 // ============================================
 
+import i18n from '../i18n'
+
+/**
+ * Tarih biçimi AKTİF DİLE göre seçiliyor.
+ *
+ * Para birimi (₺) ve sayı gruplaması kasıtlı olarak tr-TR kalıyor — tutarlar
+ * Türk Lirası cinsinden ve bu bir VERİ özelliği. Tarih biçimi ise öyle değil,
+ * saf sunum: İngilizce bir sayfada "15 Haziran 2026" yazması yalnızca çeviri
+ * eksiği olurdu.
+ *
+ * Çağrı anında okunuyor, modül seviyesinde değil — aksi halde biçim
+ * uygulamanın açılış diline donardı.
+ */
+const yerel = (): string => (i18n.resolvedLanguage === 'en' ? 'en-GB' : 'tr-TR')
+
 // Bir Date'i YEREL saate göre 'YYYY-MM-DD' anahtarına çevirir.
 // Not: toISOString() önce UTC'ye çevirdiği için TR'de (UTC+3) yerel gece yarısı
 // bir önceki güne düşer — takvim anahtarlarında asla toISOString() kullanma.
@@ -22,7 +37,7 @@ export const formatDate = (dateString?: string | null): string => {
   if (!dateString) return '-'
   const date = new Date(dateString)
   if (isNaN(date.getTime())) return '-'
-  return date.toLocaleDateString('tr-TR', {
+  return date.toLocaleDateString(yerel(), {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -34,7 +49,7 @@ export const formatDateShort = (dateString?: string | null): string => {
   if (!dateString) return '-'
   const date = new Date(dateString)
   if (isNaN(date.getTime())) return '-'
-  return date.toLocaleDateString('tr-TR', {
+  return date.toLocaleDateString(yerel(), {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -46,12 +61,12 @@ export const formatDateTime = (dateString?: string | null): string => {
   if (!dateString) return '-'
   const date = new Date(dateString)
   if (isNaN(date.getTime())) return '-'
-  const datePart = date.toLocaleDateString('tr-TR', {
+  const datePart = date.toLocaleDateString(yerel(), {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
   })
-  const timePart = date.toLocaleTimeString('tr-TR', {
+  const timePart = date.toLocaleTimeString(yerel(), {
     hour: '2-digit',
     minute: '2-digit',
   })
@@ -72,13 +87,13 @@ export const formatRelative = (dateString?: string | null): string => {
   const diffMs = target.getTime() - today.getTime()
   const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24))
 
-  if (diffDays === 0) return 'bugün'
-  if (diffDays === 1) return 'yarın'
-  if (diffDays === -1) return 'dün'
-  if (diffDays > 0 && diffDays <= 7) return `${diffDays} gün sonra`
-  if (diffDays < 0 && diffDays >= -7) return `${Math.abs(diffDays)} gün önce`
-  if (diffDays > 7 && diffDays <= 30) return `${diffDays} gün sonra`
-  if (diffDays < -7 && diffDays >= -30) return `${Math.abs(diffDays)} gün önce`
+  if (diffDays === 0) return i18n.t('dateHelpers.bugun')
+  if (diffDays === 1) return i18n.t('dateHelpers.yarin')
+  if (diffDays === -1) return i18n.t('dateHelpers.dun')
+  if (diffDays > 0 && diffDays <= 7) return i18n.t('dateHelpers.gun_sonra', { days: diffDays })
+  if (diffDays < 0 && diffDays >= -7) return i18n.t('dateHelpers.gun_once', { days: Math.abs(diffDays) })
+  if (diffDays > 7 && diffDays <= 30) return i18n.t('dateHelpers.gun_sonra', { days: diffDays })
+  if (diffDays < -7 && diffDays >= -30) return i18n.t('dateHelpers.gun_once', { days: Math.abs(diffDays) })
 
   // 30 günden fazlaysa normal formatta göster
   return formatDateShort(dateString)

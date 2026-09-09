@@ -137,12 +137,27 @@ Cypress.Commands.add('assertNoRawI18nKeys', (context = '') => {
  * @example cy.visitInLanguage('/calendar', 'en')
  */
 Cypress.Commands.add('visitInLanguage', (path, lang) => {
+  // ÖNCE ziyaret, SONRA dili yaz, SONRA yenile.
+  //
+  // Dil `onBeforeLoad` içinde yazıldığında işe yaramıyordu: cy.session önbelleğe
+  // aldığı localStorage'ı ziyaret sırasında geri yüklüyor ve bizim değerimizi
+  // eziyordu. Sonuç sessizdi — "en" testleri aslında Türkçe koşuyor, ham anahtar
+  // kontrolü yine geçtiği için kimse fark etmiyordu. Aşağıdaki `should` bunu
+  // bir daha sessizce olmayacak hâle getiriyor.
   cy.visit(path, {
     onBeforeLoad(win) {
-      win.localStorage.setItem('garajim_dil', lang)
       win.localStorage.setItem('garajim_onboarding_completed', 'true')
     },
   })
+  cy.window().then((win) => {
+    win.localStorage.setItem('garajim_dil', lang)
+    win.localStorage.setItem('garajim_onboarding_completed', 'true')
+  })
+  cy.reload()
+  // Dilin gerçekten uygulandığını doğrula — <html lang> i18n tarafından
+  // sözlük yüklendikten sonra yazılıyor, yani bu aynı zamanda "sözlük hazır"
+  // sinyali.
+  cy.document({ timeout: 15000 }).its('documentElement.lang').should('eq', lang)
 })
 
 /**

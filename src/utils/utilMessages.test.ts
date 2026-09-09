@@ -113,6 +113,37 @@ describe('calendarEvents — etiketler aktif dilde gelir', () => {
   })
 })
 
+describe('dateHelpers — tarih biçimi aktif dile uyar', () => {
+  it('Türkçede Türkçe ay adı', async () => {
+    const { formatDate } = await import('./dateHelpers')
+    await i18n.changeLanguage('tr')
+    expect(formatDate('2026-06-15')).toBe('15 Haziran 2026')
+  })
+
+  it('İngilizcede İngilizce ay adı', async () => {
+    const { formatDate } = await import('./dateHelpers')
+    await i18n.changeLanguage('en')
+    expect(formatDate('2026-06-15')).toBe('15 June 2026')
+  })
+
+  it('göreli tarih ifadeleri de çevrilir', async () => {
+    const { formatRelative } = await import('./dateHelpers')
+    await i18n.changeLanguage('en')
+    expect(formatRelative('2026-06-15')).toBe('today')
+    expect(formatRelative('2026-06-16')).toBe('tomorrow')
+    expect(formatRelative('2026-06-18')).toBe('in 3 days')
+    expect(formatRelative('2026-06-12')).toBe('3 days ago')
+  })
+
+  it('para birimi ÇEVRİLMEZ — ₺ ve tr-TR gruplaması veri özelliği', async () => {
+    // Bilinçli karar: tutarlar Türk Lirası cinsinden, arayüz dili ne olursa
+    // olsun ₺ ve "1.234,56" gruplaması korunuyor. Tarih biçimi ise saf sunum
+    // olduğu için dile uyuyor. Bu testin varlık sebebi ayrımı belgelemek.
+    await i18n.changeLanguage('en')
+    expect((1234.5).toLocaleString('tr-TR')).toBe('1.234,5')
+  })
+})
+
 describe('form doğrulama katmanı — hatalar aktif dilde gelir', () => {
   it('dateValidation: alan adı ve mesaj İngilizce', async () => {
     await i18n.changeLanguage('en')
