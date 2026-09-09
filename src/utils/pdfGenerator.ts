@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import i18n from '../i18n'
 import { formatDate } from './dateHelpers'
 import { getTotalFuelCost, getAverageConsumption } from './fuelHelpers'
 import type { Vehicle, MaintenanceRecord, FuelRecord } from '../types'
@@ -53,11 +54,29 @@ const setupFonts = (doc: jsPDF, fonts: FontCache) => {
   doc.setFont('Roboto', 'normal')
 }
 
+/**
+ * PDF rapor üreticisi.
+ *
+ * İMZA DEĞİŞMEDİ: çeviri, `t`'yi parametre olarak geçirmek yerine i18n
+ * singleton'ından okunuyor — projede notificationManager, formSchemas ve
+ * tireHelpers'ın izlediği desen. Tek çağrı yeri VehicleDetail'de dinamik
+ * import ile duruyor, o dosyada bir değişiklik gerekmedi.
+ *
+ * ÇEVRİLMEYENLER — kasıtlı:
+ *   • `₺` ve `toLocaleString('tr-TR')`: tutarlar Türk Lirası cinsinden ve sayı
+ *     gruplaması para birimine ait bir özellik. Arayüz İngilizce olsa da rapor
+ *     ₺ göstermeye devam etmeli.
+ *   • `vehicle.fuelType` ve `r.type`: bunlar VERİTABANI DEĞERLERİ, etiket değil
+ *     (bkz. i18n.test.ts'teki sözleşme). Çevrilirse kayıt eşleşmesi bozulur.
+ *   • 'GARAJIM': ürün adı.
+ */
 export const generateVehicleReport = async (
   vehicle: Vehicle,
   maintenanceRecords: MaintenanceRecord[],
   fuelRecords: FuelRecord[] = []
 ) => {
+  const t = i18n.t.bind(i18n)
+
   // Fontları yükle
   const fonts = await ensureFontsLoaded()
 
@@ -77,13 +96,13 @@ export const generateVehicleReport = async (
   doc.setFont('Roboto', 'normal')
   doc.setFontSize(10)
   doc.setTextColor(100, 116, 139)
-  doc.text('Araç Takip Asistanı', margin, 26)
+  doc.text(t('pdfReport.alt_baslik'), margin, 26)
 
   // Sağ üst köşede tarih
   doc.setFontSize(9)
   doc.setTextColor(100, 116, 139)
   const reportDate = formatDate(new Date().toISOString())
-  doc.text(`Rapor Tarihi: ${reportDate}`, pageWidth - margin, 20, { align: 'right' })
+  doc.text(t('pdfReport.rapor_tarihi', { date: reportDate }), pageWidth - margin, 20, { align: 'right' })
 
   // Çizgi
   doc.setDrawColor(226, 232, 240)
@@ -103,20 +122,20 @@ export const generateVehicleReport = async (
 
   // Araç detay tablosu
   const vehicleInfo = [
-    ['Plaka', vehicle.plate || '-'],
-    ['Marka / Model', `${vehicle.brand} ${vehicle.model}`],
-    ['Yıl', String(vehicle.year || '-')],
-    ['Yakıt Tipi', vehicle.fuelType || '-'],
-    ['Güncel KM', vehicle.currentKm ? `${Number(vehicle.currentKm).toLocaleString('tr-TR')} km` : '-'],
-    ['Muayene Tarihi', formatDate(vehicle.inspectionDate)],
-    ['MTV Tarihi', formatDate(vehicle.mtvDate)],
-    ['Trafik Sigortası', formatDate(vehicle.insuranceDate)],
-    ['Kasko Tarihi', formatDate(vehicle.kaskoDate)],
+    [t('pdfReport.row.plaka'), vehicle.plate || '-'],
+    [t('pdfReport.row.marka_model'), `${vehicle.brand} ${vehicle.model}`],
+    [t('pdfReport.row.yil'), String(vehicle.year || '-')],
+    [t('pdfReport.row.yakit_tipi'), vehicle.fuelType || '-'],
+    [t('pdfReport.row.guncel_km'), vehicle.currentKm ? `${Number(vehicle.currentKm).toLocaleString('tr-TR')} km` : '-'],
+    [t('pdfReport.row.muayene_tarihi'), formatDate(vehicle.inspectionDate)],
+    [t('pdfReport.row.mtv_tarihi'), formatDate(vehicle.mtvDate)],
+    [t('pdfReport.row.trafik_sigortasi'), formatDate(vehicle.insuranceDate)],
+    [t('pdfReport.row.kasko_tarihi'), formatDate(vehicle.kaskoDate)],
   ]
 
   autoTable(doc, {
     startY: 55,
-    head: [['Bilgi', 'Değer']],
+    head: [[t('pdfReport.head.bilgi'), t('pdfReport.head.deger')]],
     body: vehicleInfo,
     theme: 'striped',
     styles: {
@@ -148,20 +167,20 @@ export const generateVehicleReport = async (
   doc.setFont('Roboto', 'bold')
   doc.setFontSize(13)
   doc.setTextColor(30, 41, 59)
-  doc.text('ÖZET', margin, currentY)
+  doc.text(t('pdfReport.ozet'), margin, currentY)
 
   currentY += 6
 
   const summaryData = [
-    ['Toplam Bakım Kaydı', `${maintenanceRecords.length} adet`],
-    ['Toplam Yakıt Kaydı', `${fuelRecords.length} adet`],
-    ['Toplam Bakım Harcaması', `${totalMaintenanceCost.toLocaleString('tr-TR')} ₺`],
-    ['Toplam Yakıt Harcaması', `${totalFuelCost.toLocaleString('tr-TR')} ₺`],
-    ['GENEL TOPLAM', `${totalCost.toLocaleString('tr-TR')} ₺`],
+    [t('pdfReport.row.toplam_bakim_kaydi'), t('pdfReport.adet', { count: maintenanceRecords.length })],
+    [t('pdfReport.row.toplam_yakit_kaydi'), t('pdfReport.adet', { count: fuelRecords.length })],
+    [t('pdfReport.row.toplam_bakim_harcamasi'), `${totalMaintenanceCost.toLocaleString('tr-TR')} ₺`],
+    [t('pdfReport.row.toplam_yakit_harcamasi'), `${totalFuelCost.toLocaleString('tr-TR')} ₺`],
+    [t('pdfReport.row.genel_toplam'), `${totalCost.toLocaleString('tr-TR')} ₺`],
   ]
 
   if (avgConsumption) {
-    summaryData.splice(4, 0, ['Ortalama Tüketim', `${avgConsumption.toFixed(1)} L/100km`])
+    summaryData.splice(4, 0, [t('pdfReport.row.ortalama_tuketim'), `${avgConsumption.toFixed(1)} L/100km`])
   }
 
   autoTable(doc, {
@@ -200,7 +219,7 @@ export const generateVehicleReport = async (
     doc.setFont('Roboto', 'bold')
     doc.setFontSize(13)
     doc.setTextColor(30, 41, 59)
-    doc.text('BAKIM KAYITLARI', margin, currentY)
+    doc.text(t('pdfReport.bakim_kayitlari'), margin, currentY)
 
     currentY += 6
 
@@ -218,7 +237,7 @@ export const generateVehicleReport = async (
 
     autoTable(doc, {
       startY: currentY,
-      head: [['Tarih', 'Bakım Türü', 'KM', 'Maliyet', 'Notlar']],
+      head: [[t('pdfReport.head.tarih'), t('pdfReport.head.bakim_turu'), t('pdfReport.head.km'), t('pdfReport.head.maliyet'), t('pdfReport.head.notlar')]],
       body: maintenanceData,
       theme: 'striped',
       styles: {
@@ -258,7 +277,7 @@ export const generateVehicleReport = async (
     doc.setFont('Roboto', 'bold')
     doc.setFontSize(13)
     doc.setTextColor(30, 41, 59)
-    doc.text('YAKIT KAYITLARI', margin, currentY)
+    doc.text(t('pdfReport.yakit_kayitlari'), margin, currentY)
 
     currentY += 6
 
@@ -277,7 +296,7 @@ export const generateVehicleReport = async (
 
     autoTable(doc, {
       startY: currentY,
-      head: [['Tarih', 'KM', 'Litre', '₺/L', 'Toplam', 'İstasyon']],
+      head: [[t('pdfReport.head.tarih'), t('pdfReport.head.km'), t('pdfReport.head.litre'), '₺/L', t('pdfReport.head.toplam'), t('pdfReport.head.istasyon')]],
       body: fuelData,
       theme: 'striped',
       styles: {
@@ -315,7 +334,7 @@ export const generateVehicleReport = async (
     doc.setFontSize(8)
     doc.setTextColor(148, 163, 184)
     doc.text(
-      `Sayfa ${i} / ${pageCount} • Garajım — Araç Takip Asistanı`,
+      t('pdfReport.footer', { page: i, total: pageCount }),
       pageWidth / 2,
       pageHeight - 8,
       { align: 'center' }
@@ -323,7 +342,7 @@ export const generateVehicleReport = async (
   }
 
   // PDF'i indir
-  const fileName = `${vehicle.brand}_${vehicle.model}_${vehicle.plate}_rapor.pdf`
+  const fileName = `${vehicle.brand}_${vehicle.model}_${vehicle.plate}_${t('pdfReport.dosya_adi_eki')}.pdf`
     .replace(/\s+/g, '_')
   doc.save(fileName)
 }
