@@ -1254,5 +1254,6 @@
   "welcomeTour.onemli_tarihleri_gir": "Enter the Key Dates",
   "welcomeTour.sag_ustteki_bildirimleri_ac_butonuyla_tarayici": "Use the \"Enable Notifications\" button at the top right to allow browser notifications, and we'll tell you when a date is close.",
   "welcomeTour.tam_depo_doldurunca_depo_dolu_secenegini_isare": "⛽ Tick \"Full tank\" whenever you fill it right up",
+  "welcomeTour.turu_kapat": "Close the welcome tour",
   "welcomeTour.yakit_takibi": "Fuel Tracking"
 }

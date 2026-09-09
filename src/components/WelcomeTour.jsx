@@ -90,6 +90,7 @@ export default function WelcomeTour({ isOpen, onClose }) {
           >
             <button
               onClick={handleFinish}
+              aria-label={t('welcomeTour.turu_kapat')}
               className="absolute top-4 right-4 text-slate-500 hover:text-white transition"
             >
               <X className="w-5 h-5" />

@@ -79,7 +79,10 @@ function VehicleCard({ vehicle, onEdit, onDelete }) {
           )}
 
           {/* Aksiyon butonları */}
-          <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition">
+          {/* group-focus-within: butonlar Tab ile odaklanabiliyor ama yalnızca
+              group-hover'a bağlı olduklarında GÖRÜNMÜYORLARDI — klavye
+              kullanıcısı odağın nerede olduğunu göremiyordu. */}
+          <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition">
             <button
               onClick={handleEditClick}
               className="p-1.5 bg-black/70 hover:bg-blue-500/80 backdrop-blur-sm rounded-md text-white transition"

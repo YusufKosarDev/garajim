@@ -37,8 +37,8 @@ export default function PhotoGallery({ photos = [], emptyMessage = 'Henüz foto�
             />
 
             {/* Hover overlay */}
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition flex items-center justify-center">
-              <Maximize2 className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition" />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 group-focus-visible:bg-black/40 transition flex items-center justify-center">
+              <Maximize2 className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition" />
             </div>
 
             {/* Sayı rozeti */}

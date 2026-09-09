@@ -88,7 +88,7 @@ export default function NotificationItem({ notification, onDismiss, onMarkRead, 
               {/* Sil butonu */}
               <button
                 onClick={handleDismissClick}
-                className="p-1 hover:bg-red-500/10 rounded text-slate-500 hover:text-red-400 transition opacity-0 group-hover:opacity-100 shrink-0"
+                className="p-1 hover:bg-red-500/10 rounded text-slate-500 hover:text-red-400 transition opacity-0 group-hover:opacity-100 focus-visible:opacity-100 shrink-0"
                 title={t('notificationItem.kapat')}
               >
                 <X className="w-3.5 h-3.5" />
@@ -121,5 +121,22 @@ export default function NotificationItem({ notification, onDismiss, onMarkRead, 
     )
   }
 
-  return <div onClick={handleClick}>{icerik}</div>
+  // actionUrl tipte ZORUNLU ve üç üreticinin hepsi dolduruyor; bu dal savunma
+  // amaçlı. Yine de tıklanabilir bir div klavyeyle erişilemez olurdu, o yüzden
+  // standart role/tabIndex/onKeyDown desenini alıyor.
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={handleClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          handleClick()
+        }
+      }}
+    >
+      {icerik}
+    </div>
+  )
 }

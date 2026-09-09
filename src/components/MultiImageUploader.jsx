@@ -185,7 +185,7 @@ export default function MultiImageUploader({ photos = [], onChange, maxPhotos = 
                 )}
 
                 {/* Hover overlay */}
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100">
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 group-focus-within:bg-black/60 transition flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">
                   {index !== 0 && (
                     <button
                       type="button"
