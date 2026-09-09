@@ -54,7 +54,7 @@ export default function ReceiptScanner({ photo, onApply }) {
 
       if (!hasAny) toast(t('receiptScanner.fisten_okunabilir_bilgi_cikmadi'), { icon: '🔍' })
     } catch (error) {
-      captureError(error, { where: t('receiptScanner.fis_ocr') })
+      captureError(error, { where: 'ReceiptScanner.ocr' })
       toast.error(t('receiptScanner.fis_okunamadi_internet_baglantini_kontrol_et'))
     } finally {
       setScanning(false)

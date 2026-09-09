@@ -43,18 +43,3 @@ export const supabase = createClient(
     }
   }
 )
-
-/**
- * Bağlantı testi — geliştirme amaçlı, gerektiğinde manuel çağrılır.
- */
-export const testConnection = async () => {
-  try {
-    const { data, error } = await supabase.auth.getSession()
-    if (error) throw error
-    console.log('✅ Supabase bağlantısı başarılı!', data)
-    return true
-  } catch (error) {
-    console.error('❌ Supabase bağlantı hatası:', error)
-    return false
-  }
-}

@@ -1,0 +1,12 @@
+# Depoda satır sonları her zaman LF olarak saklanır; checkout sırasında
+# platforma uygun hale gelir. core.autocrlf ayarı olmayan makinelerde de
+# tutarlı davranış için açıkça yazıldı.
+* text=auto eol=lf
+
+# İkili dosyalar dönüştürülmesin
+*.png binary
+*.jpg binary
+*.ico binary
+*.ttf binary
+*.woff binary
+*.woff2 binary

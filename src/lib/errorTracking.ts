@@ -62,10 +62,10 @@ export function registerGlobalHandlers() {
   if (typeof window === 'undefined') return
 
   window.addEventListener('unhandledrejection', (e) => {
-    captureError(e.reason ?? new Error('İşlenmemiş promise reddi'), { tur: 'unhandledrejection' })
+    captureError(e.reason ?? new Error('İşlenmemiş promise reddi'), { kind: 'unhandledrejection' })
   })
 
   window.addEventListener('error', (e) => {
-    if (e.error) captureError(e.error, { tur: 'window.error' })
+    if (e.error) captureError(e.error, { kind: 'window.error' })
   })
 }

@@ -105,7 +105,10 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!loadError || shownErrorRef.current === loadError) return
     shownErrorRef.current = loadError
-    captureError(loadError, { yer: i18n.t('ctx.vehicleContext.vehiclecontext_ilk_yukleme') })
+    // Sentry'ye ÇEVRİLMEMİŞ sabit bir etiket gidiyor: burada eskiden i18n.t()
+    // vardı, yani aynı hata kullanıcının diline göre iki farklı metinle
+    // raporlanıyordu. Telemetri arayüz dilinden bağımsız olmalı.
+    captureError(loadError, { where: 'VehicleContext.initialLoad' })
     toast.error(i18n.t('ctx.vehicleContext.veriler_yuklenemedi') + formatSupabaseError(loadError))
   }, [loadError])
 
@@ -304,10 +307,10 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
           supabase.channel(`user-${user.id}-changes`)
         )
         .subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
-            console.log('🔴 Real-time aktif: Garajdaki tüm değişiklikler dinleniyor')
-          } else if (status === 'CHANNEL_ERROR') {
-            console.error('❌ Real-time bağlantı hatası')
+          // Başarılı abonelik sessiz: production konsoluna her oturumda emoji
+          // log basmanın kimseye faydası yok. Hata dalı duruyor.
+          if (status === 'CHANNEL_ERROR') {
+            console.error('Real-time bağlantı hatası')
           }
         })
     }
