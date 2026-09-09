@@ -27,6 +27,7 @@ const AcceptInvite = lazy(() => import('./pages/AcceptInvite'))
 const Register = lazy(() => import('./pages/Register'))
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
 const ResetPassword = lazy(() => import('./pages/ResetPassword'))
+const NotFound = lazy(() => import('./pages/NotFound'))
 
 import WelcomeTour from './components/WelcomeTour'
 import KeyboardShortcutsModal from './components/KeyboardShortcutsModal'
@@ -219,6 +220,8 @@ function App() {
                 <Route path="/nearby" element={<SearchNearby />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/settings" element={<Settings onShowTour={() => setShowTour(true)} />} />
+                {/* Bilinmeyen adres: eskiden navbar'lı boş sayfa çıkıyordu */}
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
           </ErrorBoundary>
