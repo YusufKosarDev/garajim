@@ -1,5 +1,61 @@
 import LZString from 'lz-string'
+import { z } from 'zod'
 import type { Vehicle, MaintenanceRecord, FuelRecord } from '../types'
+
+/**
+ * Paylaşım yükünün şeması.
+ *
+ * NEDEN VAR: `/share/:encodedData` KİMLİK DOĞRULAMASI OLMAYAN tek rota ve
+ * içeriği tamamen URL'den geliyor. Eskiden yalnızca `version` alanına bakılıp
+ * gerisi olduğu gibi bileşene veriliyordu; yani uydurulmuş bir link, beklenen
+ * alanların yerine herhangi bir şeyi (obje, dizi, null) koyabiliyordu.
+ * XSS yok — React metni kaçırıyor — ama `fuel.map(...)` gibi çağrılar
+ * beklenmedik tipte patlıyor ve kullanıcı bomboş bir hata ekranı görüyordu.
+ * Zod projede zaten var; güven sınırında kullanılmaması tutarsızlıktı.
+ *
+ * TASARIM: alanlar TOLERANSLI (nullish serbest, bilinmeyen alanlar yok
+ * sayılıyor) çünkü daha önce paylaşılmış linkler çalışmaya devam etmeli.
+ * Zorlanan şey alanların TİPİ ve yükün genel ŞEKLİ.
+ */
+const sayiVeyaMetin = z.union([z.number(), z.string()]).nullish()
+
+const paylasimSemasi = z.object({
+  version: z.literal(1),
+  sharedAt: z.string().nullish(),
+  vehicle: z.object({
+    plate: z.string().nullish(),
+    brand: z.string().nullish(),
+    model: z.string().nullish(),
+    year: sayiVeyaMetin,
+    fuelType: z.string().nullish(),
+    currentKm: sayiVeyaMetin,
+    inspectionDate: z.string().nullish(),
+    mtvDate: z.string().nullish(),
+    insuranceDate: z.string().nullish(),
+    kaskoDate: z.string().nullish(),
+    notes: z.string().nullish(),
+  }),
+  maintenance: z.array(z.object({
+    id: z.string().nullish(),
+    type: z.string().nullish(),
+    date: z.string().nullish(),
+    km: sayiVeyaMetin,
+    cost: sayiVeyaMetin,
+    notes: z.string().nullish(),
+  })),
+  fuel: z.array(z.object({
+    id: z.string().nullish(),
+    date: z.string().nullish(),
+    km: sayiVeyaMetin,
+    liters: sayiVeyaMetin,
+    pricePerLiter: sayiVeyaMetin,
+    totalCost: sayiVeyaMetin,
+    fullTank: z.boolean().nullish(),
+    station: z.string().nullish(),
+  })),
+})
+
+export type PaylasimYuku = z.infer<typeof paylasimSemasi>
 
 // Paylaşılabilir veri oluştur (compress edilmiş, URL-safe)
 export const encodeShareData = (
@@ -57,20 +113,21 @@ export const encodeShareData = (
 }
 
 // Paylaşılan veriyi decode et
-export const decodeShareData = (encoded: string): Record<string, unknown> | null => {
+export const decodeShareData = (encoded: string): PaylasimYuku | null => {
   try {
     const json = LZString.decompressFromEncodedURIComponent(encoded)
     if (!json) return null
 
-    const data = JSON.parse(json)
-
-    // Versiyon kontrolü
-    if (!data.version || data.version > 1) {
-      console.error('Unsupported share data version:', data.version)
+    // Şema versiyonu da doğrulamanın parçası (version: z.literal(1)), o yüzden
+    // ayrı bir kontrole gerek kalmadı. Başarısızlıkta null dönüyor —
+    // SharedReport'un beklediği sözleşme değişmedi.
+    const parsed = paylasimSemasi.safeParse(JSON.parse(json))
+    if (!parsed.success) {
+      console.error('Share data validation failed:', parsed.error.issues)
       return null
     }
 
-    return data
+    return parsed.data
   } catch (err) {
     console.error('Share data decode error:', err)
     return null
