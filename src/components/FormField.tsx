@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import type { ReactNode } from 'react'
 
 /**
  * Ortak form alanı: label + input + hata mesajı.
@@ -8,6 +9,32 @@ import { useId } from 'react'
  * bileşeni zaten vardı; buraya taşındı ve etiket stili diğer formlarla
  * eşitlenebilsin diye `labelStyle` ile varyantlandı.
  */
+/** Kontrole geçirilen ortak nitelikler — render-prop bunları alır */
+export interface FieldControlProps {
+  id: string
+  className: string
+  'aria-invalid'?: 'true'
+  'aria-describedby'?: string
+}
+
+interface FormFieldProps {
+  label?: ReactNode
+  error?: ReactNode
+  hint?: ReactNode
+  required?: boolean
+  /** 'uppercase' (4 form) | 'plain' (FuelForm) */
+  labelStyle?: 'uppercase' | 'plain'
+  /** Varsayılan kontrol elemanı; children verilmediğinde kullanılır */
+  as?: 'input' | 'select' | 'textarea'
+  /**
+   * Düz JSX ya da render-prop. Render-prop biçimi, özel kontrollerin
+   * (select, uploader) label bağlantısını ve aria niteliklerini almasını sağlar.
+   */
+  children?: ReactNode | ((fieldProps: FieldControlProps) => ReactNode)
+  /** Varsayılan kontrole geçirilen diğer nitelikler (type, placeholder, ...) */
+  [key: string]: unknown
+}
+
 export default function FormField({
   label,
   error,
@@ -17,7 +44,7 @@ export default function FormField({
   as = 'input',
   children,
   ...props
-}) {
+}: FormFieldProps) {
   const id = useId()
   const errorId = `${id}-hata`
 
@@ -32,10 +59,10 @@ export default function FormField({
   // Ortak alan özellikleri: özel kontroller (select, uploader) bunları
   // children render-prop'u üzerinden alır; böylece label bağlantısı ve
   // aria nitelikleri tek yerde kalır.
-  const fieldProps = {
+  const fieldProps: FieldControlProps = {
     id,
     className: controlClass,
-    'aria-invalid': error ? 'true' : undefined,
+    'aria-invalid': error ? ('true' as const) : undefined,
     'aria-describedby': error ? errorId : undefined,
   }
 

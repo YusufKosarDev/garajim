@@ -1,7 +1,13 @@
 import { Search, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-export default function SearchBar({ value, onChange, placeholder = 'Ara...' }) {
+interface SearchBarProps {
+  value: string
+  onChange: (value: string) => void
+  placeholder?: string
+}
+
+export default function SearchBar({ value, onChange, placeholder = 'Ara...' }: SearchBarProps) {
   const { t } = useTranslation()
 
   return (

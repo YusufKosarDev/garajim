@@ -1,7 +1,14 @@
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-export default function Pagination({ currentPage, totalItems, itemsPerPage, onPageChange }) {
+interface PaginationProps {
+  currentPage: number
+  totalItems: number
+  itemsPerPage: number
+  onPageChange: (page: number) => void
+}
+
+export default function Pagination({ currentPage, totalItems, itemsPerPage, onPageChange }: PaginationProps) {
   const { t } = useTranslation()
 
   const totalPages = Math.ceil(totalItems / itemsPerPage)
@@ -15,7 +22,7 @@ export default function Pagination({ currentPage, totalItems, itemsPerPage, onPa
   // Gösterilecek sayfa numaralarını hesapla (akıllı gösterim)
   // Örn: [1, ..., 4, 5, 6, ..., 20] veya [1, 2, 3, 4, 5] gibi
   const getPageNumbers = () => {
-    const pages = []
+    const pages: (number | '...')[] = []
     const maxVisible = 5  // En fazla bu kadar sayfa numarası göster
 
     if (totalPages <= maxVisible + 2) {
@@ -47,7 +54,7 @@ export default function Pagination({ currentPage, totalItems, itemsPerPage, onPa
     return pages
   }
 
-  const goToPage = (page) => {
+  const goToPage = (page: number) => {
     if (page < 1 || page > totalPages || page === currentPage) return
     onPageChange(page)
   }

@@ -1,7 +1,19 @@
 import { useTranslation } from 'react-i18next'
 import { ArrowUpDown } from 'lucide-react'
 
-export default function SortDropdown({ value, onChange, options }) {
+export interface SortOption {
+  value: string
+  /** i18n anahtarı (bkz. aşağıdaki not) */
+  label: string
+}
+
+interface SortDropdownProps {
+  value: string
+  onChange: (value: string) => void
+  options: SortOption[]
+}
+
+export default function SortDropdown({ value, onChange, options }: SortDropdownProps) {
   // `opt.label` bir i18n anahtarı. Sözlükte olmayan bir değer gelirse i18next
   // metnin kendisini döndürür, yani düz metin geçen çağrılar da bozulmaz.
   const { t } = useTranslation()

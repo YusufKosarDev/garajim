@@ -1,4 +1,15 @@
-export default function EmptyState({ icon: Icon, title, description, action }) {
+import type { ComponentType, ReactNode } from 'react'
+
+interface EmptyStateProps {
+  /** lucide-react ikonu — verilmezse ikon alanı hiç render edilmez */
+  icon?: ComponentType<{ className?: string }>
+  title: ReactNode
+  description?: ReactNode
+  /** Butona benzeri bir eylem; başlığın altında gösterilir */
+  action?: ReactNode
+}
+
+export default function EmptyState({ icon: Icon, title, description, action }: EmptyStateProps) {
   return (
     <div className="text-center py-16 px-6 bg-slate-900/50 rounded-xl border border-dashed border-slate-700">
       {Icon && (
