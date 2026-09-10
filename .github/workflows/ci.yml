@@ -11,7 +11,7 @@ jobs:
     name: Lint, test, build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v5
         with:
@@ -54,7 +54,7 @@ jobs:
       CYPRESS_DEMO_EMAIL: ${{ secrets.CYPRESS_DEMO_EMAIL }}
       CYPRESS_DEMO_PASSWORD: ${{ secrets.CYPRESS_DEMO_PASSWORD }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Secret kontrolü
         id: secrets
