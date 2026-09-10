@@ -54,11 +54,11 @@ export default function CommandPalette({ isOpen, onClose, onNewVehicle, onNewMai
 
   // Sayfa linkleri
   const pages = useMemo(() => [
-    { id: 'page-dashboard', type: 'page', icon: LayoutDashboard, title: 'Dashboard', subtitle: 'Ana sayfa', action: () => navigate('/'), keywords: 'dashboard anasayfa ana' },
+    { id: 'page-dashboard', type: 'page', icon: LayoutDashboard, title: t('commandPalette.dashboard'), subtitle: t('commandPalette.ana_sayfa'), action: () => navigate('/'), keywords: t('commandPalette.kw.dashboard') },
     { id: 'page-vehicles', type: 'page', icon: Car, title: t('commandPalette.araclarim'), subtitle: t('commandPalette.arac_listesi'), action: () => navigate('/vehicles'), keywords: t('commandPalette.arac_araclar_liste') },
-    { id: 'page-calendar', type: 'page', icon: Calendar, title: 'Takvim', subtitle: t('commandPalette.tum_tarihler_ve_olaylar'), action: () => navigate('/calendar'), keywords: 'takvim tarih olay' },
-    { id: 'page-stats', type: 'page', icon: BarChart3, title: t('commandPalette.istatistikler'), subtitle: 'Grafikler ve analiz', action: () => navigate('/statistics'), keywords: 'istatistik grafik analiz rapor' },
-    { id: 'page-settings', type: 'page', icon: Settings, title: 'Ayarlar', subtitle: t('commandPalette.uygulama_ayarlari'), action: () => navigate('/settings'), keywords: 'ayar settings tercih' },
+    { id: 'page-calendar', type: 'page', icon: Calendar, title: t('commandPalette.takvim'), subtitle: t('commandPalette.tum_tarihler_ve_olaylar'), action: () => navigate('/calendar'), keywords: t('commandPalette.kw.takvim') },
+    { id: 'page-stats', type: 'page', icon: BarChart3, title: t('commandPalette.istatistikler'), subtitle: t('commandPalette.grafikler_analiz'), action: () => navigate('/statistics'), keywords: t('commandPalette.kw.istatistik') },
+    { id: 'page-settings', type: 'page', icon: Settings, title: t('commandPalette.ayarlar'), subtitle: t('commandPalette.uygulama_ayarlari'), action: () => navigate('/settings'), keywords: t('commandPalette.kw.ayarlar') },
   ], [navigate, t])
 
   // Eylemler

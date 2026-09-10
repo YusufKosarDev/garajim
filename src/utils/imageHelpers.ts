@@ -1,3 +1,4 @@
+import i18n from '../i18n'
 // Maksimum dosya boyutu (sıkıştırma sonrası)
 const MAX_FILE_SIZE_MB = 1
 const MAX_DIMENSION = 1920 // px
@@ -10,7 +11,7 @@ export const MAX_VEHICLE_PHOTOS = 5
 export const compressImage = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     if (!file || !file.type.startsWith('image/')) {
-      reject(new Error('Geçerli bir görsel dosyası değil'))
+      reject(new Error(i18n.t('imageHelpers.gecersiz_gorsel')))
       return
     }
 

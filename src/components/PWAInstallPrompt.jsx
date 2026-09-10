@@ -87,7 +87,7 @@ export default function PWAInstallPrompt() {
                   onClick={handleDismiss}
                   className="px-4 py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white rounded-lg font-semibold text-sm transition"
                 >
-                  Daha Sonra
+                  {t('pWAInstallPrompt.daha_sonra')}
                 </button>
               </div>
             </div>

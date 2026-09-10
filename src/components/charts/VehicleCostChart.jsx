@@ -71,8 +71,8 @@ export default function VehicleCostChart({ vehicles = [], maintenanceRecords = [
           labelFormatter={(label, payload) => payload?.[0]?.payload?.name || label}
         />
         <Legend wrapperStyle={{ fontSize: '12px' }} />
-        <Bar dataKey="maintenance" name="Bakım" stackId="a" fill="#3b82f6" />
-        <Bar dataKey="fuel" name="Yakıt" stackId="a" fill="#f97316">
+        <Bar dataKey="maintenance" name={t('charts.bakim')} stackId="a" fill="#3b82f6" />
+        <Bar dataKey="fuel" name={t('charts.yakit')} stackId="a" fill="#f97316">
           {data.map((entry, index) => (
             <Cell key={`cell-${index}`} fill="#f97316" />
           ))}

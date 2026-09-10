@@ -286,7 +286,7 @@ export default function Dashboard({ globalActionsRef }) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-sm truncate">
-                      {a.activityType === 'maintenance' ? a.type : `${a.liters} L yakıt`}
+                      {a.activityType === 'maintenance' ? a.type : t('dashboard.litre_yakit', { liters: a.liters })}
                     </div>
                     <div className="text-xs text-slate-400">
                       {a.vehicle.brand} {a.vehicle.model} • {formatDate(a.date)}
@@ -359,15 +359,19 @@ function QuickAction({ icon: Icon, label, color, onClick }) {
 }
 
 function DateRow({ item }) {
+  // Ayrı bir bileşen olduğu için kendi t'sine ihtiyacı var — üstteki
+  // Dashboard'ın kapsamındaki t buraya ulaşmıyor.
+  const { t } = useTranslation()
+
   const statusStyles = {
     expired: 'border-red-500/40 bg-red-500/10',
     warning: 'border-yellow-500/40 bg-yellow-500/10',
     safe: 'border-slate-700 bg-slate-800/50',
   }
   const statusText = {
-    expired: `${Math.abs(item.days)} gün geçti`,
-    warning: `${item.days} gün kaldı`,
-    safe: `${item.days} gün kaldı`,
+    expired: t('dashboard.gun_gecti', { days: Math.abs(item.days) }),
+    warning: t('dashboard.gun_kaldi', { days: item.days }),
+    safe: t('dashboard.gun_kaldi', { days: item.days }),
   }
   const textColor = {
     expired: 'text-red-400',

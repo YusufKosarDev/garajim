@@ -2,11 +2,10 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TrendingUp, Calendar } from 'lucide-react'
 import { getMonthlyBreakdown } from '../../utils/statisticsHelpers'
-
-const MONTH_LABELS = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık']
+import { ayYilEtiketi } from '../../utils/dateHelpers'
 
 export default function TopMonthsTable({ maintenanceRecords = [], fuelRecords = [] }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
 
   const topMonths = useMemo(() => {
     const breakdown = getMonthlyBreakdown(maintenanceRecords, fuelRecords, 2)
@@ -18,14 +17,17 @@ export default function TopMonthsTable({ maintenanceRecords = [], fuelRecords = 
           key,
           year: parseInt(year),
           month: parseInt(monthNum) - 1,
-          label: `${MONTH_LABELS[parseInt(monthNum) - 1]} ${year}`,
+          label: ayYilEtiketi(parseInt(year), parseInt(monthNum) - 1),
           ...data,
         }
       })
       .filter(m => m.total > 0)
       .sort((a, b) => b.total - a.total)
       .slice(0, 6)
-  }, [maintenanceRecords, fuelRecords])
+  // Dil bağımlılığı KASITLI: etiketler aktif dilden üretiliyor, dil
+  // değiştiğinde useMemo yeniden hesaplanmazsa eski dilde donup kalıyor.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [maintenanceRecords, fuelRecords, i18n.language])
 
   if (topMonths.length === 0) {
     return (

@@ -194,7 +194,7 @@ export default function FuelForm({ isOpen, onClose, vehicleId, editRecord = null
             {t('fuelForm.iptal')}
           </button>
           <button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 py-2.5 rounded-lg transition font-semibold">
-            {editRecord ? t('fuelForm.guncelle') : 'Kaydet'}
+            {editRecord ? t('fuelForm.guncelle') : t('fuelForm.kaydet')}
           </button>
         </div>
       </form>

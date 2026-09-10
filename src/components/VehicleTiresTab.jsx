@@ -208,7 +208,7 @@ export default function VehicleTiresTab({ vehicleId }) {
           <div className="flex items-start gap-2 text-xs text-slate-300">
             <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
             <p>
-              <strong>{t('vehicleTiresTab.ipucu')}</strong> Diğer sezon setini de ekleyince mevsim değişimlerini kaydedebilirsin
+              <strong>{t('vehicleTiresTab.ipucu')}</strong> {t('vehicleTiresTab.diger_sezon_ipucu')}
               {summerSet ? t('vehicleTiresTab.kislik_ekle') : t('vehicleTiresTab.yazlik_ekle')}.
             </p>
           </div>
@@ -218,7 +218,7 @@ export default function VehicleTiresTab({ vehicleId }) {
       {/* Değişim geçmişi */}
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
         <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-          🔄 Mevsim Değişim Geçmişi
+          🔄 {t('vehicleTiresTab.mevsim_degisim_gecmisi')}
           {vehicleChanges.length > 0 && (
             <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full">
               {vehicleChanges.length}

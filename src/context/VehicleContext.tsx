@@ -177,7 +177,7 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
       await refreshPendingCount()
 
       if (result.sent > 0) {
-        toast.success(`${result.sent} bekleyen kayıt gönderildi ✓`)
+        toast.success(i18n.t('ctx.vehicleContext.kuyruk_gonderildi', { count: result.sent }))
         // Gerçek satırları almak için sorguları tazele
         queryClient.invalidateQueries({ queryKey: vehicleQueryKeys.all(userId) })
       }

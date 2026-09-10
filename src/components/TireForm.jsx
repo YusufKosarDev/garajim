@@ -131,7 +131,7 @@ export default function TireForm({ isOpen, onClose, vehicleId, editTireSet = nul
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEdit ? t('tireForm.lastik_setini_duzenle') : 'Yeni Lastik Seti'}
+      title={isEdit ? t('tireForm.lastik_setini_duzenle') : t('tireForm.yeni_lastik_seti')}
       maxWidth="max-w-2xl"
     >
       <form onSubmit={handleSubmit(onValid, onInvalid)} className="p-5 space-y-5">

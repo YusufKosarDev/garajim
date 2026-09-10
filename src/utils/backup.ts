@@ -1,3 +1,4 @@
+import i18n from '../i18n'
 import { toDateKey } from './dateHelpers'
 import { downloadFile } from './downloadFile'
 
@@ -43,7 +44,7 @@ export const parseImportFile = (file: File): Promise<Record<string, unknown>> =>
         }
 
         if (!data.maintenanceRecords || !Array.isArray(data.maintenanceRecords)) {
-          reject(new Error('Geçersiz yedek dosyası: bakım kayıtları bulunamadı'))
+          reject(new Error(i18n.t('backup.gecersiz_yedek_bakim')))
           return
         }
 
@@ -57,7 +58,7 @@ export const parseImportFile = (file: File): Promise<Record<string, unknown>> =>
           exportDate: data.exportDate,
         })
       } catch {
-        reject(new Error('Dosya okunamadı — geçerli bir JSON yedek dosyası olmalı'))
+        reject(new Error(i18n.t('backup.dosya_okunamadi')))
       }
     }
 

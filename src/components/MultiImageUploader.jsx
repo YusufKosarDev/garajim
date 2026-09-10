@@ -28,13 +28,13 @@ export default function MultiImageUploader({ photos = [], onChange, maxPhotos = 
 
     // Sınır kontrolü
     if (imageFiles.length > remainingSlots) {
-      toast.error(`En fazla ${remainingSlots} fotoğraf daha ekleyebilirsin`)
+      toast.error(t('multiImageUploader.en_fazla_ek', { count: remainingSlots }))
       if (fileInputRef.current) fileInputRef.current.value = ''
       return
     }
 
     setIsUploading(true)
-    const loadingToast = toast.loading(`${imageFiles.length} fotoğraf işleniyor...`)
+    const loadingToast = toast.loading(t('multiImageUploader.fotograf_isleniyor', { count: imageFiles.length }))
 
     try {
       const results = await compressMultipleImages(imageFiles)
@@ -49,7 +49,7 @@ export default function MultiImageUploader({ photos = [], onChange, maxPhotos = 
       toast.dismiss(loadingToast)
 
       if (failed.length === 0) {
-        toast.success(`${successful.length} fotoğraf eklendi 📸`)
+        toast.success(t('multiImageUploader.fotograf_eklendi', { count: successful.length }))
       } else if (successful.length > 0) {
         toast.success(`${successful.length} eklendi, ${failed.length} başarısız`)
       } else {
@@ -116,7 +116,7 @@ export default function MultiImageUploader({ photos = [], onChange, maxPhotos = 
       {/* Bilgi başlığı */}
       <div className="flex items-center justify-between mb-2">
         <div className="text-xs text-slate-400">
-          {photos.length} / {maxPhotos} fotoğraf
+          {t('multiImageUploader.fotograf_sayaci', { current: photos.length, max: maxPhotos })}
           {totalSize > 0 && ` • ${(totalSize / 1024).toFixed(2)} MB`}
         </div>
         {canAddMore && (
@@ -127,7 +127,7 @@ export default function MultiImageUploader({ photos = [], onChange, maxPhotos = 
             className="text-xs flex items-center gap-1 text-blue-400 hover:text-blue-300 transition disabled:opacity-50"
           >
             <ImagePlus className="w-3.5 h-3.5" />
-            {photos.length === 0 ? 'Fotoğraf Ekle' : 'Daha Ekle'}
+            {photos.length === 0 ? t('multiImageUploader.fotograf_ekle') : t('multiImageUploader.daha_ekle')}
           </button>
         )}
       </div>
@@ -145,7 +145,7 @@ export default function MultiImageUploader({ photos = [], onChange, maxPhotos = 
             {t('multiImageUploader.fotograf_yuklemek_icin_tikla')}
           </div>
           <div className="text-xs text-slate-500">
-            JPG, PNG, WEBP — max {maxPhotos} fotoğraf
+            {t('multiImageUploader.dosya_bicimleri', { max: maxPhotos })}
           </div>
           <div className="text-[10px] text-slate-600 mt-2">
             {t('multiImageUploader.gorseller_otomatik_sikistirilir_1mb_altina')}

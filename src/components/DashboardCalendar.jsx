@@ -2,14 +2,10 @@ import { useState, memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react'
-import { formatDate, toDateKey } from '../utils/dateHelpers'
+import { formatDate, toDateKey, haftaGunleri, ayYilEtiketi } from '../utils/dateHelpers'
 
-const months = [
-  'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-  'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık',
-]
 
-const weekDays = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz']
+// Gün adları aktif dilden üretiliyor (bkz. utils/dateHelpers)
 
 function DashboardCalendar({ events = [] }) {
   const { t } = useTranslation()
@@ -89,7 +85,7 @@ function DashboardCalendar({ events = [] }) {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-bold flex items-center gap-2">
           <CalendarIcon className="w-5 h-5 text-blue-400" />
-          {months[month]} {year}
+          {ayYilEtiketi(year, month)}
         </h2>
         <div className="flex items-center gap-1">
           <button
@@ -117,7 +113,7 @@ function DashboardCalendar({ events = [] }) {
       </div>
 
       <div className="grid grid-cols-7 gap-1 mb-2">
-        {weekDays.map(day => (
+        {haftaGunleri().map(day => (
           <div key={day} className="text-center text-xs font-semibold text-slate-500 py-1">
             {day}
           </div>

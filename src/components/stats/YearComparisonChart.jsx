@@ -2,18 +2,19 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 import { useTranslation } from 'react-i18next'
 import { useMemo } from 'react'
 
-const MONTH_LABELS = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara']
+import { kisaAyAdi } from '../../utils/dateHelpers'
 
 export default function YearComparisonChart({ maintenanceRecords = [], fuelRecords = [] }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
 
   const data = useMemo(() => {
     const currentYear = new Date().getFullYear()
     const previousYear = currentYear - 1
 
     // 12 ay için 2 yıllık karşılaştırma
-    const months = MONTH_LABELS.map((label, i) => ({
-      month: label,
+    const months = Array.from({ length: 12 }, (_, i) => ({
+      label: kisaAyAdi(i),
+      month: kisaAyAdi(i),
       monthIndex: i,
       [previousYear]: 0,
       [currentYear]: 0,
@@ -32,7 +33,10 @@ export default function YearComparisonChart({ maintenanceRecords = [], fuelRecor
     fuelRecords.forEach(r => addToMonth(r.date, r.totalCost || 0))
 
     return { data: months, currentYear, previousYear }
-  }, [maintenanceRecords, fuelRecords])
+  // Ay etiketleri aktif dilden üretiliyor; dil bağımlılığı olmadan useMemo
+  // eski dilde donup kalıyor.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [maintenanceRecords, fuelRecords, i18n.language])
 
   const hasCurrentData = data.data.some(m => m[data.currentYear] > 0)
   const hasPreviousData = data.data.some(m => m[data.previousYear] > 0)

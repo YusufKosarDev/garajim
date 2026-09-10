@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AlertTriangle } from 'lucide-react'
 import Modal from './Modal'
 
@@ -8,10 +9,16 @@ export default function ConfirmDialog({
   onConfirm,
   title,
   message,
-  confirmText = 'Onayla',
-  cancelText = 'İptal',
+  // Varsayılanlar BURADA değil, gövdede çözülüyor: modül seviyesinde t()
+  // çağırmak metni açılış diline dondurur.
+  confirmText,
+  cancelText,
   variant = 'danger', // 'danger' | 'warning'
 }) {
+  const { t } = useTranslation()
+  const onayMetni = confirmText ?? t('confirmDialog.onayla')
+  const iptalMetni = cancelText ?? t('confirmDialog.iptal')
+
   const handleConfirm = () => {
     onConfirm()
     onClose()
@@ -63,13 +70,13 @@ export default function ConfirmDialog({
             onClick={onClose}
             className="flex-1 bg-slate-800 hover:bg-slate-700 py-2.5 rounded-lg transition font-semibold"
           >
-            {cancelText}
+            {iptalMetni}
           </button>
           <button
             onClick={handleConfirm}
             className={`flex-1 py-2.5 rounded-lg transition font-semibold text-white ${config.buttonBg}`}
           >
-            {confirmText}
+            {onayMetni}
           </button>
         </div>
       </div>

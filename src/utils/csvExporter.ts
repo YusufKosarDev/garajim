@@ -1,3 +1,4 @@
+import i18n from '../i18n'
 import { formatDate, toDateKey } from './dateHelpers'
 import { downloadFile } from './downloadFile'
 import type { Vehicle, MaintenanceRecord, FuelRecord } from '../types'
@@ -47,22 +48,22 @@ const downloadCSV = (csv: string, filename: string): void =>
 export const exportVehiclesCSV = (vehicles: Vehicle[]): number => {
   const columns: CsvKolonu<Vehicle>[] = [
     { label: 'ID', accessor: 'id' },
-    { label: 'Plaka', accessor: 'plate' },
-    { label: 'Marka', accessor: 'brand' },
-    { label: 'Model', accessor: 'model' },
-    { label: 'Yıl', accessor: 'year' },
-    { label: 'Yakıt Tipi', accessor: 'fuelType' },
-    { label: 'Güncel KM', accessor: 'currentKm' },
-    { label: 'Muayene Tarihi', accessor: (r) => formatDate(r.inspectionDate) },
-    { label: 'MTV Tarihi', accessor: (r) => formatDate(r.mtvDate) },
-    { label: 'Sigorta Tarihi', accessor: (r) => formatDate(r.insuranceDate) },
-    { label: 'Kasko Tarihi', accessor: (r) => formatDate(r.kaskoDate) },
-    { label: 'Notlar', accessor: 'notes' },
+    { label: i18n.t('csv.col.plaka'), accessor: 'plate' },
+    { label: i18n.t('csv.col.marka'), accessor: 'brand' },
+    { label: i18n.t('csv.col.model'), accessor: 'model' },
+    { label: i18n.t('csv.col.yil'), accessor: 'year' },
+    { label: i18n.t('csv.col.yakit_tipi'), accessor: 'fuelType' },
+    { label: i18n.t('csv.col.guncel_km'), accessor: 'currentKm' },
+    { label: i18n.t('csv.col.muayene_tarihi'), accessor: (r) => formatDate(r.inspectionDate) },
+    { label: i18n.t('csv.col.mtv_tarihi'), accessor: (r) => formatDate(r.mtvDate) },
+    { label: i18n.t('csv.col.sigorta_tarihi'), accessor: (r) => formatDate(r.insuranceDate) },
+    { label: i18n.t('csv.col.kasko_tarihi'), accessor: (r) => formatDate(r.kaskoDate) },
+    { label: i18n.t('csv.col.notlar'), accessor: 'notes' },
   ]
 
   const csv = arrayToCSV(vehicles, columns)
   const timestamp = toDateKey(new Date())
-  downloadCSV(csv, `garajim-araclar-${timestamp}.csv`)
+  downloadCSV(csv, `garajim-${i18n.t('csv.dosya.araclar')}-${timestamp}.csv`)
 
   return vehicles.length
 }
@@ -73,24 +74,24 @@ export const exportMaintenanceCSV = (maintenanceRecords: MaintenanceRecord[], ve
     const v = vehicles.find(v => v.id === r.vehicleId)
     return {
       ...r,
-      vehicleName: v ? `${v.brand} ${v.model}` : 'Bilinmeyen',
+      vehicleName: v ? `${v.brand} ${v.model}` : i18n.t('csv.bilinmeyen_arac'),
       vehiclePlate: v?.plate || '',
     }
   })
 
   const columns: CsvKolonu<MaintenanceRecord & { vehicleName: string; vehiclePlate: string }>[] = [
-    { label: 'Tarih', accessor: (r) => formatDate(r.date) },
-    { label: 'Araç', accessor: 'vehicleName' },
-    { label: 'Plaka', accessor: 'vehiclePlate' },
-    { label: 'Bakım Türü', accessor: 'type' },
-    { label: 'KM', accessor: 'km' },
-    { label: 'Maliyet (₺)', accessor: 'cost' },
-    { label: 'Notlar', accessor: 'notes' },
+    { label: i18n.t('csv.col.tarih'), accessor: (r) => formatDate(r.date) },
+    { label: i18n.t('csv.col.arac'), accessor: 'vehicleName' },
+    { label: i18n.t('csv.col.plaka'), accessor: 'vehiclePlate' },
+    { label: i18n.t('csv.col.bakim_turu'), accessor: 'type' },
+    { label: i18n.t('csv.col.km'), accessor: 'km' },
+    { label: i18n.t('csv.col.maliyet'), accessor: 'cost' },
+    { label: i18n.t('csv.col.notlar'), accessor: 'notes' },
   ]
 
   const csv = arrayToCSV(withVehicle, columns)
   const timestamp = toDateKey(new Date())
-  downloadCSV(csv, `garajim-bakimlar-${timestamp}.csv`)
+  downloadCSV(csv, `garajim-${i18n.t('csv.dosya.bakimlar')}-${timestamp}.csv`)
 
   return maintenanceRecords.length
 }
@@ -101,27 +102,27 @@ export const exportFuelCSV = (fuelRecords: FuelRecord[], vehicles: Vehicle[]): n
     const v = vehicles.find(v => v.id === r.vehicleId)
     return {
       ...r,
-      vehicleName: v ? `${v.brand} ${v.model}` : 'Bilinmeyen',
+      vehicleName: v ? `${v.brand} ${v.model}` : i18n.t('csv.bilinmeyen_arac'),
       vehiclePlate: v?.plate || '',
     }
   })
 
   const columns: CsvKolonu<FuelRecord & { vehicleName: string; vehiclePlate: string }>[] = [
-    { label: 'Tarih', accessor: (r) => formatDate(r.date) },
-    { label: 'Araç', accessor: 'vehicleName' },
-    { label: 'Plaka', accessor: 'vehiclePlate' },
-    { label: 'KM', accessor: 'km' },
-    { label: 'Litre', accessor: 'liters' },
-    { label: '₺/Litre', accessor: 'pricePerLiter' },
-    { label: 'Toplam (₺)', accessor: 'totalCost' },
-    { label: 'İstasyon', accessor: 'station' },
-    { label: 'Dolu Depo', accessor: (r) => r.fullTank ? 'Evet' : 'Hayır' },
-    { label: 'Notlar', accessor: 'notes' },
+    { label: i18n.t('csv.col.tarih'), accessor: (r) => formatDate(r.date) },
+    { label: i18n.t('csv.col.arac'), accessor: 'vehicleName' },
+    { label: i18n.t('csv.col.plaka'), accessor: 'vehiclePlate' },
+    { label: i18n.t('csv.col.km'), accessor: 'km' },
+    { label: i18n.t('csv.col.litre'), accessor: 'liters' },
+    { label: i18n.t('csv.col.fiyat_litre'), accessor: 'pricePerLiter' },
+    { label: i18n.t('csv.col.toplam'), accessor: 'totalCost' },
+    { label: i18n.t('csv.col.istasyon'), accessor: 'station' },
+    { label: i18n.t('csv.col.dolu_depo'), accessor: (r) => r.fullTank ? i18n.t('csv.evet') : i18n.t('csv.hayir') },
+    { label: i18n.t('csv.col.notlar'), accessor: 'notes' },
   ]
 
   const csv = arrayToCSV(withVehicle, columns)
   const timestamp = toDateKey(new Date())
-  downloadCSV(csv, `garajim-yakit-${timestamp}.csv`)
+  downloadCSV(csv, `garajim-${i18n.t('csv.dosya.yakit')}-${timestamp}.csv`)
 
   return fuelRecords.length
 }

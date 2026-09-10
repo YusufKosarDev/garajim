@@ -1,3 +1,4 @@
+import i18n from '../i18n'
 import type {
   Vehicle, VehicleRow,
   MaintenanceRecord, MaintenanceRow,
@@ -260,17 +261,20 @@ export const customIntervalsFromDbRows = (rows?: CustomIntervalRow[] | null): Cu
 // ============================================
 
 export const formatSupabaseError = (error?: { message?: string } | string | null): string => {
-  if (!error) return 'Bilinmeyen hata'
-  
+  if (!error) return i18n.t('supabaseError.bilinmeyen')
+
   const msg = typeof error === 'string' ? error : (error.message || String(error))
-  
-  // Yaygın hataları Türkçeleştir
-  if (msg.includes('duplicate key')) return 'Bu kayıt zaten var'
-  if (msg.includes('violates foreign key')) return 'Geçersiz referans'
-  if (msg.includes('violates check constraint')) return 'Geçersiz değer'
-  if (msg.includes('violates not-null')) return 'Eksik alan'
-  if (msg.includes('JWT expired')) return 'Oturum süresi doldu, tekrar giriş yapın'
-  if (msg.includes('Network')) return 'İnternet bağlantısı yok'
-  
+
+  // Postgres/Supabase hata metinlerini kullanıcı diline çevir. Eşleşen kalıp
+  // İNGİLİZCE ve öyle kalmalı: Supabase'in döndürdüğü metin bu.
+  if (msg.includes('duplicate key')) return i18n.t('supabaseError.zaten_var')
+  if (msg.includes('violates foreign key')) return i18n.t('supabaseError.gecersiz_referans')
+  if (msg.includes('violates check constraint')) return i18n.t('supabaseError.gecersiz_deger')
+  if (msg.includes('violates not-null')) return i18n.t('supabaseError.eksik_alan')
+  if (msg.includes('JWT expired')) return i18n.t('supabaseError.oturum_doldu')
+  if (msg.includes('Network')) return i18n.t('supabaseError.baglanti_yok')
+
+  // Tanınmayan hata: Supabase'in ham metni. Çeviremiyoruz ama gizlemek de
+  // istemiyoruz — hata ayıklamada tek ipucu bu.
   return msg
 }

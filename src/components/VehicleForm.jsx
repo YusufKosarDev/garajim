@@ -101,10 +101,10 @@ export default function VehicleForm({ isOpen, onClose, editVehicle = null }) {
   const onInvalid = () => toast.error(t('vehicleForm.lutfen_hatalari_duzelt'))
 
   const dateFields = [
-    ['inspectionDate', 'Muayene'],
+    ['inspectionDate', t('vehicleForm.muayene')],
     ['mtvDate', 'MTV'],
     ['insuranceDate', t('vehicleForm.trafik_sigortasi')],
-    ['kaskoDate', 'Kasko'],
+    ['kaskoDate', t('vehicleForm.kasko')],
   ]
 
   return (

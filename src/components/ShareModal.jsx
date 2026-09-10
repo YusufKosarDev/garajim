@@ -59,7 +59,7 @@ export default function ShareModal({ isOpen, onClose, vehicle, maintenanceRecord
   const handleNativeShare = async () => {
     const result = await shareNatively({
       title: t('shareModal.rapor_basligi', { vehicle: `${vehicle.brand} ${vehicle.model}` }),
-      text: `${vehicle.brand} ${vehicle.model} (${vehicle.plate}) için detaylı bakım ve yakıt raporu`,
+      text: t('shareModal.paylasim_metni', { brand: vehicle.brand, model: vehicle.model, plate: vehicle.plate }),
       url: shareUrl,
     })
 
@@ -326,7 +326,7 @@ export default function ShareModal({ isOpen, onClose, vehicle, maintenanceRecord
             onClick={onClose}
             className="w-full bg-slate-800/50 hover:bg-slate-800 text-slate-400 py-2 rounded-lg text-sm transition"
           >
-            Kapat
+            {t('modal.kapat')}
           </button>
         </div>
 

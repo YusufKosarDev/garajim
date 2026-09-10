@@ -63,7 +63,7 @@ export default function MaintenanceTypeChart({ maintenanceRecords = [] }) {
             color: '#fff',
           }}
           formatter={(value, name, props) => [
-            `${Number(value).toLocaleString('tr-TR')} ₺ (${props.payload.count} kayıt)`,
+            t('charts.tutar_kayit', { amount: Number(value).toLocaleString('tr-TR'), count: props.payload.count }),
             name,
           ]}
         />

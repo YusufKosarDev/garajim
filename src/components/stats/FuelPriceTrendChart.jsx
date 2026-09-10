@@ -1,9 +1,10 @@
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine } from 'recharts'
 import { useTranslation } from 'react-i18next'
+import { gunAyEtiketi } from '../../utils/dateHelpers'
 import { useMemo } from 'react'
 
 export default function FuelPriceTrendChart({ fuelRecords = [] }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
 
   const data = useMemo(() => {
     const sorted = [...fuelRecords]
@@ -15,9 +16,12 @@ export default function FuelPriceTrendChart({ fuelRecords = [] }) {
       date: r.date,
       price: r.pricePerLiter,
       station: r.station || '—',
-      label: new Date(r.date).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }),
+      label: gunAyEtiketi(new Date(r.date)),
     }))
-  }, [fuelRecords])
+  // Dil bağımlılığı KASITLI: etiketler aktif dilden üretiliyor, dil
+  // değiştiğinde useMemo yeniden hesaplanmazsa eski dilde donup kalıyor.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fuelRecords, i18n.language])
 
   const avgPrice = useMemo(() => {
     if (data.length === 0) return 0
@@ -71,7 +75,7 @@ export default function FuelPriceTrendChart({ fuelRecords = [] }) {
             stroke="#f59e0b"
             strokeDasharray="3 3"
             label={{
-              value: `Ortalama: ${avgPrice.toFixed(2)} ₺`,
+              value: t('stats.fuelPriceTrendChart.ortalama_etiket', { price: avgPrice.toFixed(2) }),
               position: 'right',
               fill: '#f59e0b',
               fontSize: 10,

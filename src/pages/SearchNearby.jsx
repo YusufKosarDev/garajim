@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import i18n from '../i18n'
 import { MapPin, Fuel, Wrench, CircleDot, Loader2, Navigation, AlertCircle, ExternalLink, RefreshCw } from 'lucide-react'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
@@ -115,7 +116,7 @@ async function fetchNearbyPOIs(lat, lon, radiusKm) {
           id: el.id,
           lat: el.lat,
           lon: el.lon,
-          name: (el.tags && (el.tags.name || el.tags.brand || el.tags.operator)) || 'İsim yok',
+          name: (el.tags && (el.tags.name || el.tags.brand || el.tags.operator)) || i18n.t('searchNearby.isim_yok'),
           category: category,
           address: (el.tags && (el.tags['addr:street'] || el.tags['addr:city'])) || '',
           phone: (el.tags && (el.tags.phone || el.tags['contact:phone'])) || '',
@@ -128,7 +129,7 @@ async function fetchNearbyPOIs(lat, lon, radiusKm) {
   }
 
   console.error('All Overpass endpoints failed. Last error:', lastError)
-  throw new Error('Harita servisi şu an cevap vermiyor, biraz sonra tekrar dene.')
+  throw new Error(i18n.t('searchNearby.servis_cevap_yok'))
 }
 
 function MapRecenter(props) {

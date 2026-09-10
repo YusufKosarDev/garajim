@@ -27,7 +27,7 @@ export default function PredictionCard({ maintenanceRecords, fuelRecords }) {
 
   const TrendIcon = trend.trend === 'up' ? TrendingUp : trend.trend === 'down' ? TrendingDown : Minus
   const trendColor = trend.trend === 'up' ? 'text-red-400' : trend.trend === 'down' ? 'text-green-400' : 'text-slate-400'
-  const trendLabel = trend.trend === 'up' ? 'Artıyor' : trend.trend === 'down' ? 'Azalıyor' : 'Stabil'
+  const trendLabel = trend.trend === 'up' ? t('stats.predictionCard.artiyor') : trend.trend === 'down' ? t('stats.predictionCard.azaliyor') : t('stats.predictionCard.stabil')
 
   if (avgData.count < 3) {
     // Yeterli veri yoksa
@@ -72,7 +72,7 @@ export default function PredictionCard({ maintenanceRecords, fuelRecords }) {
             {currentMonth.total.toLocaleString('tr-TR')} ₺
           </div>
           <div className="text-[10px] text-slate-500">
-            %{Math.round(monthProgress * 100)} tamamlandı
+            {t('stats.predictionCard.tamamlandi', { percent: Math.round(monthProgress * 100) })}
           </div>
         </div>
         <div>
@@ -82,7 +82,7 @@ export default function PredictionCard({ maintenanceRecords, fuelRecords }) {
             {trendLabel}
           </div>
           <div className="text-[10px] text-slate-500">
-            {trend.change > 0 ? '+' : ''}{Math.round(trend.change)}% değişim
+            {t('stats.predictionCard.degisim', { sign: trend.change > 0 ? '+' : '', percent: Math.round(trend.change) })}
           </div>
         </div>
       </div>

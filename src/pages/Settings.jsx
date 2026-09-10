@@ -158,7 +158,7 @@ export default function Settings({ onShowTour }) {
                 onClick={() => setIsClearLocalOpen(true)}
                 className="flex items-center gap-2 bg-slate-700/50 hover:bg-slate-700 text-slate-300 px-5 py-2.5 rounded-lg font-medium transition border border-slate-600"
               >
-                Yerel Verileri Temizle
+                {t('settings.yerel_verileri_temizle')}
               </button>
             </div>
           </div>
@@ -408,8 +408,8 @@ export default function Settings({ onShowTour }) {
           onClose={() => setIsClearOpen(false)}
           onConfirm={clearAllData}
           title={t('settings.tum_veriler_silinsin_mi')}
-          message={`${vehicles.length} araç, ${maintenanceRecords.length} bakım ve ${fuelRecords.length} yakıt kaydı kalıcı olarak silinecek. Bu işlem geri alınamaz.`}
-          confirmText="Evet, hepsini sil"
+          message={t('settings.hepsi_silinecek', { vehicles: vehicles.length, maintenance: maintenanceRecords.length, fuel: fuelRecords.length })}
+          confirmText={t('settings.evet_hepsini_sil')}
         />
 
         <ConfirmDialog
@@ -417,8 +417,8 @@ export default function Settings({ onShowTour }) {
           onClose={() => setIsClearLocalOpen(false)}
           onConfirm={handleClearLocalStorage}
           title={t('settings.eski_yerel_veriler_silinsin_mi')}
-          message="Tarayıcıda kalan eski LocalStorage verileri silinecek. Supabase'deki verilerin etkilenmez."
-          confirmText="Evet, temizle"
+          message={t('settings.localstorage_mesaji')}
+          confirmText={t('settings.evet_temizle')}
           variant="warning"
         />
 
@@ -427,8 +427,8 @@ export default function Settings({ onShowTour }) {
           onClose={() => setIsLogoutOpen(false)}
           onConfirm={handleLogout}
           title={t('settings.cikis_yapilsin_mi')}
-          message="Hesabından çıkış yapmak istediğine emin misin? Tekrar giriş yapana kadar verilerine erişemezsin."
-          confirmText="Evet, çıkış yap"
+          message={t('settings.cikis_mesaji')}
+          confirmText={t('settings.evet_cikis_yap')}
         />
 
         <MigrationModal

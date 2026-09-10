@@ -134,8 +134,8 @@ export default function Vehicles({ globalActionsRef }) {
           <div>
             <h1 className="text-3xl font-bold">{t('vehicles.araclarim')}</h1>
             <p className="text-slate-400 text-sm mt-1">
-              {filteredAndSorted.length} / {vehicles.length} araç
-              {searchQuery && ` • "${searchQuery}" için sonuçlar`}
+              {t('vehicles.arac_sayisi', { shown: filteredAndSorted.length, total: vehicles.length })}
+              {searchQuery && ` • ${t('vehicles.arama_sonuclari', { query: searchQuery })}`}
             </p>
           </div>
           <button
@@ -181,7 +181,7 @@ export default function Vehicles({ globalActionsRef }) {
           <EmptyState
             icon={Car}
             title={t('vehicles.sonuc_bulunamadi')}
-            description={`"${searchQuery}" için eşleşen araç yok. Farklı bir kelimeyle dene.`}
+            description={t('vehicles.arama_eslesme_yok', { query: searchQuery })}
             action={
               <button
                 onClick={() => setSearchQuery('')}
@@ -215,10 +215,10 @@ export default function Vehicles({ globalActionsRef }) {
           title={t('vehicles.araci_sil')}
           message={
             deleteTarget
-              ? `${deleteTarget.brand} ${deleteTarget.model} (${deleteTarget.plate}) ve tüm bakım kayıtları silinecek. Bu işlem geri alınamaz.`
+              ? t('vehicles.arac_silinecek', { brand: deleteTarget.brand, model: deleteTarget.model, plate: deleteTarget.plate })
               : ''
           }
-          confirmText="Evet, sil"
+          confirmText={t('vehicles.evet_sil')}
         />
       </div>
     </PageTransition>

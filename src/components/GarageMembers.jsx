@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { formatDateShort } from '../utils/dateHelpers'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
@@ -219,14 +220,8 @@ export default function GarageMembers() {
     }
   }
 
-  // Tarih formatla
-  const formatDate = (dateStr) => {
-    return new Date(dateStr).toLocaleDateString('tr-TR', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    })
-  }
+  // Tarih biçimi paylaşımlı yardımcıdan geliyor: burada elle yazılmış
+  // tr-TR sabiti vardı ve İngilizce arayüzde de Türkçe ay adı basıyordu.
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 mb-6">
@@ -272,7 +267,7 @@ export default function GarageMembers() {
                         )}
                       </div>
                       <div className="text-xs text-slate-400">
-                        {formatDate(member.joined_at)} tarihinde katıldı
+                        {t('garageMembers.tarihinde_katildi', { date: formatDateShort(member.joined_at) })}
                       </div>
                     </div>
                   </div>
@@ -416,7 +411,7 @@ export default function GarageMembers() {
                           {invite.email}
                         </div>
                         <div className="text-xs text-slate-500">
-                          {formatDate(invite.created_at)} tarihinde davet edildi
+                          {formatDateShort(invite.created_at)} tarihinde davet edildi
                         </div>
                       </div>
                     </div>
@@ -442,10 +437,10 @@ export default function GarageMembers() {
         title={t('garageMembers.davet_iptal_edilsin_mi')}
         message={
           cancelInviteTarget
-            ? `${cancelInviteTarget.email} adresine gönderilen davet iptal edilecek.`
+            ? t('garageMembers.davet_iptal_mesaji', { email: cancelInviteTarget.email })
             : ''
         }
-        confirmText="Evet, iptal et"
+        confirmText={t('garageMembers.evet_iptal_et')}
         variant="warning"
       />
 
@@ -454,8 +449,8 @@ export default function GarageMembers() {
         onClose={() => setRemoveMemberTarget(null)}
         onConfirm={() => handleRemoveMember(removeMemberTarget.id)}
         title={t('garageMembers.uye_garajdan_cikarilsin_mi')}
-        message="Bu üye artık garajdaki araçlara ve kayıtlara erişemeyecek."
-        confirmText="Evet, çıkar"
+        message={t('garageMembers.uye_cikar_mesaji')}
+        confirmText={t('garageMembers.evet_cikar')}
       />
     </div>
   )

@@ -98,7 +98,7 @@ function ResetPassword() {
             onClick={() => navigate('/forgot-password')}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition shadow-lg shadow-blue-600/30"
           >
-            Yeni Link Talep Et
+            {t('resetPassword.yeni_link_talep_et')}
           </button>
         </div>
       </div>
@@ -178,9 +178,9 @@ function ResetPassword() {
             {/* Şifre Kontrolleri */}
             {password.length > 0 && (
               <div className="space-y-2 px-1">
-                <ValidationItem isValid={passwordChecks.length} text="En az 6 karakter" />
+                <ValidationItem isValid={passwordChecks.length} text={t('validation.en_az_6_karakter')} />
                 {confirmPassword.length > 0 && (
-                  <ValidationItem isValid={passwordChecks.match} text="Şifreler eşleşiyor" />
+                  <ValidationItem isValid={passwordChecks.match} text={t('validation.sifreler_eslesiyor')} />
                 )}
               </div>
             )}

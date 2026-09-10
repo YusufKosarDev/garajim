@@ -175,7 +175,7 @@ export default function MaintenanceIntervals() {
                 <div className="font-semibold text-sm">{type}</div>
                 {isCustomized ? (
                   <div className="text-xs text-blue-400 mt-0.5">
-                    Özel • Varsayılan: {defaultValue.toLocaleString('tr-TR')} km
+                    {t('maintenanceIntervals.ozel_varsayilan', { km: defaultValue.toLocaleString('tr-TR') })}
                   </div>
                 ) : (
                   <div className="text-xs text-slate-500 mt-0.5">{t('maintenanceIntervals.varsayilan')}</div>
@@ -253,8 +253,8 @@ export default function MaintenanceIntervals() {
         onClose={() => setIsResetOpen(false)}
         onConfirm={handleResetAll}
         title={t('maintenanceIntervals.tum_periyotlari_sifirla')}
-        message="Bu araç için özelleştirdiğin tüm bakım periyotları varsayılan değerlere dönecek."
-        confirmText="Evet, sıfırla"
+        message={t('maintenanceIntervals.sifirla_mesaji')}
+        confirmText={t('maintenanceIntervals.evet_sifirla')}
         variant="warning"
       />
     </div>

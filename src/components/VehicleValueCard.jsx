@@ -83,14 +83,17 @@ export default function VehicleValueCard({ vehicle, maintenanceRecords = [] }) {
     {
       ikon: CalendarClock,
       label: t('vehicleValueCard.yas_yil', { years: estimate.age }),
-      value: `${Math.round(estimate.components.age * 100)}% kalır`,
+      value: t('vehicleValueCard.kalir', { percent: Math.round(estimate.components.age * 100) }),
       renk: 'text-slate-300',
     },
     {
       ikon: Gauge,
       label: estimate.kmFarki === 0
-        ? 'Kilometre'
-        : `Kilometre (beklenenden ${Math.abs(estimate.kmFarki).toLocaleString('tr-TR')} km ${estimate.kmFarki > 0 ? 'fazla' : 'az'})`,
+        ? t('vehicleValueCard.kilometre')
+        : t('vehicleValueCard.kilometre_fark', {
+            km: Math.abs(estimate.kmFarki).toLocaleString('tr-TR'),
+            yon: t(estimate.kmFarki > 0 ? 'vehicleValueCard.fazla' : 'vehicleValueCard.az'),
+          }),
       value: yuzde(estimate.components.km),
       renk: estimate.components.km < 0 ? 'text-red-400' : estimate.components.km > 0 ? 'text-green-400' : 'text-slate-500',
     },

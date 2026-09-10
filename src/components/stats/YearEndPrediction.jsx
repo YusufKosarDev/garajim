@@ -131,7 +131,7 @@ export default function YearEndPrediction({ maintenanceRecords = [], fuelRecords
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
         <h3 className="text-lg font-bold mb-1 flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-purple-400" />
-          {prediction.currentYear} Yıl Sonu Tahmini
+          {t('stats.yearEndPrediction.baslik', { year: prediction.currentYear })}
         </h3>
         <p className="text-sm text-slate-500 text-center py-6">
           {t('stats.yearEndPrediction.bu_yil_icin_henuz_kayit_yok')}
@@ -163,7 +163,7 @@ export default function YearEndPrediction({ maintenanceRecords = [], fuelRecords
       {/* Header */}
       <div className="flex items-center gap-2 mb-1">
         <Sparkles className="w-5 h-5 text-purple-400" />
-        <h3 className="text-lg font-bold">{prediction.currentYear} Yıl Sonu Tahmini</h3>
+        <h3 className="text-lg font-bold">{t('stats.yearEndPrediction.baslik', { year: prediction.currentYear })}</h3>
       </div>
       <p className="text-xs text-slate-400 mb-4">
         {t('stats.yearEndPrediction.mevcut_harcama_temposuyla_yili_nasil_bitirecegin')}
@@ -178,7 +178,7 @@ export default function YearEndPrediction({ maintenanceRecords = [], fuelRecords
             {formatTL(prediction.currentYearSpent)}
           </div>
           <div className="text-xs text-slate-500 mt-1">
-            🔧 {formatTL(prediction.currentYearMaintenance)} bakım • ⛽ {formatTL(prediction.currentYearFuel)} yakıt
+            {t('stats.yearEndPrediction.dagilim', { maintenance: formatTL(prediction.currentYearMaintenance), fuel: formatTL(prediction.currentYearFuel) })}
           </div>
         </div>
 
@@ -198,8 +198,8 @@ export default function YearEndPrediction({ maintenanceRecords = [], fuelRecords
                 {prediction.yearOverYearTrend === 'flat' 
                   ? t('stats.yearEndPrediction.gecen_yilla_ayni_tempoda')
                   : prediction.yearOverYearTrend === 'up'
-                  ? `Geçen yıldan %${Math.abs(prediction.yearOverYearPercent).toFixed(0)} daha çok`
-                  : `Geçen yıldan %${Math.abs(prediction.yearOverYearPercent).toFixed(0)} daha az`
+                  ? t('stats.yearEndPrediction.gecen_yildan_cok', { percent: Math.abs(prediction.yearOverYearPercent).toFixed(0) })
+                  : t('stats.yearEndPrediction.gecen_yildan_az', { percent: Math.abs(prediction.yearOverYearPercent).toFixed(0) })
                 }
               </span>
             </div>
@@ -245,7 +245,7 @@ export default function YearEndPrediction({ maintenanceRecords = [], fuelRecords
           />
         </div>
         <div className="text-[10px] text-slate-500 mt-1.5 text-center">
-          {prediction.dayOfYear} / {prediction.totalDaysInYear} gün geçti
+          {t('stats.yearEndPrediction.gun_gecti_oran', { gecen: prediction.dayOfYear, toplam: prediction.totalDaysInYear })}
         </div>
       </div>
 

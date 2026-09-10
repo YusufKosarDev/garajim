@@ -290,7 +290,7 @@ function Register() {
               <div className="space-y-2 px-1">
                 <ValidationItem
                   isValid={passwordChecks.length}
-                  text="En az 6 karakter"
+                  text={t('validation.en_az_6_karakter')}
                 />
                 {confirmPassword.length > 0 && (
                   <ValidationItem

@@ -10,6 +10,9 @@ import {
 import { useAuth } from '../context/auth-context'
 import { supabase } from '../lib/supabase'
 import { usePageTitle } from '../hooks/usePageTitle'
+// Elle yazılmış 'tr-TR' formatlayıcı buradaydı: İngilizce arayüzde de Türkçe
+// tarih basıyordu. Paylaşılan yardımcı aktif dile uyuyor.
+import { formatDateTime } from '../utils/dateHelpers'
 import PageTransition from '../components/PageTransition'
 
 export default function Profile() {
@@ -42,18 +45,6 @@ export default function Profile() {
   const provider = user?.app_metadata?.provider || 'email'
   const isGoogleUser = provider === 'google'
 
-  // Format tarih (TR locale)
-  const formatDate = (dateString) => {
-    if (!dateString) return '-'
-    const date = new Date(dateString)
-    return new Intl.DateTimeFormat('tr-TR', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(date)
-  }
 
   // Şifre validasyonu
   const passwordChecks = {
@@ -62,7 +53,14 @@ export default function Profile() {
   }
 
   // Hesap silme onay validasyonu
-  const REQUIRED_CONFIRM_TEXT = 'HESABIMI SIL'
+  //
+  // DİKKAT: bu sabit hem kullanıcıya GÖSTERİLİYOR (etiket ve placeholder) hem
+  // de girilen metinle KARŞILAŞTIRILIYOR. Tek bir sabit olduğu için çeviriye
+  // almak üçünü birden çevirir ve tutarlı kalır — ama yalnızca gösterimi
+  // çevirip karşılaştırmayı sabit bırakmak kullanıcıyı hesabını silemez hâle
+  // getirirdi (İngilizce arayüzde "DELETE MY ACCOUNT" yazıp Türkçe metinle
+  // karşılaştırmak). Bu yüzden ikisi aynı yerden okunuyor.
+  const REQUIRED_CONFIRM_TEXT = t('profile.silme_onay_metni')
   const isDeleteFormValid = 
     deleteConfirmText === REQUIRED_CONFIRM_TEXT &&
     (isGoogleUser || deletePassword.length > 0)
@@ -151,7 +149,7 @@ export default function Profile() {
       }
 
       toast.success(
-        `Doğrulama linki ${newEmail} adresine gönderildi! Email değişikliği için linke tıkla.`,
+        t('profile.dogrulama_linki_gonderildi', { email: newEmail }),
         { duration: 6000 }
       )
       setNewEmail('')
@@ -294,12 +292,12 @@ export default function Profile() {
             <InfoRow
               icon={<Calendar className="w-4 h-4 text-slate-400" />}
               label={t('profile.kayit_tarihi')}
-              value={formatDate(user?.created_at)}
+              value={formatDateTime(user?.created_at)}
             />
             <InfoRow
               icon={<Calendar className="w-4 h-4 text-slate-400" />}
               label={t('profile.son_giris')}
-              value={formatDate(user?.last_sign_in_at)}
+              value={formatDateTime(user?.last_sign_in_at)}
             />
             <InfoRow
               icon={<Shield className="w-4 h-4 text-slate-400" />}
@@ -391,7 +389,7 @@ export default function Profile() {
                 <div className="space-y-1.5 px-1">
                   <ValidationItem
                     isValid={passwordChecks.length}
-                    text="En az 6 karakter"
+                    text={t('validation.en_az_6_karakter')}
                   />
                   {confirmNewPassword.length > 0 && (
                     <ValidationItem

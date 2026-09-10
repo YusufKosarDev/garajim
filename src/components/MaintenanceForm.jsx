@@ -260,7 +260,7 @@ export default function MaintenanceForm({ isOpen, onClose, vehicleId, editRecord
         onConfirm={() => commit(pendingKmConfirm.data)}
         title={t('maintenanceForm.gecmise_donuk_kayit_mi')}
         message={pendingKmConfirm?.message}
-        confirmText="Evet, kaydet"
+        confirmText={t('maintenanceForm.evet_kaydet')}
         cancelText="Vazgeç"
         variant="warning"
       />

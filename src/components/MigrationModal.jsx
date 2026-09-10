@@ -232,7 +232,7 @@ export default function MigrationModal({
               onClick={handleClose}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-semibold transition"
             >
-              Tamam
+              {t('migrationModal.tamam')}
             </button>
           </>
         )}
@@ -274,7 +274,7 @@ export default function MigrationModal({
               onClick={handleClose}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg font-semibold transition"
             >
-              Tamam
+              {t('migrationModal.tamam')}
             </button>
           </>
         )}

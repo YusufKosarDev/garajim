@@ -72,10 +72,10 @@ export default function VehicleBreakdownCards({ vehicles = [], maintenanceRecord
                 <div className="flex items-center justify-between text-xs mb-1.5">
                   <span className="text-blue-400 flex items-center gap-1">
                     <Wrench className="w-3 h-3" />
-                    Bakım {maintenancePercent.toFixed(0)}%
+                    {t('stats.vehicleBreakdownCards.bakim_yuzde', { percent: maintenancePercent.toFixed(0) })}
                   </span>
                   <span className="text-orange-400 flex items-center gap-1">
-                    Yakıt {fuelPercent.toFixed(0)}%
+                    {t('stats.vehicleBreakdownCards.yakit_yuzde', { percent: fuelPercent.toFixed(0) })}
                     <Droplet className="w-3 h-3" />
                   </span>
                 </div>

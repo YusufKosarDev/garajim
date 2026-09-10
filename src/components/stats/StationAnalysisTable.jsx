@@ -4,12 +4,12 @@ import { MapPin, Trophy, TrendingDown, TrendingUp, Sparkles, Info, LineChart } f
 import { getStationAnalysis } from '../../utils/statisticsHelpers'
 import { analyzeFuelPrices } from '../../utils/fuelPriceAnalysis'
 
-const MONTH_NAMES = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara']
+import { kisaAyAdi } from '../../utils/dateHelpers'
 
-/** "2026-01" -> "Oca 2026" */
+/** "2026-01" -> "Oca 2026" / "Jan 2026" (aktif dile göre) */
 const monthLabel = (month) => {
   const [year, no] = month.split('-')
-  return `${MONTH_NAMES[Number(no) - 1] ?? month} ${year}`
+  return `${kisaAyAdi(Number(no) - 1)} ${year}`
 }
 
 export default function StationAnalysisTable({ fuelRecords = [] }) {
@@ -67,19 +67,18 @@ export default function StationAnalysisTable({ fuelRecords = [] }) {
             <div className="text-xs">
               <div className="text-blue-300 font-semibold mb-1">{t('stats.stationAnalysisTable.kacirilan_tasarruf')}</div>
               <p className="text-slate-300 leading-relaxed">
-                Her alımda o günlerde açık ara en ucuz olan istasyonu seçseydin yaklaşık{' '}
+                {t('stats.stationAnalysisTable.tasarruf_aciklama')}{' '}
                 <strong className="text-green-400">
                   {Math.round(fiyat.savings.total).toLocaleString('tr-TR')} ₺
                 </strong>
                 {fiyat.savings.comparedAmount > 0 && (
                   <> (%{((fiyat.savings.total / fiyat.savings.comparedAmount) * 100).toFixed(1)})</>
                 )}
-                {' '}daha az öderdin.
+                {' '}{t('stats.stationAnalysisTable.tasarruf_kuyruk')}
               </p>
               {/* Yöntem açıkça yazılıyor: kullanıcı sayının nereden geldiğini bilmeli */}
               <p className="text-[11px] text-slate-500 mt-1">
-                {fiyat.savings.comparedFillUps} alım, aynı haftadaki diğer istasyon
-                fiyatlarıyla karşılaştırıldı. Yol farkı ve marka tercihi hesaba katılmadı.
+                {t('stats.stationAnalysisTable.tasarruf_yontemi', { count: fiyat.savings.comparedFillUps })}
               </p>
             </div>
           </div>
@@ -103,8 +102,8 @@ export default function StationAnalysisTable({ fuelRecords = [] }) {
             <div className="text-xs min-w-0">
               <div className="text-green-400 font-semibold">{t('stats.stationAnalysisTable.donemin_piyasasina_gore_en_ucuz')}</div>
               <div className="text-slate-300 truncate">
-                {cheapest.station} — <strong>{Math.abs(cheapest.avgDeviation).toFixed(2)} ₺/L altında</strong>
-                <span className="text-slate-500"> ({cheapest.count} alım)</span>
+                {cheapest.station} — <strong>{t('stats.stationAnalysisTable.piyasa_altinda', { amount: Math.abs(cheapest.avgDeviation).toFixed(2) })}</strong>
+                <span className="text-slate-500"> {t('stats.stationAnalysisTable.alim_sayisi', { count: cheapest.count })}</span>
               </div>
             </div>
           </div>
@@ -113,8 +112,8 @@ export default function StationAnalysisTable({ fuelRecords = [] }) {
             <div className="text-xs min-w-0">
               <div className="text-red-400 font-semibold">{t('stats.stationAnalysisTable.donemin_piyasasina_gore_en_pahali')}</div>
               <div className="text-slate-300 truncate">
-                {mostExpensive.station} — <strong>{mostExpensive.avgDeviation.toFixed(2)} ₺/L üstünde</strong>
-                <span className="text-slate-500"> ({mostExpensive.count} alım)</span>
+                {mostExpensive.station} — <strong>{t('stats.stationAnalysisTable.piyasa_ustunde', { amount: mostExpensive.avgDeviation.toFixed(2) })}</strong>
+                <span className="text-slate-500"> {t('stats.stationAnalysisTable.alim_sayisi', { count: mostExpensive.count })}</span>
               </div>
             </div>
           </div>
@@ -176,7 +175,7 @@ export default function StationAnalysisTable({ fuelRecords = [] }) {
                       {station.station || t('stats.stationAnalysisTable.belirtilmemis')}
                     </div>
                     <div className="text-[10px] text-slate-500">
-                      {station.count} alım • {station.liters.toFixed(1)} L
+                      {t('stats.stationAnalysisTable.alim_litre', { count: station.count, liters: station.liters.toFixed(1) })}
                     </div>
                   </div>
                 </div>

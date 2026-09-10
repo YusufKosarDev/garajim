@@ -14,8 +14,56 @@ import i18n from '../i18n'
  *
  * Çağrı anında okunuyor, modül seviyesinde değil — aksi halde biçim
  * uygulamanın açılış diline donardı.
+ *
+ * DİKKAT — `resolvedLanguage` TEK BAŞINA GÜVENİLİR DEĞİL.
+ *
+ * i18next `resolvedLanguage`'ı yalnızca `setResolvedLanguage` içinde, dil
+ * zincirinde SÖZLÜĞÜ OLAN ilk dili bularak yazıyor. Bizde sözlükler init'e
+ * `resources: {}` ile giriyor ve sonradan `addResourceBundle` ile ekleniyor
+ * (bkz. i18n/index.ts, dinamik chunk kararı) — yani init anında store boş,
+ * `resolvedLanguage` `undefined` kalıyor ve bir daha hesaplanmıyor.
+ *
+ * Somut sonucu şuydu: arayüz İngilizceyken (t() çalışıyor, <html lang> 'en')
+ * tarihler, ay ve gün adları Türkçe kalıyordu — "15 Şubat 2026", "Pzt Sal Çar".
+ * Bu yüzden `language`'a da düşülüyor; ikisi de yoksa yedek dil.
  */
-const yerel = (): string => (i18n.resolvedLanguage === 'en' ? 'en-GB' : 'tr-TR')
+export const aktifYerel = (): string => {
+  const dil = i18n.resolvedLanguage || i18n.language || 'tr'
+  return dil.startsWith('en') ? 'en-GB' : 'tr-TR'
+}
+
+const yerel = aktifYerel
+
+/** Grafik ekseni ve ısı haritası için ay indeksinden kısa ad: "Şub" / "Feb" */
+export const kisaAyAdi = (ay: number): string =>
+  new Date(2024, ay, 15).toLocaleDateString(aktifYerel(), { month: 'short' })
+
+/** Takvim başlığı ve tablo etiketi: "Eylül 2026" / "September 2026" */
+export const ayYilEtiketi = (yil: number, ay: number): string =>
+  new Date(yil, ay, 15).toLocaleDateString(aktifYerel(), { month: 'long', year: 'numeric' })
+
+/**
+ * Hafta günü adları, PAZARTESİ'den başlayarak.
+ *
+ * Önceden iki ayrı dosyada elle yazılmış diziler vardı
+ * (`['Pzt','Sal',...]` — DashboardCalendar ve Calendar) ve İngilizce arayüzde
+ * de Türkçe kalıyorlardı. Intl'den üretmek hem çeviriyi hem de ay/gün
+ * adlarının dile uymasını tek yerde çözüyor.
+ *
+ * 2024-01-01 bir Pazartesi; oradan 7 gün ilerleyerek sırayı kuruyoruz.
+ */
+export const haftaGunleri = (uzunluk: 'short' | 'long' = 'short'): string[] => {
+  const bicim = new Intl.DateTimeFormat(yerel(), { weekday: uzunluk })
+  return Array.from({ length: 7 }, (_, i) => bicim.format(new Date(2024, 0, 1 + i)))
+}
+
+/** Grafik eksenleri için kısa ay etiketi: "Şub 26" / "Feb 26" */
+export const kisaAyEtiketi = (date: Date): string =>
+  date.toLocaleDateString(yerel(), { month: 'short', year: '2-digit' })
+
+/** Grafik eksenleri için gün+ay: "08 Eyl" / "08 Sep" */
+export const gunAyEtiketi = (date: Date): string =>
+  date.toLocaleDateString(yerel(), { day: '2-digit', month: 'short' })
 
 // Bir Date'i YEREL saate göre 'YYYY-MM-DD' anahtarına çevirir.
 // Not: toISOString() önce UTC'ye çevirdiği için TR'de (UTC+3) yerel gece yarısı

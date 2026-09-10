@@ -2,10 +2,10 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getMonthlyBreakdown } from '../../utils/statisticsHelpers'
 
-const MONTH_LABELS = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara']
+import { kisaAyAdi } from '../../utils/dateHelpers'
 
 export default function SpendingHeatmap({ maintenanceRecords = [], fuelRecords = [] }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
 
   const { grid, maxValue, totalByYear } = useMemo(() => {
     const breakdown = getMonthlyBreakdown(maintenanceRecords, fuelRecords, 2)
@@ -22,7 +22,7 @@ export default function SpendingHeatmap({ maintenanceRecords = [], fuelRecords =
         return {
           year,
           monthIndex: i,
-          monthLabel: MONTH_LABELS[i],
+          monthLabel: kisaAyAdi(i),
           total: breakdown[key]?.total || 0,
           maintenance: breakdown[key]?.maintenance || 0,
           fuel: breakdown[key]?.fuel || 0,
@@ -44,7 +44,10 @@ export default function SpendingHeatmap({ maintenanceRecords = [], fuelRecords =
     })
 
     return { grid, maxValue, totalByYear }
-  }, [maintenanceRecords, fuelRecords])
+  // Ay etiketleri aktif dilden üretiliyor; dil bağımlılığı olmadan useMemo
+  // eski dilde donup kalıyor.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [maintenanceRecords, fuelRecords, i18n.language])
 
   const getIntensityClass = (value, isFuture) => {
     if (isFuture) return 'bg-slate-900/50 border-slate-800'
@@ -81,7 +84,7 @@ export default function SpendingHeatmap({ maintenanceRecords = [], fuelRecords =
                     m.isFuture ? 'cursor-not-allowed' : 'cursor-pointer hover:scale-110'
                   } transition-transform group relative`}
                   title={m.isFuture
-                    ? `${m.monthLabel} ${m.year} (Gelecek)`
+                    ? t('stats.spendingHeatmap.gelecek_ipucu', { month: m.monthLabel, year: m.year })
                     : `${m.monthLabel} ${m.year}: ${m.total.toLocaleString('tr-TR')} ₺\n🔧 Bakım: ${m.maintenance.toLocaleString('tr-TR')} ₺\n⛽ Yakıt: ${m.fuel.toLocaleString('tr-TR')} ₺`
                   }
                 >
@@ -107,7 +110,7 @@ export default function SpendingHeatmap({ maintenanceRecords = [], fuelRecords =
       <div className="flex items-center gap-3 mt-2">
         <div className="w-12 shrink-0"></div>
         <div className="flex gap-1 flex-1">
-          {MONTH_LABELS.map((label, i) => (
+          {Array.from({ length: 12 }, (_, i) => kisaAyAdi(i)).map((label, i) => (
             <div key={i} className="flex-1 min-w-[24px] text-center text-[10px] text-slate-500">
               {label}
             </div>

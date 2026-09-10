@@ -4,19 +4,14 @@ import { Link } from 'react-router-dom'
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Filter, List, Grid, Wrench, Droplet, Shield, FileCheck, Receipt, X, CalendarPlus } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useVehicles } from '../context/vehicle-context'
-import { formatDate, getDateStatus, daysUntil, toDateKey } from '../utils/dateHelpers'
+import { formatDate, getDateStatus, daysUntil, toDateKey, haftaGunleri, ayYilEtiketi } from '../utils/dateHelpers'
 import { buildVehicleEvents } from '../utils/calendarEvents'
 import { exportICS } from '../utils/icsExport'
 import { usePageTitle } from '../hooks/usePageTitle'
 import PageTransition from '../components/PageTransition'
 import EmptyState from '../components/EmptyState'
 
-const months = [
-  'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-  'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık',
-]
-const weekDays = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz']
-const weekDaysFull = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar']
+// Gün adları aktif dilden üretiliyor (bkz. utils/dateHelpers)
 
 // Olay tipleri ve özellikleri
 const eventTypeConfig = {
@@ -146,7 +141,7 @@ export default function Calendar() {
               {t('calendar.takvim')}
             </h1>
             <p className="text-slate-400 text-sm mt-1">
-              {filteredEvents.length} olay gösteriliyor • {allEvents.length - filteredEvents.length} gizli
+              {t('calendar.olay_gosteriliyor', { shown: filteredEvents.length, hidden: allEvents.length - filteredEvents.length })}
             </p>
           </div>
 
@@ -192,7 +187,7 @@ export default function Calendar() {
           <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
             <h2 className="text-sm font-semibold flex items-center gap-2 text-slate-300">
               <Filter className="w-4 h-4" />
-              Filtreler ({activeFilterCount}/6 aktif)
+              {t('calendar.filtreler_aktif', { active: activeFilterCount })}
             </h2>
             <div className="flex gap-2">
               <button
@@ -256,7 +251,7 @@ export default function Calendar() {
             <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
               <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                 <h2 className="text-2xl font-bold">
-                  {months[month]} {year}
+                  {ayYilEtiketi(year, month)}
                 </h2>
                 <div className="flex items-center gap-2">
                   <button
@@ -284,7 +279,7 @@ export default function Calendar() {
 
               {/* Hafta günleri */}
               <div className="grid grid-cols-7 gap-2 mb-2">
-                {weekDays.map((day) => (
+                {haftaGunleri().map((day) => (
                   <div key={day} className="text-center text-xs font-semibold text-slate-500 py-2">
                     {day}
                   </div>
@@ -364,7 +359,7 @@ export default function Calendar() {
                   <h3 className="text-lg font-bold">
                     {formatDate(selectedDay)}
                     <span className="text-sm text-slate-400 font-normal ml-2">
-                      ({weekDaysFull[(new Date(selectedDay).getDay() + 6) % 7]})
+                      ({haftaGunleri('long')[(new Date(selectedDay).getDay() + 6) % 7]})
                     </span>
                   </h3>
                   <button

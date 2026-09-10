@@ -32,10 +32,10 @@ export default function VehicleMaintenanceOverview({ vehicle, maintenanceRecords
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <h2 className="text-lg font-bold flex items-center gap-2">
           <Wrench className="w-5 h-5 text-blue-400" />
-          🧠 Bakım Önerileri
+          {t('vehicleMaintenanceOverview.baslik')}
           {criticalCount > 0 ? (
             <span className="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full border border-red-500/30">
-              {criticalCount} dikkat gerekli
+              {t('vehicleMaintenanceOverview.dikkat_gerekli', { count: criticalCount })}
             </span>
           ) : (
             <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full border border-green-500/30">
@@ -66,7 +66,7 @@ export default function VehicleMaintenanceOverview({ vehicle, maintenanceRecords
           className="w-full mt-3 flex items-center justify-center gap-2 py-2.5 bg-slate-800/50 hover:bg-slate-800 rounded-lg transition text-sm text-slate-400 hover:text-white"
         >
           <ChevronDown className="w-4 h-4" />
-          Tümünü Göster ({okRecs.length} güvenli bakım da görünür)
+          {t('vehicleMaintenanceOverview.tumunu_goster', { count: okRecs.length })}
         </button>
       )}
 

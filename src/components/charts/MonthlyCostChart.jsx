@@ -1,5 +1,6 @@
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts'
 import { useTranslation } from 'react-i18next'
+import { kisaAyEtiketi } from '../../utils/dateHelpers'
 
 export default function MonthlyCostChart({ maintenanceRecords = [], fuelRecords = [] }) {
   const { t } = useTranslation()
@@ -11,7 +12,7 @@ export default function MonthlyCostChart({ maintenanceRecords = [], fuelRecords 
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
     months.push({
       key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
-      label: d.toLocaleDateString('tr-TR', { month: 'short', year: '2-digit' }),
+      label: kisaAyEtiketi(d),
       maintenance: 0,
       fuel: 0,
       total: 0,
@@ -87,7 +88,7 @@ export default function MonthlyCostChart({ maintenanceRecords = [], fuelRecords 
         <Area
           type="monotone"
           dataKey="maintenance"
-          name="Bakım"
+          name={t('charts.bakim')}
           stroke="#3b82f6"
           fillOpacity={1}
           fill="url(#maintenanceGradient)"
@@ -96,7 +97,7 @@ export default function MonthlyCostChart({ maintenanceRecords = [], fuelRecords 
         <Area
           type="monotone"
           dataKey="fuel"
-          name="Yakıt"
+          name={t('charts.yakit')}
           stroke="#f97316"
           fillOpacity={1}
           fill="url(#fuelGradient)"

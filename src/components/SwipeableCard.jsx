@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Pencil, Trash2 } from 'lucide-react'
 import { useSwipe } from '../hooks/useSwipe'
 import { hapticLight, hapticStrong } from '../utils/hapticFeedback'
@@ -8,9 +9,15 @@ export default function SwipeableCard({
   onEdit,
   onDelete,
   enabled = true,
-  editLabel = 'Düzenle',
-  deleteLabel = 'Sil',
+  editLabel,
+  deleteLabel,
 }) {
+  const { t } = useTranslation()
+  // Varsayilanlar prop'ta degil burada: prop varsayilani modul yuklenirken
+  // cozulup dile donuyordu ve VehicleDetail bu prop'lari hic gecmiyor.
+  const duzenleEtiketi = editLabel ?? t('swipeableCard.duzenle')
+  const silEtiketi = deleteLabel ?? t('swipeableCard.sil')
+
   const { translateX, isDragging, isOpen, handlers, close, maxSwipe } = useSwipe({
     enabled,
     onSwipeLeft: () => hapticLight(),
@@ -69,7 +76,7 @@ export default function SwipeableCard({
         className="flex-1 flex flex-col items-center justify-center bg-blue-500 hover:bg-blue-600 text-white transition active:scale-95"
       >
         <Pencil className="w-4 h-4 mb-0.5" />
-        <span className="text-[10px] font-semibold">{editLabel}</span>
+        <span className="text-[10px] font-semibold">{duzenleEtiketi}</span>
       </button>
       <button
         type="button"
@@ -77,7 +84,7 @@ export default function SwipeableCard({
         className="flex-1 flex flex-col items-center justify-center bg-red-500 hover:bg-red-600 text-white transition active:scale-95"
       >
         <Trash2 className="w-4 h-4 mb-0.5" />
-        <span className="text-[10px] font-semibold">{deleteLabel}</span>
+        <span className="text-[10px] font-semibold">{silEtiketi}</span>
       </button>
     </div>
   )

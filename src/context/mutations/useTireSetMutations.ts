@@ -32,7 +32,7 @@ export function useTireSetMutations({
         if (prev.some(set => set.id === newSet.id)) return prev
         return [...prev, newSet]
       })
-      toast.success(`${tireSet.season === 'winter' ? 'Kışlık' : 'Yazlık'} lastik seti eklendi ✓`)
+      toast.success(i18n.t('tireSet.eklendi', { season: i18n.t(tireSet.season === 'winter' ? 'tire.season.kislik' : 'tire.season.yazlik') }))
       return newSet
     } catch (error) {
       console.error('addTireSet:', error)

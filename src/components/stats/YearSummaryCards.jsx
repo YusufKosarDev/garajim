@@ -21,7 +21,7 @@ export default function YearSummaryCards({ maintenanceRecords = [], fuelRecords 
       {/* Bu yıl */}
       <div className="bg-gradient-to-br from-blue-600/20 to-slate-900 border border-blue-500/30 rounded-xl p-5">
         <div className="text-xs text-slate-400 uppercase tracking-wide mb-2">
-          Bu Yıl ({data.currentYear})
+          {t('stats.yearSummaryCards.bu_yil', { year: data.currentYear })}
         </div>
         <div className="text-3xl font-bold text-white mb-1">
           {data.current.total.toLocaleString('tr-TR')} ₺
@@ -34,7 +34,7 @@ export default function YearSummaryCards({ maintenanceRecords = [], fuelRecords 
       {/* Geçen yıl */}
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
         <div className="text-xs text-slate-400 uppercase tracking-wide mb-2">
-          Geçen Yıl ({data.previousYear})
+          {t('stats.yearSummaryCards.gecen_yil', { year: data.previousYear })}
         </div>
         <div className="text-3xl font-bold text-slate-300 mb-1">
           {data.previous.total.toLocaleString('tr-TR')} ₺
@@ -56,8 +56,8 @@ export default function YearSummaryCards({ maintenanceRecords = [], fuelRecords 
           </span>
         </div>
         <div className="text-xs text-slate-400">
-          {isIncrease && `${Math.abs(data.difference).toLocaleString('tr-TR')} ₺ daha fazla`}
-          {isDecrease && `${Math.abs(data.difference).toLocaleString('tr-TR')} ₺ daha az`}
+          {isIncrease && t('stats.yearSummaryCards.daha_fazla', { amount: Math.abs(data.difference).toLocaleString('tr-TR') })}
+          {isDecrease && t('stats.yearSummaryCards.daha_az', { amount: Math.abs(data.difference).toLocaleString('tr-TR') })}
           {isStable && t('stats.yearSummaryCards.gecen_yilla_ayni')}
         </div>
       </div>

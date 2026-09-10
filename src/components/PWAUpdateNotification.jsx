@@ -44,7 +44,7 @@ export default function PWAUpdateNotification() {
                     onClick={() => setDismissed(true)}
                     className="bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg font-semibold text-xs transition"
                   >
-                    Sonra
+                    {t('pWAUpdateNotification.sonra')}
                   </button>
                 </div>
               </div>

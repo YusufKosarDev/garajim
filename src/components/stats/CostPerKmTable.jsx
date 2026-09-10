@@ -110,7 +110,7 @@ export default function CostPerKmTable({ vehicles = [], maintenanceRecords = [],
                   onClick={() => toggleSort('totalCost')}
                   className="flex items-center gap-1 hover:text-white transition ml-auto"
                 >
-                  Toplam ₺ <SortIcon field="totalCost" sortBy={sortBy} sortDir={sortDir} />
+                  {t('stats.costPerKmTable.toplam_tl')} <SortIcon field="totalCost" sortBy={sortBy} sortDir={sortDir} />
                 </button>
               </th>
               <th className="text-right py-2 px-3 font-semibold hidden md:table-cell">

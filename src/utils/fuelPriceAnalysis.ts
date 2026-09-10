@@ -1,3 +1,4 @@
+import i18n from '../i18n'
 /**
  * Yakıt fiyatı analizi — dış API yok, tamamen kullanıcının kendi kayıtlarından.
  *
@@ -107,7 +108,7 @@ export const analyzeFuelPrices = (records: FuelRecord[] = []): FuelPriceAnalysis
 
   const fillUps = normalize(records)
   if (fillUps.length < 2) {
-    return { ...bos, insufficientData: 'Fiyat karşılaştırması için en az iki yakıt kaydı gerekiyor.' }
+    return { ...bos, insufficientData: i18n.t('fuelPriceAnalysis.en_az_iki_kayit') }
   }
 
   // ---- Aylık fiyat seyri (kendi verinden enflasyon eğrisi) ----
@@ -127,7 +128,7 @@ export const analyzeFuelPrices = (records: FuelRecord[] = []): FuelPriceAnalysis
     return {
       ...bos,
       monthlyPrices,
-      insufficientData: 'İstasyon karşılaştırması için en az iki farklı istasyonda alım gerekiyor.',
+      insufficientData: i18n.t('fuelPriceAnalysis.en_az_iki_istasyon'),
     }
   }
 
@@ -186,7 +187,7 @@ export const analyzeFuelPrices = (records: FuelRecord[] = []): FuelPriceAnalysis
       monthlyPrices,
       savings: null,
       insufficientData:
-        'Alımlar zaman içinde birbirinden uzak; aynı dönemde karşılaştırılabilir başka istasyon yok.',
+        i18n.t('fuelPriceAnalysis.alimlar_uzak'),
     }
   }
 

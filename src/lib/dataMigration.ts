@@ -1,3 +1,4 @@
+import i18n from '../i18n'
 import { supabase } from './supabase'
 import {
   vehicleToDb,
@@ -82,7 +83,7 @@ export const migrateDataToSupabase = async (
   }
 
   if (!data || typeof data !== 'object') {
-    result.errors.push('Geçersiz veri')
+    result.errors.push(i18n.t('migration.gecersiz_veri'))
     return result
   }
 
@@ -144,7 +145,7 @@ export const migrateDataToSupabase = async (
       } catch (error) {
         console.error('Migration vehicle error:', error)
         result.vehicles.failed++
-        result.errors.push(`Araç (${vehicle.plate || 'Bilinmiyor'}): ${formatSupabaseError(error as Error)}`)
+        result.errors.push(i18n.t('migration.hata.arac', { ad: vehicle.plate || i18n.t('migration.bilinmiyor'), hata: formatSupabaseError(error as Error) }))
       }
     }
   }
@@ -164,7 +165,7 @@ export const migrateDataToSupabase = async (
         // Vehicle ID'yi yeni UUID'ye çevir
         const newVehicleId = vehicleIdMap.get(String(record.vehicleId))
         if (!newVehicleId) {
-          throw new Error('Bağlı araç bulunamadı (silinmiş olabilir)')
+          throw new Error(i18n.t('migration.arac_bulunamadi_silinmis'))
         }
 
         // Fotoğrafı Storage'a yükle (varsa base64)
@@ -192,7 +193,7 @@ export const migrateDataToSupabase = async (
       } catch (error) {
         console.error('Migration maintenance error:', error)
         result.maintenance.failed++
-        result.errors.push(`Bakım kaydı (${record.type || 'Bilinmiyor'}): ${formatSupabaseError(error as Error)}`)
+        result.errors.push(i18n.t('migration.hata.bakim', { ad: record.type || i18n.t('migration.bilinmiyor'), hata: formatSupabaseError(error as Error) }))
       }
     }
   }
@@ -211,7 +212,7 @@ export const migrateDataToSupabase = async (
       try {
         const newVehicleId = vehicleIdMap.get(String(record.vehicleId))
         if (!newVehicleId) {
-          throw new Error('Bağlı araç bulunamadı')
+          throw new Error(i18n.t('migration.arac_bulunamadi'))
         }
 
         const dbRow = fuelToDb(
@@ -228,7 +229,7 @@ export const migrateDataToSupabase = async (
       } catch (error) {
         console.error('Migration fuel error:', error)
         result.fuel.failed++
-        result.errors.push(`Yakıt kaydı: ${formatSupabaseError(error as Error)}`)
+        result.errors.push(i18n.t('migration.hata.yakit', { hata: formatSupabaseError(error as Error) }))
       }
     }
   }
@@ -247,7 +248,7 @@ export const migrateDataToSupabase = async (
       try {
         const newVehicleId = vehicleIdMap.get(String(tireSet.vehicleId))
         if (!newVehicleId) {
-          throw new Error('Bağlı araç bulunamadı')
+          throw new Error(i18n.t('migration.arac_bulunamadi'))
         }
 
         const dbRow = tireSetToDb(
@@ -264,7 +265,7 @@ export const migrateDataToSupabase = async (
       } catch (error) {
         console.error('Migration tire set error:', error)
         result.tireSets.failed++
-        result.errors.push(`Lastik seti (${tireSet.season || ''}): ${formatSupabaseError(error as Error)}`)
+        result.errors.push(i18n.t('migration.hata.lastik_seti', { ad: tireSet.season || '', hata: formatSupabaseError(error as Error) }))
       }
     }
   }
@@ -283,7 +284,7 @@ export const migrateDataToSupabase = async (
       try {
         const newVehicleId = vehicleIdMap.get(String(change.vehicleId))
         if (!newVehicleId) {
-          throw new Error('Bağlı araç bulunamadı')
+          throw new Error(i18n.t('migration.arac_bulunamadi'))
         }
 
         const dbRow = tireChangeToDb(
@@ -300,7 +301,7 @@ export const migrateDataToSupabase = async (
       } catch (error) {
         console.error('Migration tire change error:', error)
         result.tireChanges.failed++
-        result.errors.push(`Lastik değişimi: ${formatSupabaseError(error as Error)}`)
+        result.errors.push(i18n.t('migration.hata.lastik_degisimi', { hata: formatSupabaseError(error as Error) }))
       }
     }
   }
@@ -355,7 +356,7 @@ export const migrateDataToSupabase = async (
       } catch (error) {
         console.error('Migration intervals error:', error)
         result.customIntervals.failed = rowsToInsert.length
-        result.errors.push(`Bakım periyotları: ${formatSupabaseError(error as Error)}`)
+        result.errors.push(i18n.t('migration.hata.periyotlar', { hata: formatSupabaseError(error as Error) }))
       }
     }
   }

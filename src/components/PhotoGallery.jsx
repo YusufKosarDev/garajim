@@ -1,8 +1,13 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ImageIcon, Maximize2 } from 'lucide-react'
 import Lightbox from './Lightbox'
 
-export default function PhotoGallery({ photos = [], emptyMessage = 'Henüz fotoğraf yok' }) {
+export default function PhotoGallery({ photos = [], emptyMessage }) {
+  const { t } = useTranslation()
+  // Varsayilan deger PROP'TA verilemez: modul yuklenirken cozulur ve dile
+  // donar. Bilesen icinde cozuluyor.
+  const bosMesaj = emptyMessage ?? t('photoGallery.henuz_fotograf_yok')
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [initialIndex, setInitialIndex] = useState(0)
 
@@ -15,7 +20,7 @@ export default function PhotoGallery({ photos = [], emptyMessage = 'Henüz foto�
     return (
       <div className="flex flex-col items-center justify-center py-8 text-slate-500">
         <ImageIcon className="w-10 h-10 text-slate-700 mb-2" />
-        <p className="text-sm">{emptyMessage}</p>
+        <p className="text-sm">{bosMesaj}</p>
       </div>
     )
   }
@@ -31,7 +36,7 @@ export default function PhotoGallery({ photos = [], emptyMessage = 'Henüz foto�
           >
             <img
               src={photo}
-              alt={`Araç fotoğrafı ${index + 1}`}
+              alt={t('photoGallery.arac_fotografi', { index: index + 1 })}
               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
               loading="lazy"
             />

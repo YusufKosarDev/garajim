@@ -203,10 +203,10 @@ export default function VehicleDetail({ globalActionsRef }) {
   }
 
   const dates = [
-    { label: 'Muayene', date: vehicle.inspectionDate },
+    { label: t('vehicleDetail.muayene'), date: vehicle.inspectionDate },
     { label: t('vehicleDetail.mtv_son_odeme'), date: vehicle.mtvDate },
     { label: t('vehicleDetail.trafik_sigortasi'), date: vehicle.insuranceDate },
-    { label: 'Kasko', date: vehicle.kaskoDate },
+    { label: t('vehicleDetail.kasko'), date: vehicle.kaskoDate },
   ]
 
   const statusColors = {
@@ -319,7 +319,7 @@ export default function VehicleDetail({ globalActionsRef }) {
                     </div>
                     {days !== null && (
                       <div className="text-sm font-bold">
-                        {days < 0 ? `${Math.abs(days)} gün geçti` : `${days} gün kaldı`}
+                        {days < 0 ? t('vehicleDetail.gun_gecti', { days: Math.abs(days) }) : t('vehicleDetail.gun_kaldi', { days })}
                       </div>
                     )}
                   </div>
@@ -364,7 +364,7 @@ export default function VehicleDetail({ globalActionsRef }) {
               }`}
             >
               <Wrench className="w-4 h-4" />
-              Bakım ({allRecords.length})
+              {t('vehicleDetail.sekme_bakim', { count: allRecords.length })}
             </button>
             <button
               onClick={() => setActiveTab('fuel')}
@@ -375,7 +375,7 @@ export default function VehicleDetail({ globalActionsRef }) {
               }`}
             >
               <Droplet className="w-4 h-4" />
-              Yakıt ({vehicleFuelRecords.length})
+              {t('vehicleDetail.sekme_yakit', { count: vehicleFuelRecords.length })}
             </button>
             <button
               onClick={() => setActiveTab('tires')}
@@ -385,7 +385,7 @@ export default function VehicleDetail({ globalActionsRef }) {
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              🛞 Lastikler
+              🛞 {t('vehicleDetail.sekme_lastikler')}
             </button>
           </div>
 
@@ -394,7 +394,7 @@ export default function VehicleDetail({ globalActionsRef }) {
               <>
                 <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
                   <div className="text-sm text-slate-400">
-                    {filteredMaintenance.length}{searchQuery || sortBy !== 'date-desc' ? ` / ${allRecords.length}` : ''} kayıt
+                    {t('vehicleDetail.kayit_sayaci', { sayi: `${filteredMaintenance.length}${searchQuery || sortBy !== 'date-desc' ? ` / ${allRecords.length}` : ''}` })}
                   </div>
                   <button
                     onClick={() => setIsMaintenanceOpen(true)}
@@ -426,7 +426,7 @@ export default function VehicleDetail({ globalActionsRef }) {
                   <EmptyState
                     icon={Wrench}
                     title={t('vehicleDetail.sonuc_bulunamadi')}
-                    description={`"${searchQuery}" için eşleşen bakım kaydı yok.`}
+                    description={t('vehicleDetail.arama_eslesme_yok', { query: searchQuery })}
                     action={
                       <button onClick={() => setSearchQuery('')} className="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 px-5 py-2 rounded-lg font-semibold transition">
                         {t('vehicleDetail.aramayi_temizle')}
@@ -516,7 +516,7 @@ export default function VehicleDetail({ globalActionsRef }) {
               <>
                 <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
                   <div className="text-sm text-slate-400">
-                    {vehicleFuelRecords.length} yakıt alımı kayıtlı
+                    {t('vehicleDetail.yakit_alimi_kayitli', { count: vehicleFuelRecords.length })}
                   </div>
                   <button
                     onClick={() => setIsFuelOpen(true)}
@@ -640,24 +640,24 @@ export default function VehicleDetail({ globalActionsRef }) {
           onClose={() => setIsDeleteVehicleOpen(false)}
           onConfirm={confirmDeleteVehicle}
           title={t('vehicleDetail.araci_sil')}
-          message={`${vehicle.brand} ${vehicle.model} (${vehicle.plate}) ve tüm kayıtları silinecek.`}
-          confirmText="Evet, sil"
+          message={t('vehicleDetail.arac_silinecek', { brand: vehicle.brand, model: vehicle.model, plate: vehicle.plate })}
+          confirmText={t('vehicleDetail.evet_sil')}
         />
         <ConfirmDialog
           isOpen={!!deleteMaintenanceTarget}
           onClose={() => setDeleteMaintenanceTarget(null)}
           onConfirm={() => deleteMaintenanceTarget && deleteMaintenance(deleteMaintenanceTarget.id)}
           title={t('vehicleDetail.bakim_kaydini_sil')}
-          message={deleteMaintenanceTarget ? `"${deleteMaintenanceTarget.type}" kaydı silinecek.` : ''}
-          confirmText="Sil"
+          message={deleteMaintenanceTarget ? t('vehicleDetail.bakim_silinecek', { type: deleteMaintenanceTarget.type }) : ''}
+          confirmText={t('vehicleDetail.sil')}
         />
         <ConfirmDialog
           isOpen={!!deleteFuelTarget}
           onClose={() => setDeleteFuelTarget(null)}
           onConfirm={() => deleteFuelTarget && deleteFuel(deleteFuelTarget.id)}
           title={t('vehicleDetail.yakit_kaydini_sil')}
-          message={deleteFuelTarget ? `${deleteFuelTarget.liters} L / ${deleteFuelTarget.totalCost} ₺ kaydı silinecek.` : ''}
-          confirmText="Sil"
+          message={deleteFuelTarget ? t('vehicleDetail.yakit_silinecek', { liters: deleteFuelTarget.liters, cost: deleteFuelTarget.totalCost }) : ''}
+          confirmText={t('vehicleDetail.sil')}
         />
 
         <Lightbox
