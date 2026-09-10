@@ -82,7 +82,7 @@ jobs:
       # before:browser:launch ile yapılıyor ve Electron o argümanı yok sayıyor.
       - name: Cypress
         if: steps.secrets.outputs.skip == 'false'
-        uses: cypress-io/github-action@v6
+        uses: cypress-io/github-action@v7
         with:
           install: false
           browser: chrome
