@@ -19,7 +19,7 @@
 
 [![CI](https://github.com/YusufKosarDev/garajim/actions/workflows/ci.yml/badge.svg)](https://github.com/YusufKosarDev/garajim/actions/workflows/ci.yml)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](tsconfig.json)
-[![Tests](https://img.shields.io/badge/tests-522_unit_%2B_63_E2E-brightgreen)](#-testing)
+[![Tests](https://img.shields.io/badge/tests-526_unit_%2B_63_E2E-brightgreen)](#-testing)
 [![i18n](https://img.shields.io/badge/i18n-tr_%2B_en-orange)](src/i18n)
 
 </div>
@@ -73,7 +73,7 @@ Mobile-first tasarlandı; PWA olarak ana ekrana eklenip native gibi çalışıyo
 
 ⚡ **Production-grade fullstack:** Supabase tabanlı (PostgreSQL + RLS + Storage + Edge Functions), real-time multi-device & multi-user senkron, otomatik email hatırlatmaları (cron + Resend), Google OAuth, PWA, **multi-tenancy workspace pattern**.
 
-🧰 **Mühendislik tarafı:** TypeScript (`strict`, CI'da bloklayan `tsc --noEmit`), **522 unit + 63 E2E test**, iki dil (tr/en — sözlük paritesi testle korunuyor), react-hook-form + Zod form doğrulama, TanStack Query okuma katmanı, çevrimdışı mutasyon kuyruğu, güvenlik başlıklarının tek kaynaktan yönetimi.
+🧰 **Mühendislik tarafı:** TypeScript (`strict`, CI'da bloklayan `tsc --noEmit`), **526 unit + 63 E2E test**, iki dil (tr/en — sözlük paritesi testle korunuyor), react-hook-form + Zod form doğrulama, TanStack Query okuma katmanı, çevrimdışı mutasyon kuyruğu, güvenlik başlıklarının tek kaynaktan yönetimi.
 
 ---
 
@@ -210,7 +210,7 @@ Mobile-first tasarlandı; PWA olarak ana ekrana eklenip native gibi çalışıyo
 - ✅ **Dependabot** — Minor/patch gruplu, major ayrı
 
 ### 🆕 🧪 Test Coverage
-- ✅ **Unit tests** — Vitest ile **522 test / 35 dosya** (saf mantık, context, bileşenler, i18n sözleşmeleri)
+- ✅ **Unit tests** — Vitest ile **526 test / 36 dosya** (saf mantık, context, bileşenler, i18n sözleşmeleri)
 - ✅ **Component tests** — React Testing Library ile form render + validasyon
 - ✅ **E2E tests** — Cypress ile **63 test / 11 suite** (login, araçlar, istatistik, takvim, dil, 404, paylaşılan rapor, komut paleti, yakındaki istasyonlar, iki i18n guard'ı)
 - ✅ **Sabit zaman** — `vi.setSystemTime()` ile takvime bağlı testler deterministik
