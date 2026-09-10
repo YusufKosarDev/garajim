@@ -27,6 +27,7 @@ import { captureError } from '../lib/errorTracking'
 import { isOffline, isNetworkError } from '../lib/offlineQueue'
 import { vehicleQueue as queue } from '../lib/vehicleQueue'
 import { createDispatcher, REFERENCE_FIELDS } from '../lib/offlineDispatcher'
+import { useGarageId } from './useGarageId'
 import type { ReactNode } from 'react'
 import type { Updater } from './mutations/shared'
 import type {
@@ -52,6 +53,8 @@ const LIST_QUERIES = [
 
 export const VehicleProvider = ({ children }: { children: ReactNode }) => {
   const { user, isAuthenticated } = useAuth()
+  // Realtime filtresi ve INSERT'lerdeki garage_id AYNI değeri okur (bkz. useGarageId)
+  const { garageIds, garageId, hazir: garajHazir } = useGarageId(user?.id)
   const queryClient = useQueryClient()
   const userId = user?.id
   const enabled = Boolean(isAuthenticated && userId)
@@ -173,7 +176,7 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
       if (isOffline()) return
       if ((await queue.length()) === 0) return
 
-      const result = await queue.replay(createDispatcher(userId))
+      const result = await queue.replay(createDispatcher(userId, garageId))
       await refreshPendingCount()
 
       if (result.sent > 0) {
@@ -189,7 +192,7 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
     void flushQueue()
     window.addEventListener('online', flushQueue)
     return () => window.removeEventListener('online', flushQueue)
-  }, [userId, queryClient, refreshPendingCount])
+  }, [userId, garageId, queryClient, refreshPendingCount])
 
   const setVehicles = useCallback((u: Updater<Vehicle[]>) => writeCache('vehicles', u), [writeCache])
   const setMaintenanceRecordsEarly = useCallback(
@@ -227,7 +230,9 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
   // Garajdaki herhangi bir değişiklik (kendi başka cihazın veya garajı
   // paylaştığın bir üye) otomatik senkronize edilir.
   useEffect(() => {
-    if (!isAuthenticated || !user) return
+    // Üyelik gelmeden abone OLMUYORUZ: önce user_id filtresiyle bağlanıp
+    // sonra yeniden abone olmak aradaki olayları kaçırırdı.
+    if (!isAuthenticated || !user || !garajHazir) return
 
     // Generic helper: state'i INSERT/UPDATE/DELETE event'ine göre güncelle
     const handleChange = <T extends { id: string }>(
@@ -257,30 +262,20 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
     }
 
     let channel: ReturnType<typeof supabase.channel> | null = null
-    let cancelled = false
-
-    const subscribe = async () => {
-      // Veriler garaj bazlıdır (tüm tablolarda garage_id var) ve bir garajı
+    const subscribe = () => {
+      // Veriler garaj bazlıdır (beş tabloda da garage_id var) ve bir garajı
       // birden fazla kullanıcı paylaşabilir. user_id ile filtrelemek, garajı
       // paylaştığın kişinin satırlarını — onların user_id'si farklı olduğu için —
       // dışarıda bırakıyor ve "çoklu kullanıcı senkronu" hiç çalışmıyordu.
-      const { data, error } = await supabase
-        .from('garage_members')
-        .select('garage_id')
-        .eq('user_id', user.id)
-
-      if (cancelled) return
-
-      const garageIds = (data || []).map(r => r.garage_id).filter(Boolean)
-
-      // Üyelik okunamazsa eski davranışa düş: hiç dinlememektense
-      // en azından kendi değişikliklerini dinlemeye devam et.
+      //
+      // Üyelik burada SORGULANMIYOR: aynı değeri insert'ler de kullanıyor,
+      // bu yüzden tek yerden geliyor (useGarageId).
       const filter = garageIds.length > 0
         ? `garage_id=in.(${garageIds.join(',')})`
         : `user_id=eq.${user.id}`
 
-      if (error || garageIds.length === 0) {
-        console.warn('Real-time: garaj üyeliği alınamadı, user_id filtresine düşülüyor', error)
+      if (garageIds.length === 0) {
+        console.warn('Real-time: garaj üyeliği yok, user_id filtresine düşülüyor')
       }
 
       const table = <T extends { id: string }>(
@@ -319,16 +314,15 @@ export const VehicleProvider = ({ children }: { children: ReactNode }) => {
 
     // Cleanup: component unmount veya user değişince subscription'ı kapat
     return () => {
-      cancelled = true
       if (channel) supabase.removeChannel(channel)
     }
-  }, [isAuthenticated, user, setVehicles, setMaintenanceRecords, setFuelRecords, setTireSets, setTireChanges])
+  }, [isAuthenticated, user, garajHazir, garageIds, setVehicles, setMaintenanceRecords, setFuelRecords, setTireSets, setTireChanges])
 
   // ============ MUTASYONLAR ============
   // Altı alanın CRUD mantığı ayrı hook'lara taşındı (bkz. mutations/shared.ts).
   // Sağlayıcının dışarı verdiği API değişmedi — bu bir iç yeniden düzenleme.
   const mutationDeps = {
-    user, vehicles, maintenanceRecords,
+    user, garageId, vehicles, maintenanceRecords,
     setVehicles, setMaintenanceRecords, setFuelRecords,
     setTireSets, setTireChanges, setCustomIntervals,
     enqueueWithOptimisticInsert,

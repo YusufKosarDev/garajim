@@ -62,6 +62,12 @@ const maintenanceRow = (over = {}) => ({
   date: '2026-01-01', km: 95000, cost: '1000', notes: null, photo_url: null, ...over,
 })
 
+const fuelRow = (over = {}) => ({
+  id: 'f1', user_id: 'user-1', vehicle_id: 'v1', date: '2026-09-01', km: 100500,
+  liters: '40', price_per_liter: '50', total_cost: '2000', full_tank: true,
+  station: 'Shell', notes: null, ...over,
+})
+
 let queryClient
 
 // Testte retry KAPALI olmalı: hata senaryolarında varsayılan 2 retry
@@ -247,6 +253,67 @@ describe('bakım fotoğrafı yaşam döngüsü', () => {
 
     expect(h.storage.deletePhotoByUrl).toHaveBeenCalledWith('https://cdn/fis.jpg', 'maintenance-photos')
     expect(ctx.maintenanceRecords).toHaveLength(0)
+  })
+})
+
+// ===========================================================================
+/**
+ * garage_id INSERT'lerde gönderiliyor mu?
+ *
+ * Realtime aboneliği `garage_id=in.(...)` ile dinliyor. Satırlar bu sütun
+ * boş yazılırsa filtre asla eşleşmiyor: kaydı ekleyen cihaz iyimser
+ * güncelleme sayesinde satırı görüyor ama İKİNCİ cihaz ve garajı paylaşan
+ * kişi hiçbir zaman görmüyor. Sessiz bir hataydı; canlı veritabanında
+ * ölçülüp doğrulandı (bkz. lib/garageId.ts).
+ */
+describe('garage_id', () => {
+  // Üyelik sorgusu çözülmeden insert etmek yarışa girer; realtime filtresinin
+  // kurulmuş olması "üyelik geldi" sinyalinin ta kendisi.
+  const uyelikBekle = () => waitFor(() => expect(h.sb.filterFor('vehicles')).toBeDefined())
+
+  it('yeni araç kaydına garage_id yazılır', async () => {
+    await kur()
+    await uyelikBekle()
+    h.sb.setResponse('vehicles', 'insert', { data: vehicleRow(), error: null })
+
+    await act(async () => { await ctx.addVehicle({ plate: '34 A 1', brand: 'BMW', model: '3' }) })
+
+    expect(h.sb.callsFor('vehicles', 'insert')[0].payload[0].garage_id).toBe('g1')
+  })
+
+  it('yeni yakıt kaydına da yazılır', async () => {
+    await kur()
+    await uyelikBekle()
+    h.sb.setResponse('fuel_records', 'insert', { data: fuelRow(), error: null })
+
+    await act(async () => {
+      await ctx.addFuel({ vehicleId: 'v1', date: '2026-09-01', km: 1000, liters: 40, totalCost: 2000 })
+    })
+
+    expect(h.sb.callsFor('fuel_records', 'insert')[0].payload[0].garage_id).toBe('g1')
+  })
+
+  it('GÜNCELLEMEDE gönderilmez — paylaşılan garajda satırı sahibinden koparırdı', async () => {
+    h.sb.setResponse('vehicles', 'select', { data: [vehicleRow()], error: null })
+    await kur()
+    await uyelikBekle()
+    h.sb.setResponse('vehicles', 'update', { data: vehicleRow(), error: null })
+
+    await act(async () => { await ctx.updateVehicle('v1', { brand: 'Audi' }) })
+
+    const update = h.sb.callsFor('vehicles', 'update')[0]
+    expect(update.payload).not.toHaveProperty('garage_id')
+  })
+
+  it('üyelik okunamazsa anahtar hiç gönderilmez — eski davranış korunur', async () => {
+    h.sb.setResponse('garage_members', 'select', { data: [], error: { message: 'RLS' } })
+    await kur()
+    await uyelikBekle()
+    h.sb.setResponse('vehicles', 'insert', { data: vehicleRow(), error: null })
+
+    await act(async () => { await ctx.addVehicle({ plate: '34 A 1', brand: 'BMW', model: '3' }) })
+
+    expect(h.sb.callsFor('vehicles', 'insert')[0].payload[0]).not.toHaveProperty('garage_id')
   })
 })
 

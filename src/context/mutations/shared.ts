@@ -49,6 +49,8 @@ export type RunQueued = <T>(
  */
 export interface MutationDeps {
   user: User | null
+  /** Yeni satırlara yazılacak garaj kimliği; üyelik okunamazsa null (bkz. lib/garageId.ts) */
+  garageId: string | null
   vehicles: Vehicle[]
   maintenanceRecords: MaintenanceRecord[]
   setVehicles: CacheSetter<Vehicle[]>

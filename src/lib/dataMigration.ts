@@ -9,6 +9,7 @@ import {
   customIntervalToDb,
   formatSupabaseError,
 } from './supabaseMappers'
+import { fetchPrimaryGarageId } from './garageId'
 import {
   uploadPhotosBatch,
   uploadPhotoFromBase64,
@@ -87,6 +88,16 @@ export const migrateDataToSupabase = async (
     return result
   }
 
+  // Taşınan satırlar da garaj bazlı olmalı — yoksa realtime ve garaj
+  // paylaşımı bu kayıtları görmez (bkz. lib/garageId.ts). Okunamazsa
+  // taşıma durmuyor: garage_id gönderilmiyor, eski davranış sürüyor.
+  let garageId: string | null = null
+  try {
+    garageId = await fetchPrimaryGarageId(userId)
+  } catch (error) {
+    console.warn('Taşıma: garaj kimliği okunamadı', error)
+  }
+
   // Eski ID → Yeni UUID eşleştirmesi (vehicles için)
   // LocalStorage'da vehicleId 'Date.now()' formatında
   // Supabase'de UUID. Eski ID'leri yeni UUID'lere eşleştirmemiz lazım
@@ -129,7 +140,7 @@ export const migrateDataToSupabase = async (
           if (url) uploadedPhotos.push(url)
         }
 
-        const dbRow = vehicleToDb({ ...vehicle, photos: uploadedPhotos }, userId)
+        const dbRow = vehicleToDb({ ...vehicle, photos: uploadedPhotos }, userId, garageId)
 
         const { data: inserted, error } = await supabase
           .from('vehicles')
@@ -181,7 +192,8 @@ export const migrateDataToSupabase = async (
 
         const dbRow = maintenanceToDb(
           { ...record, vehicleId: newVehicleId, photo: uploadedPhoto },
-          userId
+          userId,
+          garageId
         )
 
         const { error } = await supabase
@@ -217,7 +229,8 @@ export const migrateDataToSupabase = async (
 
         const dbRow = fuelToDb(
           { ...record, vehicleId: newVehicleId },
-          userId
+          userId,
+          garageId
         )
 
         const { error } = await supabase
@@ -253,7 +266,8 @@ export const migrateDataToSupabase = async (
 
         const dbRow = tireSetToDb(
           { ...tireSet, vehicleId: newVehicleId },
-          userId
+          userId,
+          garageId
         )
 
         const { error } = await supabase
@@ -289,7 +303,8 @@ export const migrateDataToSupabase = async (
 
         const dbRow = tireChangeToDb(
           { ...change, vehicleId: newVehicleId },
-          userId
+          userId,
+          garageId
         )
 
         const { error } = await supabase

@@ -56,10 +56,15 @@ create policy "Users see their garage data"
 on public.vehicles for select
 using (garage_id in (select public.user_garage_ids()));
 
--- KURGU: yazma tarafı. Client insert'lerde user_id gönderiyor ama garage_id
--- göndermiyor (trigger dolduruyor), ve UPDATE'ten önce user_id'yi ÖZELLİKLE
--- siliyor (useVehicleMutations.ts:108, offlineDispatcher.ts:67) — bu, sahipliği
--- yeniden iddia etmenin reddedildiğini ima ediyor.
+-- KURGU: yazma tarafı. Client insert'lerde user_id gönderiyor ve UPDATE'ten
+-- önce user_id'yi ÖZELLİKLE siliyor (useVehicleMutations.ts, offlineDispatcher.ts)
+-- — bu, sahipliği yeniden iddia etmenin reddedildiğini ima ediyor.
+--
+-- DÜZELTME: burada önce "garage_id'yi trigger dolduruyor" yazıyordu. Ölçüldü,
+-- yanlış: trigger yok, insert'ler garage_id = NULL üretiyordu ve o satırlar
+-- yine de OKUNABİLİYORDU — yani aşağıdaki garaj bazlı SELECT kurgusu
+-- production'daki gerçek policy ile örtüşmüyor (bkz. README.md, madde 1).
+-- Client artık garage_id'yi kendisi gönderiyor (src/lib/garageId.ts).
 create policy "Users insert into their garage"
 on public.vehicles for insert
 with check (auth.uid() = user_id);

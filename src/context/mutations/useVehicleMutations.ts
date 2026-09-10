@@ -13,8 +13,8 @@ import { uploadPhotoFromBase64, uploadPhotosBatch, deletePhotosBatch, isBase64, 
 import type { Vehicle, CustomIntervals } from '../../types'
 import type { MutationDeps } from './shared'
 export function useVehicleMutations({
-  user, vehicles, maintenanceRecords, setVehicles, setMaintenanceRecords, setFuelRecords, setTireSets, setTireChanges, setCustomIntervals,
-}: Pick<MutationDeps, 'user' | 'vehicles' | 'maintenanceRecords' | 'setVehicles' | 'setMaintenanceRecords' | 'setFuelRecords' | 'setTireSets' | 'setTireChanges' | 'setCustomIntervals'>) {
+  user, garageId, vehicles, maintenanceRecords, setVehicles, setMaintenanceRecords, setFuelRecords, setTireSets, setTireChanges, setCustomIntervals,
+}: Pick<MutationDeps, 'user' | 'garageId' | 'vehicles' | 'maintenanceRecords' | 'setVehicles' | 'setMaintenanceRecords' | 'setFuelRecords' | 'setTireSets' | 'setTireChanges' | 'setCustomIntervals'>) {
   const addVehicle = useCallback(async (vehicle: Partial<Vehicle>) => {
     if (!user) {
       toast.error(i18n.t('ctx.vehicleContext.giris_yapmalisin'))
@@ -38,7 +38,7 @@ export function useVehicleMutations({
         }
       }
 
-      const dbRow = vehicleToDb({ ...vehicle, photos: uploadedPhotos }, user.id)
+      const dbRow = vehicleToDb({ ...vehicle, photos: uploadedPhotos }, user.id, garageId)
       const { data, error } = await supabase
         .from('vehicles')
         .insert([dbRow])
@@ -61,7 +61,7 @@ export function useVehicleMutations({
       toast.error(i18n.t('ctx.vehicleContext.arac_eklenemedi') + formatSupabaseError(error as Error))
       return null
     }
-  }, [user, setVehicles])
+  }, [user, setVehicles, garageId])
 
   const updateVehicle = useCallback(async (id: string, updates: Partial<Vehicle>) => {
     if (!user) return

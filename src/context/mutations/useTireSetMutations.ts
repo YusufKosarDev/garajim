@@ -11,13 +11,13 @@ import { tireSetToDb, tireSetFromDb, formatSupabaseError } from '../../lib/supab
 import type { TireSet } from '../../types'
 import type { MutationDeps } from './shared'
 export function useTireSetMutations({
-  user, setTireSets,
-}: Pick<MutationDeps, 'user' | 'setTireSets'>) {
+  user, garageId, setTireSets,
+}: Pick<MutationDeps, 'user' | 'garageId' | 'setTireSets'>) {
   const addTireSet = useCallback(async (tireSet: Partial<TireSet>) => {
     if (!user) return null
 
     try {
-      const dbRow = tireSetToDb(tireSet, user.id)
+      const dbRow = tireSetToDb(tireSet, user.id, garageId)
       const { data, error } = await supabase
         .from('tire_sets')
         .insert([dbRow])
@@ -39,7 +39,7 @@ export function useTireSetMutations({
       toast.error(i18n.t('ctx.vehicleContext.lastik_seti_eklenemedi') + formatSupabaseError(error as Error))
       return null
     }
-  }, [user, setTireSets])
+  }, [user, setTireSets, garageId])
 
   const updateTireSet = useCallback(async (id: string, updates: Partial<TireSet>) => {
     if (!user) return

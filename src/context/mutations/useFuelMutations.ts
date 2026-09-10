@@ -11,13 +11,13 @@ import { fuelToDb, fuelFromDb, formatSupabaseError } from '../../lib/supabaseMap
 import type { FuelRecord } from '../../types'
 import type { MutationDeps } from './shared'
 export function useFuelMutations({
-  user, setFuelRecords,
-}: Pick<MutationDeps, 'user' | 'setFuelRecords'>) {
+  user, garageId, setFuelRecords,
+}: Pick<MutationDeps, 'user' | 'garageId' | 'setFuelRecords'>) {
   const addFuel = useCallback(async (record: Partial<FuelRecord>) => {
     if (!user) return null
 
     try {
-      const dbRow = fuelToDb(record, user.id)
+      const dbRow = fuelToDb(record, user.id, garageId)
       const { data, error } = await supabase
         .from('fuel_records')
         .insert([dbRow])
@@ -39,7 +39,7 @@ export function useFuelMutations({
       toast.error(i18n.t('ctx.vehicleContext.yakit_eklenemedi') + formatSupabaseError(error as Error))
       return null
     }
-  }, [user, setFuelRecords])
+  }, [user, setFuelRecords, garageId])
 
   const updateFuel = useCallback(async (id: string, updates: Partial<FuelRecord>) => {
     if (!user) return

@@ -52,10 +52,24 @@ export const vehicleFromDb = (row: VehicleRow | null): Vehicle | null => {
   }
 }
 
-export const vehicleToDb = (vehicle: Partial<Vehicle>, userId: string) => {
+/**
+ * INSERT satırlarına `garage_id` ekler.
+ *
+ * SADECE INSERT'te çağrılıyor. Güncellemede gönderilmiyor: paylaşılan bir
+ * garajda başkasının satırını düzenlerken `garage_id`'yi kendi garajımıza
+ * çevirmek satırı sahibinden koparırdı. Sütun zaten doğruysa dokunmamak
+ * doğru davranış.
+ *
+ * `garageId` yoksa anahtar HİÇ eklenmiyor (`garage_id: null` de değil):
+ * üyeliği okunamayan kullanıcı için bugünkü davranış korunuyor.
+ */
+const garajAlani = (garageId?: string | null) => (garageId ? { garage_id: garageId } : {})
+
+export const vehicleToDb = (vehicle: Partial<Vehicle>, userId: string, garageId?: string | null) => {
   // Sadece DB sütunlarına karşılık gelen alanları gönder
   const dbRow = {
     user_id: userId,
+    ...garajAlani(garageId),
     plate: vehicle.plate,
     brand: vehicle.brand,
     model: vehicle.model,
@@ -92,10 +106,11 @@ export const maintenanceFromDb = (row: MaintenanceRow | null): MaintenanceRecord
   }
 }
 
-export const maintenanceToDb = (record: Partial<MaintenanceRecord>, userId: string) => {
+export const maintenanceToDb = (record: Partial<MaintenanceRecord>, userId: string, garageId?: string | null) => {
   return {
     vehicle_id: record.vehicleId,
     user_id: userId,
+    ...garajAlani(garageId),
     type: record.type,
     date: record.date,
     km: record.km ?? null,
@@ -127,10 +142,11 @@ export const fuelFromDb = (row: FuelRow | null): FuelRecord | null => {
   }
 }
 
-export const fuelToDb = (record: Partial<FuelRecord>, userId: string) => {
+export const fuelToDb = (record: Partial<FuelRecord>, userId: string, garageId?: string | null) => {
   return {
     vehicle_id: record.vehicleId,
     user_id: userId,
+    ...garajAlani(garageId),
     date: record.date,
     km: record.km ?? null,
     liters: record.liters,
@@ -163,10 +179,11 @@ export const tireSetFromDb = (row: TireSetRow | null): TireSet | null => {
   }
 }
 
-export const tireSetToDb = (tireSet: Partial<TireSet>, userId: string) => {
+export const tireSetToDb = (tireSet: Partial<TireSet>, userId: string, garageId?: string | null) => {
   return {
     vehicle_id: tireSet.vehicleId,
     user_id: userId,
+    ...garajAlani(garageId),
     season: tireSet.season,
     brand: tireSet.brand ?? null,
     size: tireSet.size ?? null,
@@ -197,10 +214,11 @@ export const tireChangeFromDb = (row: TireChangeRow | null): TireChange | null =
   }
 }
 
-export const tireChangeToDb = (change: Partial<TireChange>, userId: string) => {
+export const tireChangeToDb = (change: Partial<TireChange>, userId: string, garageId?: string | null) => {
   return {
     vehicle_id: change.vehicleId,
     user_id: userId,
+    ...garajAlani(garageId),
     date: change.date,
     from_season: change.fromSeason || null,
     to_season: change.toSeason,
@@ -232,6 +250,7 @@ export const customIntervalToDb = (
 ): CustomIntervalRow => {
   return {
     vehicle_id: vehicleId,
+    // custom_intervals tablosunda garage_id sütunu YOK (CustomIntervalRow)
     user_id: userId,
     maintenance_type: maintenanceType,
     kilometers: interval.kilometers ?? null,

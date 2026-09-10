@@ -11,13 +11,13 @@ import { tireChangeToDb, tireChangeFromDb, formatSupabaseError } from '../../lib
 import type { TireChange } from '../../types'
 import type { MutationDeps } from './shared'
 export function useTireChangeMutations({
-  user, setTireChanges,
-}: Pick<MutationDeps, 'user' | 'setTireChanges'>) {
+  user, garageId, setTireChanges,
+}: Pick<MutationDeps, 'user' | 'garageId' | 'setTireChanges'>) {
   const addTireChange = useCallback(async (change: Partial<TireChange>) => {
     if (!user) return null
 
     try {
-      const dbRow = tireChangeToDb(change, user.id)
+      const dbRow = tireChangeToDb(change, user.id, garageId)
       const { data, error } = await supabase
         .from('tire_changes')
         .insert([dbRow])
@@ -39,7 +39,7 @@ export function useTireChangeMutations({
       toast.error(i18n.t('ctx.vehicleContext.lastik_degisimi_eklenemedi') + formatSupabaseError(error as Error))
       return null
     }
-  }, [user, setTireChanges])
+  }, [user, setTireChanges, garageId])
 
   const updateTireChange = useCallback(async (id: string, updates: Partial<TireChange>) => {
     if (!user) return

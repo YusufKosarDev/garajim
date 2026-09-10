@@ -43,14 +43,29 @@ dolduruyor.
 
 ## Türetilemeyenler — production'da farklı olabilir
 
-1. **`garage_id` trigger'ı — en kritik boşluk.** Client `garage_id`'yi **hiç
-   yazmıyor**: hiçbir `*ToDb` mapper'ı üretmiyor, her insert yalnızca `user_id`
-   gönderiyor. Ama realtime aboneliği ve RLS ona göre filtreliyor
-   (`VehicleContext.tsx:275`, kök `README.md:304`). Demek ki veritabanı tarafında
-   `garage_id`'yi dolduran bir `BEFORE INSERT` trigger'ı **olmak zorunda**.
-   Gövdesi client'tan çıkarılamıyor ve o trigger olmadan her insert
-   `garage_id = NULL` üretir; RLS de o satırları gizler. `schema.sql` içinde
-   bir taslak var, ama **gerçeğiyle aynı olduğu iddia edilmiyor.**
+1. **`garage_id` trigger'ı — ÖLÇÜLDÜ: YOK.** Bu madde önce "olmak zorunda"
+   diyordu; canlı veritabanında denendi ve yanlış çıktı. Demo hesabına yazılan
+   86 satırın hepsi `garage_id = NULL` geldi, yani `BEFORE INSERT` trigger'ı
+   **yok**. İki sonucu var:
+
+   - **Bu satırlar okunabiliyordu.** RLS'in SELECT tarafı `garage_id`'ye
+     bakıyor olsaydı NULL satırlar kullanıcıya hiç görünmezdi. Demek ki
+     production'daki okuma policy'si `user_id` üzerinden çalışıyor —
+     `policies.sql`'deki garaj bazlı SELECT kurgusu bu noktada gerçeğiyle
+     örtüşmüyor.
+   - **Realtime sessizce bozuktu.** Abonelik `garage_id=in.(...)` ile
+     dinliyor (`VehicleContext.tsx`); NULL satırlar bu filtreyle asla
+     eşleşmiyor. Kaydı ekleyen cihaz iyimser güncelleme sayesinde satırı
+     görüyordu, ama kullanıcının ikinci cihazı ve garajı paylaştığı kişi
+     hiçbir zaman görmüyordu — yani realtime kodunun yazılma sebebi olan
+     çoklu kullanıcı senkronu çalışmıyordu.
+
+   Düzeltme istemci tarafında yapıldı: `garage_id` artık `user_id` ile aynı
+   yerde, aynı biçimde INSERT'lere ekleniyor (`src/lib/garageId.ts`,
+   `src/context/useGarageId.ts`). UPDATE'te gönderilmiyor — paylaşılan bir
+   garajda satırın garajını değiştirmek onu sahibinden koparırdı. Sunucuya bir
+   trigger eklenirse bu davranış onunla çakışmaz: gönderilen değer zaten
+   kullanıcının kendi üyeliğinden geliyor.
 
 2. **Kayıt sonrası bootstrap trigger'ı.** `GarageMembers.jsx:61` garajın
    olmamasını "beklenmedik durum" sayıyor, yani kayıt sırasında `garages` +

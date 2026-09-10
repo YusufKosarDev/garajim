@@ -14,8 +14,8 @@ import { isOffline, isNetworkError } from '../../lib/offlineQueue'
 import type { MaintenanceRecord } from '../../types'
 import type { MutationDeps } from './shared'
 export function useMaintenanceMutations({
-  user, maintenanceRecords, setMaintenanceRecords, enqueueWithOptimisticInsert,
-}: Pick<MutationDeps, 'user' | 'maintenanceRecords' | 'setMaintenanceRecords' | 'enqueueWithOptimisticInsert'>) {
+  user, garageId, maintenanceRecords, setMaintenanceRecords, enqueueWithOptimisticInsert,
+}: Pick<MutationDeps, 'user' | 'garageId' | 'maintenanceRecords' | 'setMaintenanceRecords' | 'enqueueWithOptimisticInsert'>) {
   const addMaintenance = useCallback(async (record: Partial<MaintenanceRecord>) => {
     if (!user) return null
 
@@ -39,7 +39,7 @@ export function useMaintenanceMutations({
         toast.dismiss(uploadingToast)
       }
 
-      const dbRow = maintenanceToDb({ ...record, photo: uploadedPhoto }, user.id)
+      const dbRow = maintenanceToDb({ ...record, photo: uploadedPhoto }, user.id, garageId)
       const { data, error } = await supabase
         .from('maintenance_records')
         .insert([dbRow])
@@ -64,7 +64,7 @@ export function useMaintenanceMutations({
       toast.error(i18n.t('ctx.vehicleContext.bakim_eklenemedi') + formatSupabaseError(error as Error))
       return null
     }
-  }, [user, setMaintenanceRecords, enqueueWithOptimisticInsert])
+  }, [user, setMaintenanceRecords, enqueueWithOptimisticInsert, garageId])
 
   const updateMaintenance = useCallback(async (id: string, updates: Partial<MaintenanceRecord>) => {
     if (!user) return

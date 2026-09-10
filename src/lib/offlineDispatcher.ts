@@ -14,7 +14,7 @@ import type { Vehicle, MaintenanceRecord, FuelRecord, TireSet, TireChange } from
  * yapılabiliyor — çevrimdışıyken Storage'a da erişilemediği için base64
  * fotoğraflar kuyrukta bekliyor.
  */
-export function createDispatcher(userId: string) {
+export function createDispatcher(userId: string, garageId: string | null = null) {
   const tabloyaCevir = async (tablo: string, arg: Record<string, unknown>) => {
     switch (tablo) {
       case 'vehicles': {
@@ -23,7 +23,7 @@ export function createDispatcher(userId: string) {
         if (photos.some(isBase64)) {
           photos = await uploadPhotosBatch(photos, userId, BUCKETS.VEHICLE_PHOTOS, 'vehicle')
         }
-        return vehicleToDb({ ...v, photos }, userId)
+        return vehicleToDb({ ...v, photos }, userId, garageId)
       }
       case 'maintenance_records': {
         const m = arg as Partial<MaintenanceRecord>
@@ -31,14 +31,14 @@ export function createDispatcher(userId: string) {
         if (photo && isBase64(photo)) {
           photo = await uploadPhotoFromBase64(photo, userId, BUCKETS.MAINTENANCE_PHOTOS, 'maintenance')
         }
-        return maintenanceToDb({ ...m, photo }, userId)
+        return maintenanceToDb({ ...m, photo }, userId, garageId)
       }
       case 'fuel_records':
-        return fuelToDb(arg as Partial<FuelRecord>, userId)
+        return fuelToDb(arg as Partial<FuelRecord>, userId, garageId)
       case 'tire_sets':
-        return tireSetToDb(arg as Partial<TireSet>, userId)
+        return tireSetToDb(arg as Partial<TireSet>, userId, garageId)
       case 'tire_changes':
-        return tireChangeToDb(arg as Partial<TireChange>, userId)
+        return tireChangeToDb(arg as Partial<TireChange>, userId, garageId)
       default:
         throw new Error(`Bilinmeyen tablo: ${tablo}`)
     }
@@ -65,6 +65,8 @@ export function createDispatcher(userId: string) {
     // update
     if (!targetId) throw new Error('Güncelleme için hedef id yok')
     delete (dbRow as { user_id?: string }).user_id
+    // garage_id de düşüyor: mevcut satırın garajı değişmemeli (bkz. supabaseMappers)
+    delete (dbRow as { garage_id?: string }).garage_id
     const { error } = await supabase.from(tablo).update(dbRow).eq('id', targetId)
     if (error) throw error
   }
