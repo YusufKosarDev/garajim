@@ -19,7 +19,7 @@
 
 [![CI](https://github.com/YusufKosarDev/garajim/actions/workflows/ci.yml/badge.svg)](https://github.com/YusufKosarDev/garajim/actions/workflows/ci.yml)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](tsconfig.json)
-[![Tests](https://img.shields.io/badge/tests-470_unit_%2B_52_E2E-brightgreen)](#-testing)
+[![Tests](https://img.shields.io/badge/tests-522_unit_%2B_63_E2E-brightgreen)](#-testing)
 [![i18n](https://img.shields.io/badge/i18n-tr_%2B_en-orange)](src/i18n)
 
 </div>
@@ -73,7 +73,7 @@ Mobile-first tasarlandı; PWA olarak ana ekrana eklenip native gibi çalışıyo
 
 ⚡ **Production-grade fullstack:** Supabase tabanlı (PostgreSQL + RLS + Storage + Edge Functions), real-time multi-device & multi-user senkron, otomatik email hatırlatmaları (cron + Resend), Google OAuth, PWA, **multi-tenancy workspace pattern**.
 
-🧰 **Mühendislik tarafı:** TypeScript (`strict`, CI'da bloklayan `tsc --noEmit`), **470 unit + 52 E2E test**, iki dil (tr/en — sözlük paritesi testle korunuyor), react-hook-form + Zod form doğrulama, TanStack Query okuma katmanı, çevrimdışı mutasyon kuyruğu, güvenlik başlıklarının tek kaynaktan yönetimi.
+🧰 **Mühendislik tarafı:** TypeScript (`strict`, CI'da bloklayan `tsc --noEmit`), **522 unit + 63 E2E test**, iki dil (tr/en — sözlük paritesi testle korunuyor), react-hook-form + Zod form doğrulama, TanStack Query okuma katmanı, çevrimdışı mutasyon kuyruğu, güvenlik başlıklarının tek kaynaktan yönetimi.
 
 ---
 
@@ -117,6 +117,7 @@ Mobile-first tasarlandı; PWA olarak ana ekrana eklenip native gibi çalışıyo
 - ✅ **WebSocket subscription** — postgres_changes ile canlı dinleyici
 - ✅ **Anlık güncelleme** — Telefondan ekleyince bilgisayarda F5'siz görünür
 - ✅ **Çoklu kullanıcı sync** — Garajı paylaştığın kişinin değişiklikleri anında ekrana yansır
+- ✅ **`garage_id` istemciden yazılıyor** — Abonelik `garage_id=in.(...)` ile dinliyor ama insert'ler bu sütunu hiç göndermiyordu ve sunucuda dolduran trigger da yok (canlıda ölçüldü). Satırlar `NULL` kaldığı için filtre asla eşleşmiyor, senkron sessizce çalışmıyordu
 - ✅ **Echo prevention** — Optimistic UI + duplicate engellemesi
 - ✅ **Tüm tablolar** — Araç, bakım, yakıt, lastik, lastik değişim, custom periyot
 
@@ -192,11 +193,12 @@ Mobile-first tasarlandı; PWA olarak ana ekrana eklenip native gibi çalışıyo
 - ✅ **Otomatik güncelleme** — Workbox ile
 
 ### 🌍 Çoklu Dil (tr / en)
-- ✅ **Tam çeviri** — İki sözlükte de 1261 anahtar; **anahtar kümelerinin birebir aynı olması testle zorunlu** (`src/i18n/i18n.test.ts`)
+- ✅ **Tam çeviri** — İki sözlükte de 1443 anahtar; **anahtar kümelerinin birebir aynı olması testle zorunlu** (`src/i18n/i18n.test.ts`)
 - ✅ **Veritabanı değerleri çevrilmez** — "Yağ Değişimi" ekranda etiket gibi görünür ama `maintenance_records.type` sütununda duran bir VERİ. Çevrilirse bakım öneri motoru eşleşmeyi kaybeder; bu kural ayrı bir testle çitlenmiş
 - ✅ **Talep üzerine yükleme** — Sözlükler dinamik chunk; yalnızca aktif dil iniyor
 - ✅ **`<html lang>` senkronu** — Ekran okuyucu ve tarayıcı çevirisi doğru dili görüyor
 - ✅ **Ham anahtar taraması** — 6 rota × 2 dil E2E kontrolü: ekranda hiç `foo.bar` biçimi görünmemeli
+- ✅ **Türkçe kalıntı taraması** — İngilizce arayüzde Türkçe metin kalmadığını üç mekanizmayla birden ölçen ayrı bir guard (ifade listesi, Türkçe harf taraması, Türkçe harfi olmayan kelime listesi). Ham anahtar taraması bunları yapısal olarak göremiyor: o anahtar arıyor, metin değil
 - ✅ **Envanter aracı** — `npm run i18n:audit` t() dışında kalmış Türkçe metinleri listeler
 
 ### 🧰 Kod Kalitesi
@@ -208,9 +210,9 @@ Mobile-first tasarlandı; PWA olarak ana ekrana eklenip native gibi çalışıyo
 - ✅ **Dependabot** — Minor/patch gruplu, major ayrı
 
 ### 🆕 🧪 Test Coverage
-- ✅ **Unit tests** — Vitest ile **470 test / 32 dosya** (saf mantık, context, bileşenler, i18n sözleşmeleri)
+- ✅ **Unit tests** — Vitest ile **522 test / 35 dosya** (saf mantık, context, bileşenler, i18n sözleşmeleri)
 - ✅ **Component tests** — React Testing Library ile form render + validasyon
-- ✅ **E2E tests** — Cypress ile **52 test / 10 suite** (login, araçlar, istatistik, takvim, dil, 404, paylaşılan rapor)
+- ✅ **E2E tests** — Cypress ile **63 test / 11 suite** (login, araçlar, istatistik, takvim, dil, 404, paylaşılan rapor, komut paleti, yakındaki istasyonlar, iki i18n guard'ı)
 - ✅ **Sabit zaman** — `vi.setSystemTime()` ile takvime bağlı testler deterministik
 - ✅ **Session caching** — `cy.session({ cacheAcrossSpecs })` ile spec'ler arası tek login
 - ✅ **Custom commands** — `cy.login()`, `cy.logout()`, `cy.checkToast()`
@@ -390,8 +392,9 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 Supabase projesi oluştur ve aşağıdaki adımları uygula:
 
 > ⚠️ **`docs/database/` altındaki SQL, client kodundan TÜRETİLMİŞTİR** — production
-> dump'ı değil. Tablo ve sütun adları güvenilir; RLS policy gövdeleri, `garage_id`
-> trigger'ı ve indeksler yeniden kurgulanmıştır ve `-- KURGU` ile işaretlidir.
+> dump'ı değil. Tablo ve sütun adları güvenilir; RLS policy gövdeleri ve indeksler
+> yeniden kurgulanmıştır ve `-- KURGU` ile işaretlidir. `garage_id` trigger'ı ise
+> **ölçüldü ve yok**; sütunu artık istemci dolduruyor (bkz. `src/lib/garageId.ts`).
 > Neyin kanıtlı neyin tahmin olduğu **[`docs/database/README.md`](docs/database/README.md)**
 > içinde madde madde yazıyor. Olduğu gibi çalıştırmak çalışan bir kopya vermez.
 

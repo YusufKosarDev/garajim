@@ -40,18 +40,40 @@ export type ProgressCallback = (step: string, current: number, total: number) =>
  */
 type LegacyId = string | number
 
+/**
+ * Kesişim (`&`) yerine `Omit` kullanılıyor. Öncesinde
+ * `Partial<Vehicle> & { id?: LegacyId }` yazıyordu; TypeScript bunu
+ * `string & (string | number)` = `string` diye daraltıyor ve LegacyId'nin
+ * tek amacı olan "eski yedeklerde id bir SAYI" durumu tipte hiç ifade
+ * edilmemiş oluyordu. Alanı önce çıkarıp yeniden tanımlamak niyeti
+ * gerçekten yazıyor.
+ */
+type EskiKayit<T> = Omit<Partial<T>, 'id' | 'vehicleId'> & { id?: LegacyId; vehicleId?: LegacyId }
+
 export interface BackupData {
-  vehicles?: (Partial<Vehicle> & { id?: LegacyId; photo?: string | null })[]
-  maintenanceRecords?: (Partial<MaintenanceRecord> & { id?: LegacyId; vehicleId?: LegacyId })[]
-  fuelRecords?: (Partial<FuelRecord> & { id?: LegacyId; vehicleId?: LegacyId })[]
-  tireSets?: (Partial<TireSet> & { id?: LegacyId; vehicleId?: LegacyId })[]
-  tireChanges?: (Partial<TireChange> & { id?: LegacyId; vehicleId?: LegacyId })[]
+  vehicles?: (Omit<Partial<Vehicle>, 'id'> & { id?: LegacyId; photo?: string | null })[]
+  maintenanceRecords?: EskiKayit<MaintenanceRecord>[]
+  fuelRecords?: EskiKayit<FuelRecord>[]
+  tireSets?: EskiKayit<TireSet>[]
+  tireChanges?: EskiKayit<TireChange>[]
   customIntervals?: CustomIntervals
 }
 
 /**
  * Migration sonuç tipi
  */
+/**
+ * Eski id alanlarını düşürür.
+ *
+ * Yedekteki `id` ve `vehicleId` LocalStorage döneminden kalma SAYILAR
+ * olabiliyor; yeni satırın id'sini veritabanı üretiyor, `vehicleId` de
+ * eşleştirme tablosundan geliyor. Mapper'a giden nesnede eskilerinin işi yok.
+ */
+const idsiz = <T extends { id?: LegacyId; vehicleId?: LegacyId }>(kayit: T) => {
+  const { id: _eskiId, vehicleId: _eskiAracId, ...kalan } = kayit
+  return kalan
+}
+
 const createResult = (): MigrationResult => ({
   success: false,
   vehicles: { total: 0, success: 0, failed: 0 },
@@ -140,7 +162,7 @@ export const migrateDataToSupabase = async (
           if (url) uploadedPhotos.push(url)
         }
 
-        const dbRow = vehicleToDb({ ...vehicle, photos: uploadedPhotos }, userId, garageId)
+        const dbRow = vehicleToDb({ ...idsiz(vehicle), photos: uploadedPhotos }, userId, garageId)
 
         const { data: inserted, error } = await supabase
           .from('vehicles')
@@ -191,7 +213,7 @@ export const migrateDataToSupabase = async (
         }
 
         const dbRow = maintenanceToDb(
-          { ...record, vehicleId: newVehicleId, photo: uploadedPhoto },
+          { ...idsiz(record), vehicleId: newVehicleId, photo: uploadedPhoto },
           userId,
           garageId
         )
@@ -228,7 +250,7 @@ export const migrateDataToSupabase = async (
         }
 
         const dbRow = fuelToDb(
-          { ...record, vehicleId: newVehicleId },
+          { ...idsiz(record), vehicleId: newVehicleId },
           userId,
           garageId
         )
@@ -265,7 +287,7 @@ export const migrateDataToSupabase = async (
         }
 
         const dbRow = tireSetToDb(
-          { ...tireSet, vehicleId: newVehicleId },
+          { ...idsiz(tireSet), vehicleId: newVehicleId },
           userId,
           garageId
         )
@@ -302,7 +324,7 @@ export const migrateDataToSupabase = async (
         }
 
         const dbRow = tireChangeToDb(
-          { ...change, vehicleId: newVehicleId },
+          { ...idsiz(change), vehicleId: newVehicleId },
           userId,
           garageId
         )
