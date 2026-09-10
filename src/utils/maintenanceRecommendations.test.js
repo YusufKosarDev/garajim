@@ -9,6 +9,7 @@ import {
   getAllRecommendations,
   getCriticalRecommendations,
   getVehicleRecommendations,
+  canonicalMaintenanceType,
 } from './maintenanceRecommendations'
 
 const UUID = '550e8400-e29b-41d4-a716-446655440000'
@@ -108,6 +109,83 @@ describe('getRecommendationStatus', () => {
 
   it('bolca km kalmışsa sorun yok', () => {
     expect(getRecommendationStatus(5000, 10000)).toBe('ok')
+  })
+})
+
+// ============================================================
+// FORM ADI ↔ PERİYOT TABLOSU ADI UYUŞMAZLIĞI
+//
+// MaintenanceForm'un açılır listesi 'Balata', 'Disk', 'Lastik' yazıyor ve bu
+// değerler DB'ye aynen gidiyor; DEFAULT_INTERVALS ise 'Balata Değişimi',
+// 'Disk Değişimi', 'Lastik Değişimi' tutuyor. getAllRecommendations tablo
+// anahtarlarını gezdiği ve kayıt eşleştirmesi düz eşitlikle yapıldığı için
+// BU ÜÇ TÜR İÇİN ÖNERİ MOTORU HİÇ ÇALIŞMIYORDU: kullanıcı balata değiştirip
+// kaydediyor, uygulama bir daha asla "balata zamanı geldi" demiyordu.
+// ============================================================
+describe('bakım türü takma adları', () => {
+  it('kısa form adı tablodaki tam ada çözülür', () => {
+    expect(canonicalMaintenanceType('Balata')).toBe('Balata Değişimi')
+    expect(canonicalMaintenanceType('Disk')).toBe('Disk Değişimi')
+    expect(canonicalMaintenanceType('Lastik')).toBe('Lastik Değişimi')
+  })
+
+  it('tablodaki adlar olduğu gibi kalır', () => {
+    for (const type of Object.keys(DEFAULT_INTERVALS)) {
+      expect(canonicalMaintenanceType(type)).toBe(type)
+    }
+  })
+
+  it('bilinmeyen tür (kullanıcının yazdığı özel tür) değişmez', () => {
+    expect(canonicalMaintenanceType('Rot Balans')).toBe('Rot Balans')
+  })
+
+  it('kısa adla girilen kayıt periyodunu bulur', () => {
+    const v = vehicle(UUID, 100000)
+    const records = [maintenance(UUID, 'Balata', 70000)]
+    const rec = getMaintenanceRecommendation(v, 'Balata', records)
+
+    expect(rec.interval).toBe(DEFAULT_INTERVALS['Balata Değişimi'])
+    expect(rec.lastKm).toBe(70000)
+    expect(rec.hasHistory).toBe(true)
+  })
+
+  it('REGRESYON: kısa adla girilen kayıt önerilerde GÖRÜNÜR', () => {
+    // getAllRecommendations 'Balata Değişimi' diye soruyor, kayıt 'Balata'.
+    // Alias öncesi bu öneri hasHistory:false ile eleniyordu.
+    const v = vehicle(UUID, 105000)
+    const records = [maintenance(UUID, 'Balata', 70000)]
+
+    const hepsi = getAllRecommendations([v], records)
+    const balata = hepsi.find(r => r.type === 'Balata Değişimi')
+
+    expect(balata, 'kısa adla girilen balata kaydı öneri üretmeli').toBeDefined()
+    expect(balata.lastKm).toBe(70000)
+    expect(balata.nextDueKm).toBe(110000)
+    expect(balata.kmRemaining).toBe(5000)
+    expect(balata.status).toBe('soon') // 5000 / 40000 = %12,5 → urgent eşiği %10
+  })
+
+  it('iki yazım da aynı geçmişe bakar — en yüksek km kazanır', () => {
+    const v = vehicle(UUID, 100000)
+    const records = [
+      maintenance(UUID, 'Balata', 60000),
+      maintenance(UUID, 'Balata Değişimi', 75000),
+    ]
+    const rec = getMaintenanceRecommendation(v, 'Balata Değişimi', records)
+    expect(rec.lastKm).toBe(75000)
+  })
+
+  it('özel periyot tablo adıyla saklanır ve uygulanır', () => {
+    // Ayarlar ekranı DEFAULT_INTERVALS'ı gezdiği için özel değer daima tam
+    // adla kaydediliyor; kayıt kısa adla girilmiş olsa bile eşleşmeli.
+    const v = vehicle(UUID, 100000)
+    const records = [maintenance(UUID, 'Balata', 70000)]
+    const ozel = { [buildIntervalKey(UUID, 'Balata Değişimi')]: { kilometers: 25000 } }
+
+    const rec = getMaintenanceRecommendation(v, 'Balata Değişimi', records, ozel)
+    expect(rec.interval).toBe(25000)
+    expect(rec.nextDueKm).toBe(95000)
+    expect(rec.status).toBe('overdue')
   })
 })
 

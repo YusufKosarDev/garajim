@@ -58,15 +58,49 @@ export const parseIntervalKey = (key?: string | null): ParsedIntervalKey | null 
   return { vehicleId: key.slice(0, dash), maintenanceType: key.slice(dash + 1) }
 }
 
+/**
+ * Formdaki tür adı ile periyot tablosundaki ad AYNI DEĞİL.
+ *
+ * `MaintenanceForm.jsx`'in açılır listesi kullanıcıya 'Balata', 'Disk',
+ * 'Lastik' sunuyor ve bu değerler `maintenance_records.type` sütununa aynen
+ * yazılıyor. DEFAULT_INTERVALS ise 'Balata Değişimi', 'Disk Değişimi',
+ * 'Lastik Değişimi' anahtarlarını tutuyor. `resolveInterval` düz anahtar
+ * araması yaptığı için BU ÜÇ TÜR İÇİN ÖNERİ MOTORU HİÇ EŞLEŞMİYORDU:
+ * kullanıcı balata değiştirip kaydediyor, uygulama bir daha asla "balata
+ * zamanı geldi" demiyordu. Demo hesabındaki 'Balata' kaydı da sessizce
+ * yok sayılıyordu.
+ *
+ * Çözüm neden burada: açılır listeyi 'Balata Değişimi'ne çevirmek daha temiz
+ * görünürdü ama DB'ye yazılmış mevcut 'Balata' kayıtlarını öksüz bırakırdı.
+ * DEFAULT_INTERVALS anahtarlarını kısaltmak da olmaz — `i18n.test.ts` onları
+ * sözleşme olarak koruyor ve `parseIntervalKey` onlara göre ayrıştırıyor.
+ * O yüzden ne veri ne tablo değişiyor; yalnızca ÇÖZÜMLEME adımı iki yazımı
+ * da tanıyor.
+ */
+const TYPE_ALIASES: Record<string, string> = {
+  'Balata': 'Balata Değişimi',
+  'Disk': 'Disk Değişimi',
+  'Lastik': 'Lastik Değişimi',
+}
+
+/** Bir bakım türünün DEFAULT_INTERVALS'taki karşılığını verir. */
+export const canonicalMaintenanceType = (maintenanceType: string): string =>
+  maintenanceType in DEFAULT_INTERVALS
+    ? maintenanceType
+    : (TYPE_ALIASES[maintenanceType] ?? maintenanceType)
+
 // Eski yedeklerde değer düz sayı olarak durabildiği için ikisini de kabul ediyoruz.
 export const resolveInterval = (
   customIntervals: CustomIntervals | undefined,
   vehicleId: string,
   maintenanceType: string
 ): number => {
+  // Özel periyot KULLANICININ YAZDIĞI adla saklanıyor (anahtar formdaki türden
+  // üretiliyor), o yüzden önce onunla aranıyor; takma ad yalnızca varsayılan
+  // tabloya düşerken devreye giriyor.
   const custom = customIntervals?.[buildIntervalKey(vehicleId, maintenanceType)]
   const km = typeof custom === 'number' ? custom : custom?.kilometers
-  return km || DEFAULT_INTERVALS[maintenanceType]
+  return km || DEFAULT_INTERVALS[canonicalMaintenanceType(maintenanceType)]
 }
 
 // Bir araç için, bir bakım türünün durumunu hesapla
@@ -95,9 +129,16 @@ export const getMaintenanceRecommendation = (
   const currentKm = Number(vehicle.currentKm) || 0
   if (currentKm === 0) return null  // KM bilgisi yoksa öneri veremeyiz
 
-  // Bu aracın bu türdeki son bakımı
+  // Bu aracın bu türdeki son bakımı.
+  //
+  // Karşılaştırma KANONİK ad üzerinden: `getAllRecommendations` DEFAULT_INTERVALS
+  // anahtarlarını geziyor ('Balata Değişimi'), oysa form 'Balata' yazıyor. Düz
+  // eşitlik kullanıldığı sürece bu iki taraf hiç buluşmuyordu — periyot bulunsa
+  // bile kayıt bulunamadığı için `hasHistory: false` çıkıyor ve öneri
+  // `getAllRecommendations`'ta eleniyordu.
+  const aranan = canonicalMaintenanceType(maintenanceType)
   const typeRecords = maintenanceRecords
-    .filter(r => r.vehicleId === vehicle.id && r.type === maintenanceType)
+    .filter(r => r.vehicleId === vehicle.id && canonicalMaintenanceType(r.type) === aranan)
     .sort((a, b) => Number(b.km) - Number(a.km))
 
   const lastRecord = typeRecords[0]
