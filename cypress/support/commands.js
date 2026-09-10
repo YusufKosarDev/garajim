@@ -11,6 +11,35 @@
 // ============================================================================
 
 /**
+ * TESTİN DİLİ KOŞULDUĞU MAKİNEYE BAĞLI OLMAMALI.
+ *
+ * Uygulama dili `i18next-browser-languagedetector` ile seçiyor:
+ * önce localStorage, yoksa `navigator.language`. Yerelde tarayıcı Türkçe
+ * olduğu için testler Türkçe metin buluyordu; CI koşucusunun tarayıcısı
+ * İngilizce ve aynı testlerin 20 tanesi "Takvim", "Liste", "ara..." gibi
+ * Türkçe metinleri bulamayıp düştü. Uygulamada hata yoktu — testler
+ * makinenin diline bağımlıydı.
+ *
+ * Bu yüzden her ziyaret açık bir dille başlıyor. Varsayılan 'tr' (uygulamanın
+ * kendi varsayılanı); `cy.visitInLanguage(path, 'en')` bunu geçersiz kılıyor.
+ */
+let dilTercihi = 'tr'
+
+/** Her spec temiz başlasın: bir önceki testin 'en' seçimi sızmamalı. */
+beforeEach(() => { dilTercihi = 'tr' })
+
+Cypress.Commands.overwrite('visit', (orijinal, url, secenekler = {}) => {
+  const kullanicininOnBeforeLoad = secenekler.onBeforeLoad
+  return orijinal(url, {
+    ...secenekler,
+    onBeforeLoad(win) {
+      win.localStorage.setItem('garajim_dil', dilTercihi)
+      kullanicininOnBeforeLoad?.(win)
+    },
+  })
+})
+
+/**
  * Demo hesapla giriş yap.
  * Login flow'unu kısaltır — her test başında 1 satır.
  *
@@ -28,6 +57,9 @@ Cypress.Commands.add('login', (email, password) => {
     [userEmail, userPassword],
     () => {
       cy.visit('/login')
+      // Dil anahtarı oturum önbelleğine de girsin — cy.session localStorage'ı
+      // geri yüklerken bunu da geri yüklüyor (bkz. yukarıdaki not).
+      cy.window().then((win) => win.localStorage.setItem('garajim_dil', dilTercihi))
       cy.get('input[type="email"]', { timeout: 10000 }).should('be.visible').type(userEmail)
       cy.get('input[type="password"]').type(userPassword)
       cy.get('button[type="submit"]').click()
@@ -137,6 +169,7 @@ Cypress.Commands.add('assertNoRawI18nKeys', (context = '') => {
  * @example cy.visitInLanguage('/calendar', 'en')
  */
 Cypress.Commands.add('visitInLanguage', (path, lang) => {
+  dilTercihi = lang
   // ÖNCE ziyaret, SONRA dili yaz, SONRA yenile.
   //
   // Dil `onBeforeLoad` içinde yazıldığında işe yaramıyordu: cy.session önbelleğe

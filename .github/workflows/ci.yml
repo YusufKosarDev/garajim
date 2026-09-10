@@ -76,14 +76,22 @@ jobs:
         if: steps.secrets.outputs.skip == 'false'
         run: npm ci
 
+      # Üretim derlemesine karşı koşuyor, dev sunucusuna değil: canlıda
+      # görünen bir hata (SPA yönlendirmesi) dev'de görünmüyordu.
+      # Tarayıcı Chrome, çünkü dil sabitleme cypress.config.js'te
+      # before:browser:launch ile yapılıyor ve Electron o argümanı yok sayıyor.
       - name: Cypress
         if: steps.secrets.outputs.skip == 'false'
         uses: cypress-io/github-action@v6
         with:
           install: false
-          start: npm run dev
-          wait-on: 'http://localhost:5173'
+          browser: chrome
+          build: npm run build
+          start: npm run preview
+          wait-on: 'http://localhost:4173'
           wait-on-timeout: 120
+        env:
+          CYPRESS_baseUrl: http://localhost:4173
 
       - name: Başarısız testlerin ekran görüntüleri
         if: failure() && steps.secrets.outputs.skip == 'false'
