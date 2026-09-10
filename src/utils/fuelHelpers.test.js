@@ -45,6 +45,53 @@ describe('getAverageConsumption', () => {
   it('tüm kayıtlar aynı km ise null döner', () => {
     expect(getAverageConsumption([record(1000, 50), record(1000, 40)])).toBeNull()
   })
+
+  // ============================================================
+  // ÇOKLU ARAÇ
+  //
+  // Araçların kilometre sayaçları birbirinden bağımsız. Tüm kayıtlar tek küme
+  // sayıldığında "en yüksek km − en düşük km" gidilen yol sanılıyor ve filo
+  // ortalaması gerçeğin çok altına düşüyordu. Demo hesabında bu, 5,4 ve 7,6
+  // L/100km tüketen iki araç için 6,0 gibi anlamsız bir sayı üretiyordu.
+  // ============================================================
+  describe('çoklu araç', () => {
+    const kayit = (vehicleId, km, liters) => ({ vehicleId, km, liters, totalCost: 0 })
+
+    it('her aracın km aralığı AYRI hesaplanır', () => {
+      // A: 1000->2000 km, ilk hariç 80 L  -> 8 L/100km
+      // B: 50000->51000 km, ilk hariç 40 L -> 4 L/100km
+      // Filo: 120 L / 2000 km = 6 L/100km
+      const records = [
+        kayit('A', 1000, 50), kayit('A', 1500, 40), kayit('A', 2000, 40),
+        kayit('B', 50000, 30), kayit('B', 50500, 20), kayit('B', 51000, 20),
+      ]
+      expect(getAverageConsumption(records)).toBe(6)
+    })
+
+    it('REGRESYON: sayaçlar tek aralık sayılmaz', () => {
+      // İki araç da 10 L/100km tüketiyor ama sayaçları çok uzak.
+      // Tek küme sayılsaydı: 30 L / (90500-1000) km = 0,03 L/100km.
+      const records = [
+        kayit('A', 1000, 12), kayit('A', 1100, 10),
+        kayit('B', 90000, 12), kayit('B', 90200, 20),
+      ]
+      expect(getAverageConsumption(records)).toBeCloseTo(10, 5)
+    })
+
+    it('hesaplanamayan araç toplama katılmaz, diğeri bozulmaz', () => {
+      const records = [
+        kayit('A', 1000, 50), kayit('A', 1500, 40),   // 8 L/100km
+        kayit('B', 7000, 45),                          // tek kayıt: atlanır
+        kayit('C', 9000, 30), kayit('C', 9000, 30),    // aynı km: atlanır
+      ]
+      expect(getAverageConsumption(records)).toBe(8)
+    })
+
+    it('vehicleId olmayan eski kayıtlar tek araç gibi ele alınır', () => {
+      const records = [record(1000, 50), record(1500, 40), record(2000, 40)]
+      expect(getAverageConsumption(records)).toBe(8)
+    })
+  })
 })
 
 describe('getTotalFuelCost', () => {

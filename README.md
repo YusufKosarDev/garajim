@@ -624,7 +624,27 @@ Email:   demo@garajim.com
 Şifre:   Demo1234!
 ```
 
-Demo hesabında 2 araç (BMW + Audi), bakım kayıtları, yakıt kayıtları ve örnek veriler hazırdır.
+Demo hesabında **2 araç** (BMW 320i benzin, Audi A4 dizel), **20 aylık gerçekçi
+bir geçmiş** var: 75 yakıt kaydı (4 farklı istasyon, 2025-01 → 2026-09),
+11 bakım kaydı, iki mevsim lastik seti + 4 mevsim değişimi, özel bakım
+periyotları. Böylece İstatistikler sayfasındaki her hesap gerçekten çalışıyor —
+tüketim, yıl karşılaştırması, istasyon analizi ve "kaçırılan tasarruf"
+içgörüsü dahil.
+
+Veri seti elle girilmedi; [`scripts/seed-demo.mjs`](scripts/seed-demo.mjs)
+üretiyor. Script uygulamanın hesap motorlarının ön koşullarına göre yazılmış
+(ör. tüketim doğru çıksın diye litre değerleri km artışından türetiliyor,
+tasarruf içgörüsü için ±7 gün içinde farklı istasyonda dolum çiftleri
+kuruluyor) ve **idempotent**: doğal anahtarla var-mı kontrolü yaptığı için
+tekrar çalıştırmak kopya üretmiyor, hiçbir şeyi silmiyor.
+
+```bash
+npm run seed:demo              # KURU çalışma — ne yazacağını gösterir
+npm run seed:demo -- --apply   # gerçekten yazar
+```
+
+> Varsayılan kuru; canlı veriye yazan bir aracın varsayılanı "yaz" olmamalı.
+> Script yalnızca `demo@garajim.com` üzerinde çalışır, başka hesabı reddeder.
 
 ---
 

@@ -22,22 +22,57 @@ export const calculateConsumption = (
   return (currentRecord.liters / kmDiff) * 100
 }
 
-// Bir aracın tüm yakıt kayıtlarına göre ortalama tüketim
+/**
+ * Tek bir aracın kayıtlarından litre ve km toplamı.
+ * İlk dolumun litresi sayılmaz: ondan önceki aralık bilinmiyor.
+ */
+const aracToplami = (records: FuelRecord[]): { litre: number; km: number } | null => {
+  const kmliOlanlar = records.filter(r => kmValue(r) !== null)
+  if (kmliOlanlar.length < 2) return null
+
+  const sirali = [...kmliOlanlar].sort((a, b) => (kmValue(a) ?? 0) - (kmValue(b) ?? 0))
+  const km = (kmValue(sirali[sirali.length - 1]) ?? 0) - (kmValue(sirali[0]) ?? 0)
+  if (km <= 0) return null
+
+  return { litre: sirali.slice(1).reduce((s, r) => s + r.liters, 0), km }
+}
+
+/**
+ * Ortalama tüketim (L/100km).
+ *
+ * ARAÇ BAZINDA hesaplanıp toplanıyor. Önceden tüm kayıtlar tek bir küme gibi
+ * ele alınıyordu: en düşük ve en yüksek km arasındaki fark "gidilen yol"
+ * sayılıyordu. Tek araçta bu doğru, ama birden fazla araçta ARAÇLARIN
+ * KİLOMETRE SAYAÇLARI BİRBİRİNDEN BAĞIMSIZ olduğu için tamamen anlamsız bir
+ * sayı çıkıyordu — ör. 18.000-38.500 km arası bir Audi ile 45.000-72.500 km
+ * arası bir BMW birlikte 54.500 km "yol" gibi sayılıp gerçek tüketimin çok
+ * altında bir değer üretiyordu (6,0 yerine sırasıyla 5,4 ve 7,6).
+ *
+ * Artık her aracın kendi litre/km toplamı çıkarılıp filo geneli
+ * toplamLitre / toplamKm olarak birleştiriliyor — fiziksel olarak doğru olan
+ * budur ve tek araçta eski davranışla birebir aynı sonucu verir.
+ */
 export const getAverageConsumption = (fuelRecords: FuelRecord[]): number | null => {
-  // km'si olmayan kayıtlar mesafe hesabına giremez
-  const recordsWithKm = fuelRecords.filter(r => kmValue(r) !== null)
-  if (recordsWithKm.length < 2) return null
+  const araclaraGore = new Map<string, FuelRecord[]>()
+  for (const record of fuelRecords) {
+    // vehicleId yoksa hepsi tek küme sayılır (eski yedeklerde olabiliyor)
+    const anahtar = record.vehicleId ?? '_'
+    const liste = araclaraGore.get(anahtar)
+    if (liste) liste.push(record)
+    else araclaraGore.set(anahtar, [record])
+  }
 
-  const sorted = [...recordsWithKm].sort((a, b) => (kmValue(a) ?? 0) - (kmValue(b) ?? 0))
-  const ilk = kmValue(sorted[0]) ?? 0
-  const son = kmValue(sorted[sorted.length - 1]) ?? 0
-  const totalKm = son - ilk
+  let toplamLitre = 0
+  let toplamKm = 0
+  for (const records of araclaraGore.values()) {
+    const toplam = aracToplami(records)
+    if (!toplam) continue
+    toplamLitre += toplam.litre
+    toplamKm += toplam.km
+  }
 
-  // İlk kayıt hariç toplam litre (ilk dolumda önceki aralık yok)
-  const totalLiters = sorted.slice(1).reduce((sum, r) => sum + r.liters, 0)
-
-  if (totalKm <= 0) return null
-  return (totalLiters / totalKm) * 100
+  if (toplamKm <= 0) return null
+  return (toplamLitre / toplamKm) * 100
 }
 
 // Toplam harcama
